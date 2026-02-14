@@ -70,3 +70,16 @@ A GroupAdmin invites an existing registered user to join a group, creating a pen
 - Invitation revocation / expiration policies.
 - Sending email delivery or templates.
 - Cross-group invitations or bulk invites.
+
+## Out of Scope (Integration)
+
+This spec defines core behavior only (domain + application).
+
+The following integration concerns are intentionally out of scope and will be specified separately:
+
+- HTTP/controller contract (endpoint, request/response mapping, status codes)
+- Authentication/authorization wiring (how `inviterUserId` is derived from user context)
+- Persistence details (schema, constraints, identifier generation strategy)
+- Transaction boundary and consistency strategy
+- Notification delivery mechanism (email/push/etc.)
+- Infrastructure integration tests

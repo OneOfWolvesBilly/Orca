@@ -1,66 +1,71 @@
-# DDD Notes — 02 Invite Member (Derived)
+# DDD Derivation — 02 Invite Member (Derived)
+
+This note is **derived from** `docs/specs/02-invite-member.md`.
+It does not introduce new behavior.
+Its purpose is to make model decisions explicit and reviewable.
+
+---
 
 ## Bounded Context
 
-- organization
+**organization**
 
-Reason: the behavior concerns Group membership management (members, roles, invitations).
+Rationale:
+- The spec defines `Group`, `GroupMember`, `GroupAdmin`, and `GroupInvitation` as core terms.
+- The behavior is group-scoped membership management (roles, membership, invitations).
+
+---
 
 ## Aggregate Root
 
-- Group
+**Group** is the aggregate root.
 
 Why:
-- Atomicity: "no duplicate pending invites for same invitee userId" and "cannot invite existing member" must be enforced within one consistency boundary.
-- Invariants: membership uniqueness and pending invite uniqueness are group-scoped.
+- Atomicity: the spec requires enforcing:
+  - no duplicate PENDING invitations for the same invitee userId within a group
+  - cannot invite a user who is already a group member
+- These invariants are group-scoped and must be enforced within one consistency boundary.
 
-## Entities / Value Objects / Enums (minimum set)
+---
+
+## Entities / Value Objects / Enums (Minimum Set)
 
 ### Entities
-- Group
-  - id
-  - members (userId -> role)
-  - pendingInvitations (inviteeUserId -> GroupInvitation)
-
-- GroupInvitation
-  - id
-  - groupId
-  - inviteeUserId
-  - intendedRole
-  - status (PENDING/...)
+- `Group` (Aggregate Root)
+- `GroupInvitation` (Entity inside Group)
+- `GroupMember` (Entity inside Group)
 
 ### Value Objects
-- GroupId
-- GroupInvitationId
-- UserId
+- `GroupId`
+- `GroupInvitationId`
+- `UserId`
 
 ### Enums
-- GroupRole (minimum: GROUP_ADMIN, MEMBER)
-- InvitationStatus (minimum: PENDING)
+- `GroupRole`
+  - ADMIN (maps to `GroupAdmin` in the spec)
+  - MEMBER
+- `InvitationStatus`
+  - PENDING (minimum for this slice; other statuses exist but are out of scope)
 
-## Invariant Checklist (mapped to spec)
+---
 
-- Only GroupAdmin can invite
-  - Enforced by Group checking inviter's role.
+## Invariant Checklist (Mapped to the Spec)
 
-- No duplicate PENDING invitation for the same invitee userId
-  - Enforced by Group ensuring at most one PENDING invitation keyed by inviteeUserId.
-
-- Cannot invite a user who is already a group member
-  - Enforced by Group checking membership set/map before creating an invitation.
-
-- PENDING invitation must reference exactly one group
-  - Enforced by GroupInvitation containing groupId set at creation.
-
-## Rule Classification
-
-### Domain invariants (pure, enforceable inside aggregate)
+### Domain invariants (enforced inside the Group aggregate)
 - Invitee userId must be non-empty.
-- Inviter must be GroupAdmin of the group.
-- Reject duplicate pending invitation for the same invitee userId within the group.
-- Reject inviting a user who is already a group member.
-- Create invitation with status PENDING and associate it with the group.
+- Only a GroupAdmin can create an invitation for the group.
+- A group cannot have more than one PENDING invitation for the same invitee userId.
+- A group cannot invite a user who is already a group member.
+- A PENDING invitation must always reference exactly one group.
 
-### Application rules (require repository/external checks)
+### Application rules (require external state / repository)
 - Invitee user exists (UserRepository / identity boundary).
-- Unauthenticated request rejection (web/auth boundary).
+- Unauthenticated request is rejected (security / application boundary).
+
+---
+
+## Notes on Placement
+
+- Domain code must not depend on Spring/JPA/DB (see `docs/constraints.md`).
+- Repository checks (e.g., invitee existence) belong to application layer, not in the aggregate.
+- Notification delivery is integration and out of scope for this slice.

@@ -2,15 +2,18 @@
 
 ## Goal
 
-A registered user accepts a PENDING GroupInvitation and becomes a GroupMember of the group with the intended role.
+An invited registered user accepts a pending group invitation, becoming a group member with the intended role, and marking the invitation as accepted.
 
 ## Domain Terms
+
+- Group
+  A workspace that owns members and access control.
 
 - GroupInvitation
   A pending record that represents an invitation for a registered user to join a group.
 
 - InvitationStatus
-  The state of an invitation (PENDING, ACCEPTED, REVOKED, EXPIRED).
+  The state of an invitation (e.g. PENDING, ACCEPTED, REVOKED, EXPIRED).
 
 - GroupMember
   A user who belongs to a group with exactly one role.
@@ -21,53 +24,60 @@ A registered user accepts a PENDING GroupInvitation and becomes a GroupMember of
 
 **Given**
 - A group exists.
-- A GroupInvitation exists in PENDING status.
-- The invitation references:
-  - exactly one group
-  - exactly one invitee userId
-  - exactly one intended group role.
+- A GroupInvitation exists for the invitee userId in PENDING status.
 - The accepting user is the same user as the invitee userId.
-- The user is not already a member of the group.
+- The invitee is not already a group member.
 
 **When**
-- The invitee submits an accept invitation request for that invitation.
+- The invitee submits an accept request containing:
+  - invitation id
 
 **Then**
 - The GroupInvitation status becomes ACCEPTED.
-- A new GroupMember is created in the group.
-- The GroupMember userId equals the invitation invitee userId.
-- The GroupMember role equals the invitation intended group role.
-- The group now contains the new member.
-- The invitation is no longer PENDING.
+- A new GroupMember is created for the invitee userId.
+- The member role equals the invitation intended group role.
+- The group no longer contains that invitation as a pending invite.
 
 ## Acceptance Criteria
 
+- Invitation id must be non-empty.
 - Only the invitee userId can accept the invitation.
 - Only a PENDING invitation can be accepted.
-- A user cannot accept an invitation if already a group member.
-- Accepting an invitation is atomic:
+- A group cannot accept an invitation for a user who is already a group member.
+- Accepting an invitation must be atomic:
   - membership is created
-  - invitation status changes to ACCEPTED.
+  - invitation status changes to ACCEPTED
 
 ## Invariants
 
-- A user cannot have multiple roles within the same group.
-- A GroupInvitation in ACCEPTED status cannot return to PENDING.
-- A GroupMember must always belong to exactly one group.
-- Invitation must reference exactly one group.
+- Accepting an invitation must transition status from PENDING to ACCEPTED.
+- An ACCEPTED invitation cannot return to PENDING.
 
 ## Error Cases
 
+- Invitation id is empty → validation error.
 - Invitation does not exist → rejected.
 - Invitation status is not PENDING → rejected.
 - Accepting userId does not match invitee userId → rejected.
-- User is already a group member → rejected.
+- Invitee is already a group member → rejected.
 - Unauthenticated request → rejected.
 
 ## Non-Goals
 
-- Invitation revocation logic.
-- Invitation expiration policy.
-- Re-accepting an already ACCEPTED invitation.
+- Invitation revocation / expiration policies.
+- Re-sending invitation notifications.
+- Inviting non-registered users by email.
 - Cross-group membership transfer.
-- Audit/event streaming integration.
+
+## Out of Scope (Integration)
+
+This spec defines core behavior only (domain + application).
+
+The following integration concerns are intentionally out of scope and will be specified separately:
+
+- HTTP/controller contract (endpoint, request/response mapping, status codes)
+- Authentication/authorization wiring (how `inviteeUserId` is derived from user context)
+- Persistence details (schema, constraints, identifier generation strategy)
+- Transaction boundary and consistency strategy
+- Notification delivery mechanism (email/push/etc.)
+- Infrastructure integration tests

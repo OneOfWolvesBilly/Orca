@@ -8,11 +8,10 @@ organization
 
 Group
 
-Reason:
-- Group owns members.
-- Group owns invitations.
-- Membership invariant lives inside group boundary.
-- Avoid cross-aggregate transaction between Invitation and Membership.
+Why:
+- Group owns membership and invitations vocabulary (Specs 01-02).
+- Acceptance must be atomic: create member + transition invitation status (Spec 03 AC).
+- Membership/role uniqueness invariant lives at group boundary (Specs 01-02).
 
 ## Entities
 
@@ -20,56 +19,29 @@ Reason:
 - GroupMember
 - GroupInvitation
 
-## Value Objects
+## Value Objects / Enums
 
 - UserId
 - GroupRole
 - InvitationStatus
+- GroupInvitationId (or equivalent identifier)
 
-## Aggregate Responsibilities
+## Invariant Checklist (mapped to spec)
 
-Group must enforce:
+- Only invitee userId can accept → enforced by Group when handling accept.
+- Only PENDING can be accepted → enforced by InvitationStatus transition rule.
+- Cannot accept if already member → enforced by Group membership set.
+- Atomic accept → one aggregate method performs both updates.
+- Group must always have at least one GroupAdmin → already established by Spec 01; 03 must not break it.
 
-1. Invitation exists.
-2. Invitation belongs to this group.
-3. Invitation is PENDING.
-4. Accepting userId equals invitation invitee userId.
-5. User is not already member.
-6. No duplicate roles per user.
-7. Membership creation + status transition atomic.
+## Rule Classification
 
-## Proposed Aggregate Method
+### Domain invariants
+- Invitation exists and is PENDING.
+- Accepting userId matches invitee userId.
+- Accepting user is not already a member.
+- Membership role uniqueness inside group.
+- Transition PENDING → ACCEPTED only.
 
-public void acceptInvitation(
-    InvitationId invitationId,
-    UserId acceptingUserId
-)
-
-### Behavior inside aggregate
-
-1. locate invitation
-2. assert status == PENDING
-3. assert invitation.inviteeUserId == acceptingUserId
-4. assert user not already member
-5. create new GroupMember with intended role
-6. mark invitation as ACCEPTED
-
-All invariant enforcement must happen inside Group.
-
-## State Transition
-
-PENDING → ACCEPTED
-
-Other transitions not handled in this slice.
-
-## Consistency Model
-
-Strong consistency within aggregate boundary.
-No cross-context behavior allowed.
-
-## Domain Errors (explicit)
-
-- InvitationNotFound
-- InvitationNotPending
-- InvitationNotOwnedByUser
-- UserAlreadyMember
+### Application rules
+- None for this slice.
