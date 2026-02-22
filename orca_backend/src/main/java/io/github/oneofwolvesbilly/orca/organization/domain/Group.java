@@ -19,8 +19,11 @@ public final class Group {
     // Spec 02: Tracks pending invitations by invitee userId.
     private final Map<UserId, GroupInvitation> pendingInvitations;
 
+    // Spec 03: Stable lookup by invitation id (needed after acceptance).
+    private final Map<GroupInvitationId, GroupInvitation> invitationsById;
+
     private Group(GroupId id, GroupName name, GroupDescription description, List<GroupMember> members) {
-        this(id, name, description, members, new HashMap<>());
+        this(id, name, description, members, new HashMap<>(), new HashMap<>());
     }
 
     private Group(GroupId id,
@@ -28,11 +31,21 @@ public final class Group {
                   GroupDescription description,
                   List<GroupMember> members,
                   Map<UserId, GroupInvitation> pendingInvitations) {
+        this(id, name, description, members,pendingInvitations ,new HashMap<>());
+    }
+
+    private Group(GroupId id,
+                  GroupName name,
+                  GroupDescription description,
+                  List<GroupMember> members,
+                  Map<UserId, GroupInvitation> pendingInvitations,
+                  Map<GroupInvitationId, GroupInvitation> invitationsById) {
         this.id = Objects.requireNonNull(id, "id");
         this.name = Objects.requireNonNull(name, "name");
         this.description = description;
         this.members = new ArrayList<>(Objects.requireNonNull(members, "members"));
         this.pendingInvitations = new HashMap<>(Objects.requireNonNull(pendingInvitations, "pendingInvitations"));
+        this.invitationsById = new HashMap<>(Objects.requireNonNull(invitationsById, "invitationsById"));
         validateInvariants();
     }
 
@@ -104,6 +117,7 @@ public final class Group {
         );
 
         pendingInvitations.put(inviteeUserId, invitation);
+        invitationsById.put(invitation.id(), invitation);
         return invitation;
     }
 
@@ -112,7 +126,7 @@ public final class Group {
         return pendingInvitations.containsKey(inviteeUserId);
     }
 
-    private boolean isMember(UserId userId) {
+    boolean isMember(UserId userId) {
         return members.stream().anyMatch(m -> m.userId().equals(userId));
     }
 
@@ -125,6 +139,61 @@ public final class Group {
         if (inviter == null || inviter.role() != GroupRole.GROUP_ADMIN) {
             throw new DomainException(DomainError.INVITER_NOT_GROUP_ADMIN, "Only GROUP_ADMIN can invite members.");
         }
+    }
+
+    void acceptInvitation(GroupInvitationId invitationId, UserId acceptingUserId) {
+        Objects.requireNonNull(invitationId, "invitationId");
+        Objects.requireNonNull(acceptingUserId, "acceptingUserId");
+
+        GroupInvitation inv = invitationsById.get(invitationId);
+        if (inv == null) {
+            throw new DomainException(DomainError.INVITATION_NOT_FOUND, "Invitation not found.");
+        }
+
+        if (inv.status() != InvitationStatus.PENDING) {
+            throw new DomainException(DomainError.INVITATION_NOT_PENDING, "Only PENDING invitation can be accepted.");
+        }
+
+        if (!inv.inviteeUserId().equals(acceptingUserId)) {
+            throw new DomainException(DomainError.INVITATION_ACCEPTOR_MISMATCH, "Only invitee can accept.");
+        }
+
+        if (isMember(acceptingUserId)) {
+            throw new DomainException(DomainError.INVITEE_ALREADY_MEMBER, "Invitee is already a group member.");
+        }
+
+        // Atomic in-memory: membership + invitation accepted + remove pending link
+        addMember(acceptingUserId, inv.intendedRole());
+
+        GroupInvitation accepted = new GroupInvitation(
+                inv.id(),
+                inv.groupId(),
+                inv.inviteeUserId(),
+                inv.intendedRole(),
+                InvitationStatus.ACCEPTED
+        );
+
+        invitationsById.put(invitationId, accepted);
+        pendingInvitations.remove(inv.inviteeUserId());
+
+        validateInvariants();
+    }
+
+    GroupInvitation getInvitation(GroupInvitationId invitationId) {
+        Objects.requireNonNull(invitationId, "invitationId");
+        GroupInvitation inv = invitationsById.get(invitationId);
+        if (inv == null) {
+            throw new DomainException(DomainError.INVITATION_NOT_FOUND, "Invitation not found.");
+        }
+        return inv;
+    }
+
+    GroupMember getMember(UserId userId) {
+        Objects.requireNonNull(userId, "userId");
+        return members.stream()
+                .filter(m -> m.userId().equals(userId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("member not found: " + userId.value()));
     }
 
     // package-private is recommended to prevent misuse by application layer.
