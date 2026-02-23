@@ -179,6 +179,41 @@ public final class Group {
         validateInvariants();
     }
 
+    void rejectInvitation(GroupInvitationId invitationId, UserId rejectingUserId) {
+        Objects.requireNonNull(invitationId, "invitationId");
+        Objects.requireNonNull(rejectingUserId, "rejectingUserId");
+
+        GroupInvitation inv = invitationsById.get(invitationId);
+        if (inv == null) {
+            throw new DomainException(DomainError.INVITATION_NOT_FOUND, "Invitation not found.");
+        }
+
+        if (inv.status() != InvitationStatus.PENDING) {
+            throw new DomainException(DomainError.INVITATION_NOT_PENDING, "Only PENDING invitation can be rejected.");
+        }
+
+        if (!inv.inviteeUserId().equals(rejectingUserId)) {
+            throw new DomainException(DomainError.INVITATION_REJECTOR_MISMATCH, "Only invitee can reject.");
+        }
+
+        if (isMember(rejectingUserId)) {
+            throw new DomainException(DomainError.INVITEE_ALREADY_MEMBER, "Invitee is already a group member.");
+        }
+
+        GroupInvitation rejected = new GroupInvitation(
+                inv.id(),
+                inv.groupId(),
+                inv.inviteeUserId(),
+                inv.intendedRole(),
+                InvitationStatus.REJECTED
+        );
+
+        invitationsById.put(invitationId, rejected);
+        pendingInvitations.remove(inv.inviteeUserId());
+
+        validateInvariants();
+    }
+
     GroupInvitation getInvitation(GroupInvitationId invitationId) {
         Objects.requireNonNull(invitationId, "invitationId");
         GroupInvitation inv = invitationsById.get(invitationId);
