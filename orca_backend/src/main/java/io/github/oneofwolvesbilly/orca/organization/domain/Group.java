@@ -95,7 +95,7 @@ public final class Group {
         Objects.requireNonNull(intendedRole, "intendedRole");
 
         // Spec 02 - AC2
-        ensureInviterIsGroupAdmin(inviterUserId);
+        ensureInviterIsGroupAdmin(inviterUserId, "Only GROUP_ADMIN can invite members.");
 
         // Spec 02 - AC4
         if (isMember(inviteeUserId)) {
@@ -129,15 +129,15 @@ public final class Group {
     boolean isMember(UserId userId) {
         return members.stream().anyMatch(m -> m.userId().equals(userId));
     }
-
-    private void ensureInviterIsGroupAdmin(UserId inviterUserId) {
+    
+    private void ensureInviterIsGroupAdmin(UserId userId, String message) {
         GroupMember inviter = members.stream()
-                .filter(m -> m.userId().equals(inviterUserId))
+                .filter(m -> m.userId().equals(userId))
                 .findFirst()
                 .orElse(null);
 
         if (inviter == null || inviter.role() != GroupRole.GROUP_ADMIN) {
-            throw new DomainException(DomainError.INVITER_NOT_GROUP_ADMIN, "Only GROUP_ADMIN can invite members.");
+            throw new DomainException(DomainError.INVITER_NOT_GROUP_ADMIN, message);
         }
     }
 
@@ -209,6 +209,35 @@ public final class Group {
         );
 
         invitationsById.put(invitationId, rejected);
+        pendingInvitations.remove(inv.inviteeUserId());
+
+        validateInvariants();
+    }
+    void revokeInvitation(GroupInvitationId invitationId, UserId revokerUserId) {
+        Objects.requireNonNull(invitationId, "invitationId");
+        Objects.requireNonNull(revokerUserId, "revokerUserId");
+
+        GroupInvitation inv = invitationsById.get(invitationId);
+        if (inv == null) {
+            throw new DomainException(DomainError.INVITATION_NOT_FOUND, "Invitation not found.");
+        }
+
+        if (inv.status() != InvitationStatus.PENDING) {
+            throw new DomainException(DomainError.INVITATION_NOT_PENDING, "Only PENDING invitation can be revoked.");
+        }
+
+        // Reuse existing admin check (same rule, different action)
+        ensureInviterIsGroupAdmin(revokerUserId);
+
+        GroupInvitation revoked = new GroupInvitation(
+                inv.id(),
+                inv.groupId(),
+                inv.inviteeUserId(),
+                inv.intendedRole(),
+                InvitationStatus.REVOKED
+        );
+
+        invitationsById.put(invitationId, revoked);
         pendingInvitations.remove(inv.inviteeUserId());
 
         validateInvariants();

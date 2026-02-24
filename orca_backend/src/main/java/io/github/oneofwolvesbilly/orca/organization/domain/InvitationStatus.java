@@ -3,5 +3,6 @@ package io.github.oneofwolvesbilly.orca.organization.domain;
 public enum InvitationStatus {
     PENDING,
     ACCEPTED,
-    REJECTED
+    REJECTED,
+    REVOKED
 }
