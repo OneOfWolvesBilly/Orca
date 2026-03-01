@@ -227,7 +227,7 @@ public final class Group {
         }
 
         // Reuse existing admin check (same rule, different action)
-        ensureInviterIsGroupAdmin(revokerUserId);
+        ensureInviterIsGroupAdmin(revokerUserId,  "Only GROUP_ADMIN can revoke invitations.");
 
         GroupInvitation revoked = new GroupInvitation(
                 inv.id(),
