@@ -141,7 +141,7 @@ public final class Group {
         }
     }
 
-    void acceptInvitation(GroupInvitationId invitationId, UserId acceptingUserId) {
+    public void acceptInvitation(GroupInvitationId invitationId, UserId acceptingUserId) {
         Objects.requireNonNull(invitationId, "invitationId");
         Objects.requireNonNull(acceptingUserId, "acceptingUserId");
 
@@ -179,7 +179,7 @@ public final class Group {
         validateInvariants();
     }
 
-    void rejectInvitation(GroupInvitationId invitationId, UserId rejectingUserId) {
+    public void rejectInvitation(GroupInvitationId invitationId, UserId rejectingUserId) {
         Objects.requireNonNull(invitationId, "invitationId");
         Objects.requireNonNull(rejectingUserId, "rejectingUserId");
 
@@ -213,7 +213,8 @@ public final class Group {
 
         validateInvariants();
     }
-    void revokeInvitation(GroupInvitationId invitationId, UserId revokerUserId) {
+
+    public void revokeInvitation(GroupInvitationId invitationId, UserId revokerUserId) {
         Objects.requireNonNull(invitationId, "invitationId");
         Objects.requireNonNull(revokerUserId, "revokerUserId");
 
