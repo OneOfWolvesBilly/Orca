@@ -55,4 +55,9 @@ public final class InMemoryGroupRepository implements GroupRepository {
     public List<Group> savedGroups() {
         return Collections.unmodifiableList(savedGroups);
     }
+
+    /** Returns invitation indexes for assertions. */
+    public Map<GroupInvitationId, GroupId> indexedInvitations() {
+        return Collections.unmodifiableMap(invitationToGroupId);
+    }
 }

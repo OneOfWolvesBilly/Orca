@@ -1,6 +1,8 @@
 package io.github.oneofwolvesbilly.orca.organization.application;
 
+import io.github.oneofwolvesbilly.orca.organization.domain.Group;
 import io.github.oneofwolvesbilly.orca.organization.domain.GroupId;
+import io.github.oneofwolvesbilly.orca.organization.domain.GroupName;
 import io.github.oneofwolvesbilly.orca.organization.domain.UserId;
 import io.github.oneofwolvesbilly.orca.organization.infrastructure.inmemory.InMemoryAuditRecorder;
 import io.github.oneofwolvesbilly.orca.organization.infrastructure.inmemory.InMemoryGroupRepository;
@@ -35,5 +37,34 @@ class CreateGroupUseCaseTest {
         var event = audit.recordedEvents().get(0);
         assertEquals("GROUP_CREATED", event.type());
         assertEquals("g-100", event.aggregateId());
+    }
+
+    @Test
+    void spec01_handle_rejects_duplicate_group_id_without_saving_audit_or_changing_existing_group() {
+        var repo = new InMemoryGroupRepository();
+        var audit = new InMemoryAuditRecorder();
+
+        var groupId = GroupId.of("g-100");
+        var creatorId = UserId.of("u-1");
+        Group existingGroup = Group.create(groupId, GroupName.of("Existing Team"), null, creatorId);
+        repo.save(existingGroup);
+
+        GroupIdGenerator idGenerator = () -> groupId;
+
+        var useCase = new CreateGroupUseCase(repo, audit, idGenerator);
+
+        int savesBeforeFailure = repo.savedGroups().size();
+        int membersBeforeFailure = existingGroup.members().size();
+
+        assertThrows(IllegalArgumentException.class, () ->
+                useCase.handle(new CreateGroupCommand(UserId.of("u-2"), "Team X", "hello"))
+        );
+
+        Group after = repo.findById(groupId).orElseThrow();
+        assertEquals(savesBeforeFailure, repo.savedGroups().size());
+        assertTrue(audit.recordedEvents().isEmpty());
+        assertEquals("Existing Team", after.name().value());
+        assertEquals(membersBeforeFailure, after.members().size());
+        assertSame(existingGroup, after);
     }
 }

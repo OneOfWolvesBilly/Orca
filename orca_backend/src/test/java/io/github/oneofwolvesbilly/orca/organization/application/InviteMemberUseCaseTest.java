@@ -39,7 +39,140 @@ class InviteMemberUseCaseTest {
     }
 
     @Test
-    void handle_throws_when_invitee_user_does_not_exist() {
+    void spec02_handle_rejects_group_not_found_without_saving_indexing_or_changing_group_state() {
+        var repo = new InMemoryGroupRepository();
+        var users = new InMemoryRegisteredUserDirectory();
+
+        var groupId = GroupId.of("g-missing");
+        var adminId = UserId.of("user-admin");
+        var inviteeId = UserId.of("user-1");
+        users.register(inviteeId);
+
+        var useCase = new InviteMemberUseCase(repo, users);
+
+        assertThrows(IllegalArgumentException.class, () ->
+                useCase.handle(new InviteMemberCommand(groupId, adminId, inviteeId, GroupRole.MEMBER))
+        );
+
+        assertTrue(repo.savedGroups().isEmpty());
+        assertTrue(repo.indexedInvitations().isEmpty());
+        assertTrue(repo.findById(groupId).isEmpty());
+    }
+
+    @Test
+    void spec02_handle_rejects_inviter_who_is_not_group_admin_without_saving_indexing_or_changing_group_state() {
+        var repo = new InMemoryGroupRepository();
+        var users = new InMemoryRegisteredUserDirectory();
+
+        var groupId = GroupId.of("g-1");
+        var adminId = UserId.of("user-admin");
+        var nonAdminInviterId = UserId.of("user-non-admin");
+        var inviteeId = UserId.of("user-1");
+
+        users.register(inviteeId);
+
+        Group group = Group.create(groupId, GroupName.of("Team A"), null, adminId);
+        repo.save(group);
+
+        Group before = repo.findById(groupId).orElseThrow();
+        int savesBeforeFailure = repo.savedGroups().size();
+        int indexesBeforeFailure = repo.indexedInvitations().size();
+        int membersBeforeFailure = before.members().size();
+        boolean hadPendingBeforeFailure = before.hasPendingInvitationFor(inviteeId);
+
+        var useCase = new InviteMemberUseCase(repo, users);
+
+        assertThrows(RuntimeException.class, () ->
+                useCase.handle(new InviteMemberCommand(groupId, nonAdminInviterId, inviteeId, GroupRole.MEMBER))
+        );
+
+        assertFailureDidNotPersistIndexOrChangeGroup(
+                repo,
+                groupId,
+                inviteeId,
+                savesBeforeFailure,
+                indexesBeforeFailure,
+                membersBeforeFailure,
+                hadPendingBeforeFailure
+        );
+    }
+
+    @Test
+    void spec02_handle_rejects_duplicate_pending_invitation_without_saving_indexing_or_changing_group_state() {
+        var repo = new InMemoryGroupRepository();
+        var users = new InMemoryRegisteredUserDirectory();
+
+        var groupId = GroupId.of("g-1");
+        var adminId = UserId.of("user-admin");
+        var inviteeId = UserId.of("user-1");
+
+        users.register(inviteeId);
+
+        Group group = Group.create(groupId, GroupName.of("Team A"), null, adminId);
+        repo.save(group);
+
+        var useCase = new InviteMemberUseCase(repo, users);
+        useCase.handle(new InviteMemberCommand(groupId, adminId, inviteeId, GroupRole.MEMBER));
+
+        Group before = repo.findById(groupId).orElseThrow();
+        int savesBeforeFailure = repo.savedGroups().size();
+        int indexesBeforeFailure = repo.indexedInvitations().size();
+        int membersBeforeFailure = before.members().size();
+        boolean hadPendingBeforeFailure = before.hasPendingInvitationFor(inviteeId);
+
+        assertThrows(RuntimeException.class, () ->
+                useCase.handle(new InviteMemberCommand(groupId, adminId, inviteeId, GroupRole.MEMBER))
+        );
+
+        assertFailureDidNotPersistIndexOrChangeGroup(
+                repo,
+                groupId,
+                inviteeId,
+                savesBeforeFailure,
+                indexesBeforeFailure,
+                membersBeforeFailure,
+                hadPendingBeforeFailure
+        );
+    }
+
+    @Test
+    void spec02_handle_rejects_invitee_already_member_without_saving_indexing_or_changing_group_state() {
+        var repo = new InMemoryGroupRepository();
+        var users = new InMemoryRegisteredUserDirectory();
+
+        var groupId = GroupId.of("g-1");
+        var adminId = UserId.of("user-admin");
+
+        users.register(adminId);
+
+        Group group = Group.create(groupId, GroupName.of("Team A"), null, adminId);
+        repo.save(group);
+
+        Group before = repo.findById(groupId).orElseThrow();
+        int savesBeforeFailure = repo.savedGroups().size();
+        int indexesBeforeFailure = repo.indexedInvitations().size();
+        int membersBeforeFailure = before.members().size();
+        boolean hadPendingBeforeFailure = before.hasPendingInvitationFor(adminId);
+
+        var useCase = new InviteMemberUseCase(repo, users);
+
+        assertThrows(RuntimeException.class, () ->
+                useCase.handle(new InviteMemberCommand(groupId, adminId, adminId, GroupRole.MEMBER))
+        );
+
+        assertFailureDidNotPersistIndexOrChangeGroup(
+                repo,
+                groupId,
+                adminId,
+                savesBeforeFailure,
+                indexesBeforeFailure,
+                membersBeforeFailure,
+                hadPendingBeforeFailure
+        );
+    }
+
+    @Test
+    void spec02_handle_rejects_invitee_user_does_not_exist_without_saving_indexing_or_changing_group_state() {
         var repo = new InMemoryGroupRepository();
         var users = new InMemoryRegisteredUserDirectory();
 
@@ -52,8 +185,40 @@ class InviteMemberUseCaseTest {
 
         var useCase = new InviteMemberUseCase(repo, users);
 
+        Group before = repo.findById(groupId).orElseThrow();
+        int savesBeforeFailure = repo.savedGroups().size();
+        int indexesBeforeFailure = repo.indexedInvitations().size();
+        int membersBeforeFailure = before.members().size();
+        boolean hadPendingBeforeFailure = before.hasPendingInvitationFor(inviteeId);
+
         assertThrows(IllegalArgumentException.class, () ->
                 useCase.handle(new InviteMemberCommand(groupId, adminId, inviteeId, GroupRole.MEMBER))
         );
+
+        assertFailureDidNotPersistIndexOrChangeGroup(
+                repo,
+                groupId,
+                inviteeId,
+                savesBeforeFailure,
+                indexesBeforeFailure,
+                membersBeforeFailure,
+                hadPendingBeforeFailure
+        );
+    }
+
+    private static void assertFailureDidNotPersistIndexOrChangeGroup(
+            InMemoryGroupRepository repo,
+            GroupId groupId,
+            UserId inviteeId,
+            int expectedSaves,
+            int expectedIndexes,
+            int expectedMembers,
+            boolean expectedPending
+    ) {
+        Group after = repo.findById(groupId).orElseThrow();
+        assertEquals(expectedSaves, repo.savedGroups().size());
+        assertEquals(expectedIndexes, repo.indexedInvitations().size());
+        assertEquals(expectedMembers, after.members().size());
+        assertEquals(expectedPending, after.hasPendingInvitationFor(inviteeId));
     }
 }
