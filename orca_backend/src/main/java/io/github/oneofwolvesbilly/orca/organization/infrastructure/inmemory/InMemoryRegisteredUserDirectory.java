@@ -17,6 +17,10 @@ public final class InMemoryRegisteredUserDirectory implements RegisteredUserDire
         return this;
     }
 
+    public void clear() {
+        registered.clear();
+    }
+
     @Override
     public boolean exists(UserId userId) {
         return registered.contains(Objects.requireNonNull(userId, "userId"));

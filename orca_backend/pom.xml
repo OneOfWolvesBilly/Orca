@@ -22,6 +22,12 @@
     </properties>
 
     <dependencies>
+        <!-- HTTP web adapter -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
         <!-- JDBC infrastructure -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
