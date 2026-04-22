@@ -59,6 +59,34 @@ public final class Group {
         return new Group(id, name, description, members);
     }
 
+    /** Reconstitutes a group from persisted state without executing new business behavior. */
+    public static Group reconstitute(GroupId id,
+                                     GroupName name,
+                                     GroupDescription description,
+                                     List<GroupMember> members,
+                                     List<GroupInvitation> invitations) {
+        Objects.requireNonNull(invitations, "invitations");
+
+        Map<UserId, GroupInvitation> pendingInvitations = new HashMap<>();
+        Map<GroupInvitationId, GroupInvitation> invitationsById = new HashMap<>();
+
+        for (GroupInvitation invitation : invitations) {
+            Objects.requireNonNull(invitation, "invitation");
+            if (!invitation.groupId().equals(id)) {
+                throw new IllegalStateException("invitation belongs to a different group");
+            }
+            if (invitationsById.put(invitation.id(), invitation) != null) {
+                throw new IllegalStateException("duplicate invitation id is not allowed");
+            }
+            if (invitation.status() == InvitationStatus.PENDING
+                    && pendingInvitations.put(invitation.inviteeUserId(), invitation) != null) {
+                throw new IllegalStateException("duplicate pending invitation is not allowed");
+            }
+        }
+
+        return new Group(id, name, description, members, pendingInvitations, invitationsById);
+    }
+
     public GroupId id() {
         return id;
     }
@@ -74,6 +102,10 @@ public final class Group {
 
     public List<GroupMember> members() {
         return Collections.unmodifiableList(members);
+    }
+
+    public List<GroupInvitation> invitations() {
+        return List.copyOf(invitationsById.values());
     }
 
     // ---- Spec 02 - Invite Member ----
