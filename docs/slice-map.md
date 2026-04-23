@@ -1,0 +1,49 @@
+# Slice Map
+
+This document is a derived index.
+It helps contributors find behavior slices by bounded context.
+It does not introduce behavior.
+
+Authoritative behavior remains in `docs/specs/<bounded-context>/*`.
+
+---
+
+## Naming Rules
+
+Slice ids are scoped by bounded context:
+
+```text
+<bounded-context>-<NN>
+```
+
+Spec and DDD note files use matching names:
+
+```text
+docs/specs/<bounded-context>/<NN>-<behavior-or-integration>.md
+docs/ddd/<bounded-context>/<NN>-<behavior-or-integration>.md
+```
+
+Frontend work is normally a delivery slice inside the bounded context it exposes.
+For example, an organization UI command console should be tracked as an
+organization slice, not as a separate frontend bounded context.
+
+---
+
+## Organization
+
+| Slice | Spec | DDD | Status |
+| --- | --- | --- | --- |
+| `organization-01` | [Create Group](specs/organization/01-create-group.md) | [DDD](ddd/organization/01-create-group.md) | Done |
+| `organization-02` | [Invite Member](specs/organization/02-invite-member.md) | [DDD](ddd/organization/02-invite-member.md) | Done |
+| `organization-03` | [Accept Invitation](specs/organization/03-accept-invitation.md) | [DDD](ddd/organization/03-accept-invitation.md) | Done |
+| `organization-04` | [Reject Invitation](specs/organization/04-reject-invitation.md) | [DDD](ddd/organization/04-reject-invitation.md) | Done |
+| `organization-05` | [Revoke Invitation](specs/organization/05-revoke-invitation.md) | [DDD](ddd/organization/05-revoke-invitation.md) | Done |
+| `organization-06` | [Application Integration](specs/organization/06-application-integration.md) | [DDD](ddd/organization/06-application-integration.md) | Done |
+| `organization-07` | [Persistence Integration](specs/organization/07-persistence-integration.md) | [DDD](ddd/organization/07-persistence-integration.md) | Done |
+| `organization-08` | [Web API Integration](specs/organization/08-web-api-integration.md) | [DDD](ddd/organization/08-web-api-integration.md) | Done |
+
+## Planned Contexts
+
+No additional bounded contexts are authoritative yet.
+Introduce `auth`, `issue`, or other bounded contexts only by adding their first
+authoritative spec under `docs/specs/<bounded-context>/`.

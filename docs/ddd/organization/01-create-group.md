@@ -1,6 +1,6 @@
 # DDD Derivation — 01 Create Group
 
-This note is **derived from** `docs/specs/01-create-group.md`.
+This note is **derived from** `docs/specs/organization/01-create-group.md`.
 It does not introduce new behavior.
 Its purpose is to make model decisions explicit and reviewable.
 
@@ -82,4 +82,3 @@ The system produces a new Group aggregate containing exactly one member:
 - Repository checks (e.g., id uniqueness) belong to application layer, not in the aggregate.
 - Audit/event persistence is infrastructure. The domain may emit an in-memory domain event,
   but recording is not a domain invariant.
-

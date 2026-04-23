@@ -1,6 +1,6 @@
 # DDD Derivation — 02 Invite Member (Derived)
 
-This note is **derived from** `docs/specs/02-invite-member.md`.
+This note is **derived from** `docs/specs/organization/02-invite-member.md`.
 It does not introduce new behavior.
 Its purpose is to make model decisions explicit and reviewable.
 

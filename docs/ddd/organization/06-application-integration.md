@@ -1,4 +1,4 @@
-# DDD Notes 06 — Organization Integration (Invitation Lifecycle Orchestration)
+# DDD Notes 06 — Application Integration (Organization Invitation Lifecycle Orchestration)
 
 ## Bounded Context
 

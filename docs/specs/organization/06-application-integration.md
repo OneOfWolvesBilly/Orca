@@ -1,4 +1,4 @@
-# Spec 06 — Organization Integration (Invitation Lifecycle Orchestration)
+# Spec 06 — Application Integration (Organization Invitation Lifecycle Orchestration)
 
 ## Goal
 

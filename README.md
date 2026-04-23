@@ -44,7 +44,8 @@ Each user-visible behavior is captured as a specification using:
 * error cases
 * explicit non-goals
 
-Specifications live in `docs/specs/` and are the **authoritative source of truth**.
+Specifications live under `docs/specs/<bounded-context>/` and are the
+**authoritative source of truth**.
 
 A specification answers one question only:
 
@@ -128,6 +129,33 @@ Each slice:
 
 This prevents architectural sprawl and keeps ownership clear.
 
+Slice identifiers are scoped by bounded context:
+
+```text
+<bounded-context>-<NN>
+```
+
+Examples:
+
+```text
+organization-01
+organization-08
+auth-01
+```
+
+The file layout mirrors that scope:
+
+```text
+docs/specs/organization/08-web-api-integration.md
+docs/ddd/organization/08-web-api-integration.md
+```
+
+Frontend work is not a bounded context by default.
+Frontend slices should live under the bounded context whose behavior they expose
+(for example `organization/09-frontend-command-console.md`).
+A frontend-only cross-context shell/navigation slice may be introduced separately
+only when its behavior is explicitly specified.
+
 ---
 
 ## Repository Structure
@@ -136,6 +164,10 @@ This prevents architectural sprawl and keeps ownership clear.
 orca/
 ├─ docs/
 │  ├─ specs/                 # Authoritative behavior specifications
+│  │  └─ <bounded-context>/   # Context-scoped behavior slices
+│  ├─ ddd/                   # Derived context-scoped design notes
+│  │  └─ <bounded-context>/
+│  ├─ slice-map.md           # Derived slice index
 │  ├─ constraints.md         # Non-negotiable engineering rules
 │  └─ document-map.md        # Documentation authority and reading order
 │
@@ -154,7 +186,8 @@ orca/
 
 Bounded contexts are introduced by behavior slices.
 This README intentionally does not enumerate them.
-The authoritative behavior list lives in docs/specs/*
+The authoritative behavior list lives in `docs/specs/<bounded-context>/*`.
+The derived slice index lives in `docs/slice-map.md`.
 
 ---
 
@@ -164,8 +197,9 @@ New contributors should read documents in the following order:
 
 1. `docs/document-map.md` — document authority and structure
 2. `docs/constraints.md` — non-negotiable engineering constraints
-3. `docs/specs/` — behavior definitions
-4. Derived documents (architecture, design notes), if present
+3. `docs/specs/<bounded-context>/` — behavior definitions
+4. `docs/slice-map.md` — derived slice index
+5. Derived documents (architecture, design notes), if present
 
 If a document cannot be placed in this order,
 it likely does not belong in the repository.

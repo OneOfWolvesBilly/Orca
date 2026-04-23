@@ -1,6 +1,6 @@
 # DDD Note 08 — Organization Web API Integration
 
-This note is derived from `docs/specs/08-web-api-integration.md`.
+This note is derived from `docs/specs/organization/08-web-api-integration.md`.
 It does not introduce new behavior.
 
 ## Bounded Context
