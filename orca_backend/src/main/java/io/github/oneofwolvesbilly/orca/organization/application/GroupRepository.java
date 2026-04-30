@@ -16,8 +16,8 @@ public interface GroupRepository {
     /**
      * Records a stable mapping from invitationId to owning groupId.
      *
-     * <p>This is required for application-layer orchestration where requests carry only an invitationId
-     * (Spec 03–05). Adapters that can resolve invitationId natively may treat this as a no-op.
+     * <p>This remains available for adapters that manage the lookup separately, but repository {@link #save(Group)}
+     * must persist aggregate state and invitation lookup changes as one atomic application operation.
      */
     void indexInvitation(GroupInvitationId invitationId, GroupId groupId);
 

@@ -54,7 +54,6 @@ class JdbcGroupRepositoryAdapterTest {
         GroupInvitationId invitationId = invitation.id();
 
         repository.save(group);
-        repository.indexInvitation(invitationId, group.id());
 
         Group reloaded = repository.findById(GroupId.of("g1")).orElseThrow();
 
@@ -64,6 +63,7 @@ class JdbcGroupRepositoryAdapterTest {
         assertEquals(1, reloaded.members().size());
         assertTrue(reloaded.hasPendingInvitationFor(UserId.of("user-1")));
         assertEquals(InvitationStatus.PENDING, invitationStatus(reloaded, invitationId));
+        assertTrue(repository.findByInvitationId(invitationId).isPresent());
 
         reloaded.acceptInvitation(invitationId, UserId.of("user-1"));
 

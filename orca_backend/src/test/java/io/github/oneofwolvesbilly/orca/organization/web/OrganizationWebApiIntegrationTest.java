@@ -16,6 +16,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpRequest.BodyPublisher;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -69,9 +70,19 @@ class OrganizationWebApiIntegrationTest {
 
     @Test
     void invite_member_accept_reject_and_revoke_flow_uses_post_contracts() throws Exception {
-        String groupId = createGroup("admin");
+        String acceptingGroupId = createGroup("admin");
+        String rejectingGroupId = createGroup("admin");
+        String revokingGroupId = createGroup("admin");
 
-        String invitationToAccept = inviteMember(groupId, "admin", "user-1");
+        HttpResponse<String> inviteResponse = post("/api/groups/%s/invitations".formatted(acceptingGroupId), "admin", """
+                {
+                  "inviteeUserId": "user-1",
+                  "intendedRole": "MEMBER"
+                }
+                """);
+
+        assertEquals(200, inviteResponse.statusCode());
+        String invitationToAccept = extract(INVITATION_ID, inviteResponse.body());
         HttpResponse<String> acceptResponse = post(
                 "/api/group-invitations/%s/accept".formatted(invitationToAccept),
                 "user-1",
@@ -81,7 +92,7 @@ class OrganizationWebApiIntegrationTest {
         assertEquals(200, acceptResponse.statusCode());
         assertEquals("{\"status\":\"ACCEPTED\"}", acceptResponse.body());
 
-        String invitationToReject = inviteMember(groupId, "admin", "outsider");
+        String invitationToReject = inviteMember(rejectingGroupId, "admin", "outsider");
         HttpResponse<String> rejectResponse = post(
                 "/api/group-invitations/%s/reject".formatted(invitationToReject),
                 "outsider",
@@ -91,7 +102,7 @@ class OrganizationWebApiIntegrationTest {
         assertEquals(200, rejectResponse.statusCode());
         assertEquals("{\"status\":\"REJECTED\"}", rejectResponse.body());
 
-        String invitationToRevoke = inviteMember(groupId, "admin", "outsider");
+        String invitationToRevoke = inviteMember(revokingGroupId, "admin", "outsider");
         HttpResponse<String> revokeResponse = post(
                 "/api/group-invitations/%s/revoke".formatted(invitationToRevoke),
                 "admin",
@@ -103,58 +114,225 @@ class OrganizationWebApiIntegrationTest {
     }
 
     @Test
-    void command_endpoint_rejects_missing_authenticated_user_before_use_case_execution() throws Exception {
-        HttpResponse<String> response = postWithoutUser("/api/groups", """
+    void command_endpoints_reject_missing_authenticated_user() throws Exception {
+        String groupId = createGroup("admin");
+        String invitationId = inviteMember(groupId, "admin", "user-1");
+
+        HttpResponse<String> createGroupResponse = postWithoutUser("/api/groups", """
                 {
                   "name": "Core Team"
                 }
                 """);
+        HttpResponse<String> inviteMemberResponse = postWithoutUser("/api/groups/%s/invitations".formatted(groupId), """
+                {
+                  "inviteeUserId": "outsider",
+                  "intendedRole": "MEMBER"
+                }
+                """);
+        HttpResponse<String> acceptResponse = postWithoutUser(
+                "/api/group-invitations/%s/accept".formatted(invitationId),
+                "{}"
+        );
+        HttpResponse<String> rejectResponse = postWithoutUser(
+                "/api/group-invitations/%s/reject".formatted(invitationId),
+                "{}"
+        );
+        HttpResponse<String> revokeResponse = postWithoutUser(
+                "/api/group-invitations/%s/revoke".formatted(invitationId),
+                "{}"
+        );
 
-        assertEquals(401, response.statusCode());
+        assertEquals(401, createGroupResponse.statusCode());
+        assertEquals(401, inviteMemberResponse.statusCode());
+        assertEquals(401, acceptResponse.statusCode());
+        assertEquals(401, rejectResponse.statusCode());
+        assertEquals(401, revokeResponse.statusCode());
     }
 
     @Test
-    void command_endpoint_rejects_missing_required_body_fields_as_validation_errors() throws Exception {
+    void command_endpoints_reject_blank_authenticated_user() throws Exception {
+        String groupId = createGroup("admin");
+        String invitationId = inviteMember(groupId, "admin", "user-1");
+
+        HttpResponse<String> createGroupResponse = post("/api/groups", "   ", """
+                {
+                  "name": "Core Team"
+                }
+                """);
+        HttpResponse<String> inviteMemberResponse = post("/api/groups/%s/invitations".formatted(groupId), "   ", """
+                {
+                  "inviteeUserId": "outsider",
+                  "intendedRole": "MEMBER"
+                }
+                """);
+        HttpResponse<String> acceptResponse = post(
+                "/api/group-invitations/%s/accept".formatted(invitationId),
+                "   ",
+                "{}"
+        );
+        HttpResponse<String> rejectResponse = post(
+                "/api/group-invitations/%s/reject".formatted(invitationId),
+                "   ",
+                "{}"
+        );
+        HttpResponse<String> revokeResponse = post(
+                "/api/group-invitations/%s/revoke".formatted(invitationId),
+                "   ",
+                "{}"
+        );
+
+        assertEquals(401, createGroupResponse.statusCode());
+        assertEquals(401, inviteMemberResponse.statusCode());
+        assertEquals(401, acceptResponse.statusCode());
+        assertEquals(401, rejectResponse.statusCode());
+        assertEquals(401, revokeResponse.statusCode());
+    }
+
+    @Test
+    void command_endpoints_reject_malformed_or_missing_required_request_bodies() throws Exception {
+        String groupId = createGroup("admin");
+        String invitationId = inviteMember(groupId, "admin", "user-1");
+
+        HttpResponse<String> malformedCreateGroupResponse = post("/api/groups", "admin", "{");
         HttpResponse<String> missingNameResponse = post("/api/groups", "admin", """
                 {
                   "description": "Platform"
                 }
                 """);
-
-        assertEquals(400, missingNameResponse.statusCode());
-
-        String groupId = createGroup("admin");
-
         HttpResponse<String> missingRoleResponse = post("/api/groups/%s/invitations".formatted(groupId), "admin", """
                 {
                   "inviteeUserId": "user-1"
                 }
                 """);
+        HttpResponse<String> malformedAcceptResponse = post(
+                "/api/group-invitations/%s/accept".formatted(invitationId),
+                "user-1",
+                "{"
+        );
+        HttpResponse<String> missingRejectBodyResponse = postWithoutBody(
+                "/api/group-invitations/%s/reject".formatted(invitationId),
+                "user-1"
+        );
+        HttpResponse<String> missingRevokeBodyResponse = postWithoutBody(
+                "/api/group-invitations/%s/revoke".formatted(invitationId),
+                "admin"
+        );
 
+        assertEquals(400, malformedCreateGroupResponse.statusCode());
+        assertEquals(400, missingNameResponse.statusCode());
         assertEquals(400, missingRoleResponse.statusCode());
+        assertEquals(400, malformedAcceptResponse.statusCode());
+        assertEquals(400, missingRejectBodyResponse.statusCode());
+        assertEquals(400, missingRevokeBodyResponse.statusCode());
     }
 
     @Test
-    void invite_member_maps_not_found_and_forbidden_failures_to_http_errors() throws Exception {
+    void command_endpoints_map_unknown_group_or_invitation_to_not_found() throws Exception {
         HttpResponse<String> missingGroupResponse = post("/api/groups/missing-group/invitations", "admin", """
                 {
                   "inviteeUserId": "user-1",
                   "intendedRole": "MEMBER"
                 }
                 """);
+        HttpResponse<String> missingAcceptInvitationResponse = post(
+                "/api/group-invitations/missing-invitation/accept",
+                "user-1",
+                "{}"
+        );
+        HttpResponse<String> missingRejectInvitationResponse = post(
+                "/api/group-invitations/missing-invitation/reject",
+                "user-1",
+                "{}"
+        );
+        HttpResponse<String> missingRevokeInvitationResponse = post(
+                "/api/group-invitations/missing-invitation/revoke",
+                "admin",
+                "{}"
+        );
 
         assertEquals(404, missingGroupResponse.statusCode());
+        assertEquals(404, missingAcceptInvitationResponse.statusCode());
+        assertEquals(404, missingRejectInvitationResponse.statusCode());
+        assertEquals(404, missingRevokeInvitationResponse.statusCode());
+    }
 
-        String groupId = createGroup("admin");
+    @Test
+    void command_endpoints_map_actor_permission_mismatch_to_forbidden() throws Exception {
+        String invitationGroupId = createGroup("admin");
+        String acceptGroupId = createGroup("admin");
+        String rejectGroupId = createGroup("admin");
+        String revokeGroupId = createGroup("admin");
+        String invitationForAccept = inviteMember(acceptGroupId, "admin", "user-1");
+        String invitationForReject = inviteMember(rejectGroupId, "admin", "outsider");
+        String invitationForRevoke = inviteMember(revokeGroupId, "admin", "user-1");
 
-        HttpResponse<String> forbiddenResponse = post("/api/groups/%s/invitations".formatted(groupId), "outsider", """
+        HttpResponse<String> inviteForbiddenResponse = post("/api/groups/%s/invitations".formatted(invitationGroupId), "outsider", """
                 {
                   "inviteeUserId": "user-1",
                   "intendedRole": "MEMBER"
                 }
                 """);
+        HttpResponse<String> acceptForbiddenResponse = post(
+                "/api/group-invitations/%s/accept".formatted(invitationForAccept),
+                "outsider",
+                "{}"
+        );
+        HttpResponse<String> rejectForbiddenResponse = post(
+                "/api/group-invitations/%s/reject".formatted(invitationForReject),
+                "user-1",
+                "{}"
+        );
+        HttpResponse<String> revokeForbiddenResponse = post(
+                "/api/group-invitations/%s/revoke".formatted(invitationForRevoke),
+                "outsider",
+                "{}"
+        );
 
-        assertEquals(403, forbiddenResponse.statusCode());
+        assertEquals(403, inviteForbiddenResponse.statusCode());
+        assertEquals(403, acceptForbiddenResponse.statusCode());
+        assertEquals(403, rejectForbiddenResponse.statusCode());
+        assertEquals(403, revokeForbiddenResponse.statusCode());
+    }
+
+    @Test
+    void command_endpoints_map_other_domain_or_application_validation_failures_to_bad_request() throws Exception {
+        String groupId = createGroup("admin");
+        String acceptedInvitationId = inviteMember(groupId, "admin", "user-1");
+
+        HttpResponse<String> acceptResponse = post(
+                "/api/group-invitations/%s/accept".formatted(acceptedInvitationId),
+                "user-1",
+                "{}"
+        );
+        HttpResponse<String> duplicatePendingInvitationResponse = post("/api/groups/%s/invitations".formatted(groupId), "admin", """
+                {
+                  "inviteeUserId": "outsider",
+                  "intendedRole": "MEMBER"
+                }
+                """);
+        HttpResponse<String> duplicatePendingInvitationRetryResponse = post("/api/groups/%s/invitations".formatted(groupId), "admin", """
+                {
+                  "inviteeUserId": "outsider",
+                  "intendedRole": "MEMBER"
+                }
+                """);
+        HttpResponse<String> inviteUnknownUserResponse = post("/api/groups/%s/invitations".formatted(groupId), "admin", """
+                {
+                  "inviteeUserId": "missing-user",
+                  "intendedRole": "MEMBER"
+                }
+                """);
+        HttpResponse<String> acceptAlreadyAcceptedResponse = post(
+                "/api/group-invitations/%s/accept".formatted(acceptedInvitationId),
+                "user-1",
+                "{}"
+        );
+
+        assertEquals(200, acceptResponse.statusCode());
+        assertEquals(200, duplicatePendingInvitationResponse.statusCode());
+        assertEquals(400, duplicatePendingInvitationRetryResponse.statusCode());
+        assertEquals(400, inviteUnknownUserResponse.statusCode());
+        assertEquals(400, acceptAlreadyAcceptedResponse.statusCode());
     }
 
     private String createGroup(String actorUserId) throws Exception {
@@ -181,21 +359,28 @@ class OrganizationWebApiIntegrationTest {
     }
 
     private HttpResponse<String> post(String path, String actorUserId, String body) throws Exception {
-        HttpRequest request = requestBuilder(path, body)
+        HttpRequest request = requestBuilder(path, HttpRequest.BodyPublishers.ofString(body))
                 .header("X-User-Id", actorUserId)
                 .build();
         return client.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
     private HttpResponse<String> postWithoutUser(String path, String body) throws Exception {
-        HttpRequest request = requestBuilder(path, body).build();
+        HttpRequest request = requestBuilder(path, HttpRequest.BodyPublishers.ofString(body)).build();
         return client.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
-    private HttpRequest.Builder requestBuilder(String path, String body) {
+    private HttpResponse<String> postWithoutBody(String path, String actorUserId) throws Exception {
+        HttpRequest request = requestBuilder(path, HttpRequest.BodyPublishers.noBody())
+                .header("X-User-Id", actorUserId)
+                .build();
+        return client.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpRequest.Builder requestBuilder(String path, BodyPublisher bodyPublisher) {
         return HttpRequest.newBuilder(URI.create("http://localhost:%d%s".formatted(port, path)))
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(body));
+                .POST(bodyPublisher);
     }
 
     private static String extract(Pattern pattern, String body) {

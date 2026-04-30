@@ -29,7 +29,7 @@ Value Objects (as implied by specs; naming may already exist in code):
 - GroupRole (includes GroupAdmin and other member roles)
 
 Enum:
-- InvitationStatus (PENDING, ACCEPTED, REJECTED, REVOKED, EXPIRED) — must NOT add new values.
+- InvitationStatus (PENDING, ACCEPTED, REJECTED, REVOKED) — must NOT add new values.
 
 ## Invariant Checklist (mapped to Specs)
 

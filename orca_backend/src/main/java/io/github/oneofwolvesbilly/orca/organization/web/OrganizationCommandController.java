@@ -81,7 +81,8 @@ final class OrganizationCommandController {
     @PostMapping("/group-invitations/{invitationId}/accept")
     InvitationStatusResponse acceptInvitation(
             @RequestHeader(value = "X-User-Id", required = false) String userId,
-            @PathVariable String invitationId
+            @PathVariable String invitationId,
+            @RequestBody InvitationActionRequest request
     ) {
         acceptInvitationUseCase.handle(new AcceptInvitationCommand(
                 authenticatedUser(userId),
@@ -93,7 +94,8 @@ final class OrganizationCommandController {
     @PostMapping("/group-invitations/{invitationId}/reject")
     InvitationStatusResponse rejectInvitation(
             @RequestHeader(value = "X-User-Id", required = false) String userId,
-            @PathVariable String invitationId
+            @PathVariable String invitationId,
+            @RequestBody InvitationActionRequest request
     ) {
         rejectInvitationUseCase.handle(new RejectInvitationCommand(
                 authenticatedUser(userId),
@@ -105,7 +107,8 @@ final class OrganizationCommandController {
     @PostMapping("/group-invitations/{invitationId}/revoke")
     InvitationStatusResponse revokeInvitation(
             @RequestHeader(value = "X-User-Id", required = false) String userId,
-            @PathVariable String invitationId
+            @PathVariable String invitationId,
+            @RequestBody InvitationActionRequest request
     ) {
         revokeInvitationUseCase.handle(new RevokeInvitationCommand(
                 authenticatedUser(userId),
@@ -145,6 +148,9 @@ final class OrganizationCommandController {
     }
 
     record InviteMemberResponse(String invitationId) {
+    }
+
+    record InvitationActionRequest() {
     }
 
     record InvitationStatusResponse(String status) {

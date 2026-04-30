@@ -32,9 +32,8 @@ public final class InviteMemberUseCase {
                 command.intendedRole()
         );
 
-        // Persist and index for Spec 03–05 flows.
+        // Persist the aggregate and its invitation lookup as one repository operation.
         groupRepository.save(group);
-        groupRepository.indexInvitation(invitation.id(), group.id());
 
         return new InviteMemberResult(invitation.id());
     }

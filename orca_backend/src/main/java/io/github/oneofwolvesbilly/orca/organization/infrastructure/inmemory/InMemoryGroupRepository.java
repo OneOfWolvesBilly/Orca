@@ -48,6 +48,8 @@ public final class InMemoryGroupRepository implements GroupRepository {
     public void save(Group group) {
         Group nonNull = Objects.requireNonNull(group, "group");
         groupsById.put(nonNull.id(), nonNull);
+        invitationToGroupId.entrySet().removeIf(entry -> entry.getValue().equals(nonNull.id()));
+        nonNull.invitations().forEach(invitation -> invitationToGroupId.put(invitation.id(), nonNull.id()));
         savedGroups.add(nonNull);
     }
 

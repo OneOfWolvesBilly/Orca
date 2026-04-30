@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class InviteMemberUseCaseTest {
 
     @Test
-    void handle_invites_member_persists_group_and_indexes_invitation() {
+    void handle_invites_member_persists_group_and_invitation_lookup_atomically() {
         var repo = new InMemoryGroupRepository();
         var users = new InMemoryRegisteredUserDirectory();
 
@@ -34,6 +34,7 @@ class InviteMemberUseCaseTest {
         );
 
         assertNotNull(result.invitationId());
+        assertEquals(1, repo.indexedInvitations().size());
         assertTrue(repo.findByInvitationId(result.invitationId()).isPresent());
         assertEquals("g-1", repo.findByInvitationId(result.invitationId()).get().id().value());
     }
