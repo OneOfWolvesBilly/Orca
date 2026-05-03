@@ -17,7 +17,7 @@ marking it as revoked and ensuring it no longer counts as a pending invite.
   A record that represents an invitation for a registered user to join a group.
 
 - InvitationStatus
-  The state of an invitation (e.g. PENDING, ACCEPTED, REJECTED, REVOKED, EXPIRED).
+  The state of an invitation (e.g. PENDING, ACCEPTED, REJECTED, REVOKED).
 
 ## Scenario
 

@@ -19,7 +19,7 @@ A GroupAdmin invites an existing registered user to join a group, creating a pen
   A pending record that represents an invitation for a registered user to join a group.
 
 - InvitationStatus
-  The state of an invitation (e.g. PENDING, ACCEPTED, REVOKED, EXPIRED).
+  The state of an invitation (e.g. PENDING, ACCEPTED, REVOKED).
 
 ## Scenario
 
