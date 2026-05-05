@@ -42,8 +42,16 @@ organization slice, not as a separate frontend bounded context.
 | `organization-07` | [Persistence Integration](specs/organization/07-persistence-integration.md) | [DDD](ddd/organization/07-persistence-integration.md) | Done |
 | `organization-08` | [Web API Integration](specs/organization/08-web-api-integration.md) | [DDD](ddd/organization/08-web-api-integration.md) | Done |
 
+## Auth
+
+| Slice | Spec | DDD | Status |
+| --- | --- | --- | --- |
+| `auth-01` | [Establish Authenticated User Context](specs/auth/01-establish-authenticated-user-context.md) | [DDD](ddd/auth/01-establish-authenticated-user-context.md) | Done |
+| `auth-02` | [HTTP Current User Context Integration](specs/auth/02-http-current-user-context-integration.md) | [DDD](ddd/auth/02-http-current-user-context-integration.md) | Done |
+
 ## Planned Contexts
 
-No additional bounded contexts are authoritative yet.
-Introduce `auth`, `issue`, or other bounded contexts only by adding their first
+No additional bounded contexts beyond `organization` and `auth` are
+authoritative yet.
+Introduce `issue` or other bounded contexts only by adding their first
 authoritative spec under `docs/specs/<bounded-context>/`.

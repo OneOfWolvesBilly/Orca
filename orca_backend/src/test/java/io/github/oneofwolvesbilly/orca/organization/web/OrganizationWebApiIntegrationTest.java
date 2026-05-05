@@ -189,6 +189,17 @@ class OrganizationWebApiIntegrationTest {
     }
 
     @Test
+    void command_endpoints_reject_multiple_authenticated_user_headers() throws Exception {
+        HttpResponse<String> createGroupResponse = post("/api/groups", java.util.List.of("admin", "outsider"), """
+                {
+                  "name": "Core Team"
+                }
+                """);
+
+        assertEquals(401, createGroupResponse.statusCode());
+    }
+
+    @Test
     void command_endpoints_reject_malformed_or_missing_required_request_bodies() throws Exception {
         String groupId = createGroup("admin");
         String invitationId = inviteMember(groupId, "admin", "user-1");
@@ -359,9 +370,17 @@ class OrganizationWebApiIntegrationTest {
     }
 
     private HttpResponse<String> post(String path, String actorUserId, String body) throws Exception {
+        return post(path, java.util.List.of(actorUserId), body);
+    }
+
+    private HttpResponse<String> post(String path, java.util.List<String> actorUserIds, String body) throws Exception {
         HttpRequest request = requestBuilder(path, HttpRequest.BodyPublishers.ofString(body))
-                .header("X-User-Id", actorUserId)
                 .build();
+        HttpRequest.Builder rebased = HttpRequest.newBuilder(request.uri())
+                .method(request.method(), request.bodyPublisher().orElse(HttpRequest.BodyPublishers.noBody()));
+        request.headers().map().forEach((name, values) -> values.forEach(value -> rebased.header(name, value)));
+        actorUserIds.forEach(actorUserId -> rebased.header("X-User-Id", actorUserId));
+        request = rebased.build();
         return client.send(request, HttpResponse.BodyHandlers.ofString());
     }
 

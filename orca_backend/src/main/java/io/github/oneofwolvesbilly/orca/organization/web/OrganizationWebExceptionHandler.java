@@ -1,5 +1,6 @@
 package io.github.oneofwolvesbilly.orca.organization.web;
 
+import io.github.oneofwolvesbilly.orca.auth.web.UnauthenticatedHttpRequestException;
 import io.github.oneofwolvesbilly.orca.organization.domain.DomainError;
 import io.github.oneofwolvesbilly.orca.organization.domain.DomainException;
 import org.springframework.http.HttpStatus;
@@ -12,8 +13,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice(assignableTypes = OrganizationCommandController.class)
 final class OrganizationWebExceptionHandler {
 
-    @ExceptionHandler(UnauthenticatedRequestException.class)
-    ResponseEntity<ProblemDetail> unauthenticated(UnauthenticatedRequestException ex) {
+    @ExceptionHandler(UnauthenticatedHttpRequestException.class)
+    ResponseEntity<ProblemDetail> unauthenticated(UnauthenticatedHttpRequestException ex) {
         return problem(HttpStatus.UNAUTHORIZED, "Missing authenticated user");
     }
 
