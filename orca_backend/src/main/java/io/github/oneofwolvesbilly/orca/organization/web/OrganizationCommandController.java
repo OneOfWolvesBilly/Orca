@@ -1,6 +1,6 @@
 package io.github.oneofwolvesbilly.orca.organization.web;
 
-import io.github.oneofwolvesbilly.orca.auth.web.CurrentUserContextResolver;
+import io.github.oneofwolvesbilly.orca.auth.domain.CurrentUserContext;
 import io.github.oneofwolvesbilly.orca.organization.application.AcceptInvitationCommand;
 import io.github.oneofwolvesbilly.orca.organization.application.AcceptInvitationUseCase;
 import io.github.oneofwolvesbilly.orca.organization.application.CreateGroupCommand;
@@ -19,18 +19,15 @@ import io.github.oneofwolvesbilly.orca.organization.domain.UserId;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.Objects;
 
 @RestController
 @RequestMapping("/api")
 final class OrganizationCommandController {
 
-    private final CurrentUserContextResolver currentUserContextResolver;
     private final CreateGroupUseCase createGroupUseCase;
     private final InviteMemberUseCase inviteMemberUseCase;
     private final AcceptInvitationUseCase acceptInvitationUseCase;
@@ -38,14 +35,12 @@ final class OrganizationCommandController {
     private final RevokeInvitationUseCase revokeInvitationUseCase;
 
     OrganizationCommandController(
-            CurrentUserContextResolver currentUserContextResolver,
             CreateGroupUseCase createGroupUseCase,
             InviteMemberUseCase inviteMemberUseCase,
             AcceptInvitationUseCase acceptInvitationUseCase,
             RejectInvitationUseCase rejectInvitationUseCase,
             RevokeInvitationUseCase revokeInvitationUseCase
     ) {
-        this.currentUserContextResolver = Objects.requireNonNull(currentUserContextResolver, "currentUserContextResolver");
         this.createGroupUseCase = Objects.requireNonNull(createGroupUseCase, "createGroupUseCase");
         this.inviteMemberUseCase = Objects.requireNonNull(inviteMemberUseCase, "inviteMemberUseCase");
         this.acceptInvitationUseCase = Objects.requireNonNull(acceptInvitationUseCase, "acceptInvitationUseCase");
@@ -55,10 +50,10 @@ final class OrganizationCommandController {
 
     @PostMapping("/groups")
     CreateGroupResponse createGroup(
-            @RequestHeader(value = "X-User-Id", required = false) List<String> userIds,
+            CurrentUserContext currentUserContext,
             @RequestBody CreateGroupRequest request
     ) {
-        UserId actor = authenticatedUser(userIds);
+        UserId actor = authenticatedUser(currentUserContext);
         var result = createGroupUseCase.handle(new CreateGroupCommand(
                 actor,
                 requiredField(request.name(), "name"),
@@ -69,11 +64,11 @@ final class OrganizationCommandController {
 
     @PostMapping("/groups/{groupId}/invitations")
     InviteMemberResponse inviteMember(
-            @RequestHeader(value = "X-User-Id", required = false) List<String> userIds,
+            CurrentUserContext currentUserContext,
             @PathVariable String groupId,
             @RequestBody InviteMemberRequest request
     ) {
-        UserId actor = authenticatedUser(userIds);
+        UserId actor = authenticatedUser(currentUserContext);
         var result = inviteMemberUseCase.handle(new InviteMemberCommand(
                 GroupId.of(groupId),
                 actor,
@@ -85,12 +80,12 @@ final class OrganizationCommandController {
 
     @PostMapping("/group-invitations/{invitationId}/accept")
     InvitationStatusResponse acceptInvitation(
-            @RequestHeader(value = "X-User-Id", required = false) List<String> userIds,
+            CurrentUserContext currentUserContext,
             @PathVariable String invitationId,
             @RequestBody InvitationActionRequest request
     ) {
         acceptInvitationUseCase.handle(new AcceptInvitationCommand(
-                authenticatedUser(userIds),
+                authenticatedUser(currentUserContext),
                 GroupInvitationId.of(invitationId)
         ));
         return new InvitationStatusResponse(InvitationStatus.ACCEPTED.name());
@@ -98,12 +93,12 @@ final class OrganizationCommandController {
 
     @PostMapping("/group-invitations/{invitationId}/reject")
     InvitationStatusResponse rejectInvitation(
-            @RequestHeader(value = "X-User-Id", required = false) List<String> userIds,
+            CurrentUserContext currentUserContext,
             @PathVariable String invitationId,
             @RequestBody InvitationActionRequest request
     ) {
         rejectInvitationUseCase.handle(new RejectInvitationCommand(
-                authenticatedUser(userIds),
+                authenticatedUser(currentUserContext),
                 GroupInvitationId.of(invitationId)
         ));
         return new InvitationStatusResponse(InvitationStatus.REJECTED.name());
@@ -111,20 +106,19 @@ final class OrganizationCommandController {
 
     @PostMapping("/group-invitations/{invitationId}/revoke")
     InvitationStatusResponse revokeInvitation(
-            @RequestHeader(value = "X-User-Id", required = false) List<String> userIds,
+            CurrentUserContext currentUserContext,
             @PathVariable String invitationId,
             @RequestBody InvitationActionRequest request
     ) {
         revokeInvitationUseCase.handle(new RevokeInvitationCommand(
-                authenticatedUser(userIds),
+                authenticatedUser(currentUserContext),
                 GroupInvitationId.of(invitationId)
         ));
         return new InvitationStatusResponse(InvitationStatus.REVOKED.name());
     }
 
-    private UserId authenticatedUser(List<String> userIds) {
-        var context = currentUserContextResolver.resolve(userIds == null ? List.of() : userIds);
-        return UserId.of(context.authenticatedUserId().value());
+    private UserId authenticatedUser(CurrentUserContext currentUserContext) {
+        return UserId.of(currentUserContext.authenticatedUserId().value());
     }
 
     private static String requiredField(String value, String fieldName) {
