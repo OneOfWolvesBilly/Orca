@@ -8,6 +8,13 @@ import java.util.Objects;
 /** Establishes a current authenticated user context for one protected operation. */
 public final class EstablishCurrentUserContextUseCase {
 
+    private final RegisteredUserIdentityRepository registeredUserIdentityRepository;
+
+    public EstablishCurrentUserContextUseCase(RegisteredUserIdentityRepository registeredUserIdentityRepository) {
+        this.registeredUserIdentityRepository =
+                Objects.requireNonNull(registeredUserIdentityRepository, "registeredUserIdentityRepository");
+    }
+
     public CurrentUserContext handle(EstablishCurrentUserContextCommand command) {
         Objects.requireNonNull(command, "command");
 
@@ -19,8 +26,11 @@ public final class EstablishCurrentUserContextUseCase {
             throw new AmbiguousAuthenticatedUserException();
         }
 
-        return CurrentUserContext.establish(
-                AuthenticatedUserId.of(command.presentedAuthenticatedUserIds().get(0))
-        );
+        AuthenticatedUserId authenticatedUserId = AuthenticatedUserId.of(command.presentedAuthenticatedUserIds().get(0));
+        if (!registeredUserIdentityRepository.exists(authenticatedUserId)) {
+            throw new UnauthenticatedOperationException();
+        }
+
+        return CurrentUserContext.establish(authenticatedUserId);
     }
 }

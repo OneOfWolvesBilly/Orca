@@ -1,5 +1,6 @@
 package io.github.oneofwolvesbilly.orca.organization.infrastructure.spring;
 
+import io.github.oneofwolvesbilly.orca.auth.application.RegisteredUserIdentityRepository;
 import io.github.oneofwolvesbilly.orca.organization.application.AcceptInvitationUseCase;
 import io.github.oneofwolvesbilly.orca.organization.application.AuditRecorder;
 import io.github.oneofwolvesbilly.orca.organization.application.CreateGroupUseCase;
@@ -11,7 +12,7 @@ import io.github.oneofwolvesbilly.orca.organization.application.RejectInvitation
 import io.github.oneofwolvesbilly.orca.organization.application.RevokeInvitationUseCase;
 import io.github.oneofwolvesbilly.orca.organization.domain.GroupId;
 import io.github.oneofwolvesbilly.orca.organization.infrastructure.inmemory.InMemoryAuditRecorder;
-import io.github.oneofwolvesbilly.orca.organization.infrastructure.inmemory.InMemoryRegisteredUserDirectory;
+import io.github.oneofwolvesbilly.orca.organization.infrastructure.auth.AuthRegisteredUserDirectoryAdapter;
 import io.github.oneofwolvesbilly.orca.organization.infrastructure.persistence.GroupEntityMapper;
 import io.github.oneofwolvesbilly.orca.organization.infrastructure.persistence.JdbcGroupRepositoryAdapter;
 import org.flywaydb.core.Flyway;
@@ -55,8 +56,8 @@ class OrganizationConfiguration {
     }
 
     @Bean
-    RegisteredUserDirectory registeredUserDirectory() {
-        return new InMemoryRegisteredUserDirectory();
+    RegisteredUserDirectory registeredUserDirectory(RegisteredUserIdentityRepository registeredUserIdentityRepository) {
+        return new AuthRegisteredUserDirectoryAdapter(registeredUserIdentityRepository);
     }
 
     @Bean

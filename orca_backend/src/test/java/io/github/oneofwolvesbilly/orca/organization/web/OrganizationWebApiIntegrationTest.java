@@ -1,9 +1,6 @@
 package io.github.oneofwolvesbilly.orca.organization.web;
 
 import io.github.oneofwolvesbilly.orca.OrcaApplication;
-import io.github.oneofwolvesbilly.orca.organization.application.RegisteredUserDirectory;
-import io.github.oneofwolvesbilly.orca.organization.domain.UserId;
-import io.github.oneofwolvesbilly.orca.organization.infrastructure.inmemory.InMemoryRegisteredUserDirectory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,9 +31,6 @@ class OrganizationWebApiIntegrationTest {
     private int port;
 
     @Autowired
-    private RegisteredUserDirectory registeredUserDirectory;
-
-    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     private final HttpClient client = HttpClient.newHttpClient();
@@ -47,12 +41,11 @@ class OrganizationWebApiIntegrationTest {
         jdbcTemplate.update("DELETE FROM group_invitations");
         jdbcTemplate.update("DELETE FROM group_members");
         jdbcTemplate.update("DELETE FROM organization_groups");
+        jdbcTemplate.update("DELETE FROM auth_registered_users");
 
-        InMemoryRegisteredUserDirectory users = (InMemoryRegisteredUserDirectory) registeredUserDirectory;
-        users.clear();
-        users.register(UserId.of("admin"));
-        users.register(UserId.of("user-1"));
-        users.register(UserId.of("outsider"));
+        registerAuthUser("admin");
+        registerAuthUser("user-1");
+        registerAuthUser("outsider");
     }
 
     @Test
@@ -197,6 +190,17 @@ class OrganizationWebApiIntegrationTest {
                 """);
 
         assertEquals(401, createGroupResponse.statusCode());
+    }
+
+    @Test
+    void command_endpoints_reject_unknown_authenticated_user() throws Exception {
+        HttpResponse<String> response = post("/api/groups", "missing-user", """
+                {
+                  "name": "Core Team"
+                }
+                """);
+
+        assertEquals(401, response.statusCode());
     }
 
     @Test
@@ -428,5 +432,9 @@ class OrganizationWebApiIntegrationTest {
                 .filter(matcher -> matcher.find())
                 .map(matcher -> matcher.group(1))
                 .orElseThrow(() -> new AssertionError("Response body did not match " + pattern + ": " + body));
+    }
+
+    private void registerAuthUser(String userId) {
+        jdbcTemplate.update("INSERT INTO auth_registered_users (user_id) VALUES (?)", userId);
     }
 }

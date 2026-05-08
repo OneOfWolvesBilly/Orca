@@ -1,6 +1,8 @@
 package io.github.oneofwolvesbilly.orca.auth.infrastructure.spring;
 
 import io.github.oneofwolvesbilly.orca.auth.application.EstablishCurrentUserContextUseCase;
+import io.github.oneofwolvesbilly.orca.auth.application.RegisteredUserIdentityRepository;
+import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcRegisteredUserIdentityRepository;
 import io.github.oneofwolvesbilly.orca.auth.web.CurrentUserContextArgumentResolver;
 import io.github.oneofwolvesbilly.orca.auth.web.CurrentUserContextInterceptor;
 import io.github.oneofwolvesbilly.orca.auth.web.CurrentUserContextResolver;
@@ -11,6 +13,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import javax.sql.DataSource;
 import java.util.List;
 
 @Configuration
@@ -25,8 +28,15 @@ class AuthConfiguration {
     };
 
     @Bean
-    EstablishCurrentUserContextUseCase establishCurrentUserContextUseCase() {
-        return new EstablishCurrentUserContextUseCase();
+    RegisteredUserIdentityRepository registeredUserIdentityRepository(DataSource dataSource) {
+        return new JdbcRegisteredUserIdentityRepository(dataSource);
+    }
+
+    @Bean
+    EstablishCurrentUserContextUseCase establishCurrentUserContextUseCase(
+            RegisteredUserIdentityRepository registeredUserIdentityRepository
+    ) {
+        return new EstablishCurrentUserContextUseCase(registeredUserIdentityRepository);
     }
 
     @Bean
