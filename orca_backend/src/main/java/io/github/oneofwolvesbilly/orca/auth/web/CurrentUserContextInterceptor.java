@@ -18,6 +18,9 @@ public final class CurrentUserContextInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        if (!"POST".equals(request.getMethod())) {
+            return true;
+        }
         var context = currentUserContextResolver.resolve(
                 Collections.list(request.getHeaders("X-User-Id"))
         );

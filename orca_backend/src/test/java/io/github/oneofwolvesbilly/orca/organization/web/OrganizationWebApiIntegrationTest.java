@@ -200,6 +200,27 @@ class OrganizationWebApiIntegrationTest {
     }
 
     @Test
+    void unmapped_api_requests_do_not_require_current_user_context() throws Exception {
+        HttpRequest request = requestBuilder("/api/unmapped-command", HttpRequest.BodyPublishers.ofString("{}"))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        assertEquals(404, response.statusCode());
+    }
+
+    @Test
+    void non_post_requests_to_command_paths_do_not_require_current_user_context() throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:%d/api/groups".formatted(port)))
+                .GET()
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        assertEquals(405, response.statusCode());
+    }
+
+    @Test
     void command_endpoints_reject_malformed_or_missing_required_request_bodies() throws Exception {
         String groupId = createGroup("admin");
         String invitationId = inviteMember(groupId, "admin", "user-1");
