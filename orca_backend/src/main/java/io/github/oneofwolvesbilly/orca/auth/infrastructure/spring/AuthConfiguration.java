@@ -1,7 +1,10 @@
 package io.github.oneofwolvesbilly.orca.auth.infrastructure.spring;
 
 import io.github.oneofwolvesbilly.orca.auth.application.EstablishCurrentUserContextUseCase;
+import io.github.oneofwolvesbilly.orca.auth.application.AuthSystemRoleDirectory;
+import io.github.oneofwolvesbilly.orca.auth.application.ProvisionRegisteredUserIdentityUseCase;
 import io.github.oneofwolvesbilly.orca.auth.application.RegisteredUserIdentityRepository;
+import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcAuthSystemRoleDirectory;
 import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcRegisteredUserIdentityRepository;
 import io.github.oneofwolvesbilly.orca.auth.web.CurrentUserContextArgumentResolver;
 import io.github.oneofwolvesbilly.orca.auth.web.CurrentUserContextInterceptor;
@@ -33,10 +36,23 @@ class AuthConfiguration {
     }
 
     @Bean
+    AuthSystemRoleDirectory authSystemRoleDirectory(DataSource dataSource) {
+        return new JdbcAuthSystemRoleDirectory(dataSource);
+    }
+
+    @Bean
     EstablishCurrentUserContextUseCase establishCurrentUserContextUseCase(
             RegisteredUserIdentityRepository registeredUserIdentityRepository
     ) {
         return new EstablishCurrentUserContextUseCase(registeredUserIdentityRepository);
+    }
+
+    @Bean
+    ProvisionRegisteredUserIdentityUseCase provisionRegisteredUserIdentityUseCase(
+            RegisteredUserIdentityRepository registeredUserIdentityRepository,
+            AuthSystemRoleDirectory authSystemRoleDirectory
+    ) {
+        return new ProvisionRegisteredUserIdentityUseCase(registeredUserIdentityRepository, authSystemRoleDirectory);
     }
 
     @Bean

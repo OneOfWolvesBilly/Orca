@@ -51,6 +51,7 @@ organization slice, not as a separate frontend bounded context.
 | `auth-03` | [HTTP Request Current User Context Access](specs/auth/03-http-request-current-user-context-access.md) | [DDD](ddd/auth/03-http-request-current-user-context-access.md) | Done |
 | `auth-04` | [Protected HTTP Command Boundary Mapping](specs/auth/04-protected-http-command-boundary-mapping.md) | [DDD](ddd/auth/04-protected-http-command-boundary-mapping.md) | Done |
 | `auth-05` | [Registered User Identity Integration](specs/auth/05-registered-user-identity-integration.md) | [DDD](ddd/auth/05-registered-user-identity-integration.md) | Done |
+| `auth-06` | [Admin-managed User Provisioning](specs/auth/06-admin-managed-user-provisioning.md) | [DDD](ddd/auth/06-admin-managed-user-provisioning.md) | Done |
 
 ## Planned Contexts
 
