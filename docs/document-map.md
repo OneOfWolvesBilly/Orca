@@ -67,8 +67,9 @@ Recommended reading order for new contributors:
 2) `docs/document-map.md`
 3) `docs/constraints.md`
 4) `docs/specs/<bounded-context>/*`
-5) `docs/slice-map.md`
-6) Derived documents (`docs/ddd/<bounded-context>/*`, `docs/orca-architecture.md`, etc.)
+5) `docs/ddd/<bounded-context>/*`
+6) `docs/slice-map.md`
+7) Other derived documents (`docs/orca-architecture.md`, etc.)
 
 If a document cannot be placed in this order, it likely does not belong in the repo.
 
@@ -84,6 +85,10 @@ Use this file layout:
 docs/specs/<bounded-context>/<NN>-<behavior-or-integration>.md
 docs/ddd/<bounded-context>/<NN>-<behavior-or-integration>.md
 ```
+
+The spec file is authoritative for behavior. The matching DDD file is derived
+from the spec and explains model boundaries, rule placement, and test-layer
+placement without adding behavior.
 
 Use this slice id format when referring to a slice in prose:
 

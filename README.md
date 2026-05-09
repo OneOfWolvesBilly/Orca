@@ -186,7 +186,9 @@ orca/
 
 Bounded contexts are introduced by behavior slices.
 This README intentionally does not enumerate them.
-The authoritative behavior list lives in `docs/specs/<bounded-context>/*`.
+The authoritative behavior definitions live in `docs/specs/<bounded-context>/*`.
+Derived DDD notes live in `docs/ddd/<bounded-context>/*`; they explain
+modeling decisions derived from specs and must not introduce behavior.
 The derived slice index lives in `docs/slice-map.md`.
 
 ---
@@ -197,9 +199,10 @@ New contributors should read documents in the following order:
 
 1. `docs/document-map.md` — document authority and structure
 2. `docs/constraints.md` — non-negotiable engineering constraints
-3. `docs/specs/<bounded-context>/` — behavior definitions
-4. `docs/slice-map.md` — derived slice index
-5. Derived documents (architecture, design notes), if present
+3. `docs/specs/<bounded-context>/` — authoritative behavior definitions
+4. `docs/ddd/<bounded-context>/` — derived DDD notes for those specs
+5. `docs/slice-map.md` — derived slice index
+6. Other derived documents (architecture, design notes), if present
 
 If a document cannot be placed in this order,
 it likely does not belong in the repository.

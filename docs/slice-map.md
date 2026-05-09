@@ -23,6 +23,10 @@ docs/specs/<bounded-context>/<NN>-<behavior-or-integration>.md
 docs/ddd/<bounded-context>/<NN>-<behavior-or-integration>.md
 ```
 
+The Spec column links to authoritative behavior definitions. The DDD column
+links to derived notes that explain model decisions and must not introduce
+behavior.
+
 Frontend work is normally a delivery slice inside the bounded context it exposes.
 For example, an organization UI command console should be tracked as an
 organization slice, not as a separate frontend bounded context.
