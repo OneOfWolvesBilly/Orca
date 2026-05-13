@@ -2,9 +2,12 @@ package io.github.oneofwolvesbilly.orca.auth.infrastructure.spring;
 
 import io.github.oneofwolvesbilly.orca.auth.application.EstablishCurrentUserContextUseCase;
 import io.github.oneofwolvesbilly.orca.auth.application.AuthSystemRoleDirectory;
+import io.github.oneofwolvesbilly.orca.auth.application.ConfirmProvisioningIdentityVerificationUseCase;
 import io.github.oneofwolvesbilly.orca.auth.application.ProvisionRegisteredUserIdentityUseCase;
+import io.github.oneofwolvesbilly.orca.auth.application.ProvisioningVerificationRequestRepository;
 import io.github.oneofwolvesbilly.orca.auth.application.RegisteredUserIdentityRepository;
 import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcAuthSystemRoleDirectory;
+import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcProvisioningVerificationRequestRepository;
 import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcRegisteredUserIdentityRepository;
 import io.github.oneofwolvesbilly.orca.auth.web.CurrentUserContextArgumentResolver;
 import io.github.oneofwolvesbilly.orca.auth.web.CurrentUserContextInterceptor;
@@ -17,6 +20,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.sql.DataSource;
+import java.time.Clock;
 import java.util.List;
 
 @Configuration
@@ -41,6 +45,16 @@ class AuthConfiguration {
     }
 
     @Bean
+    ProvisioningVerificationRequestRepository provisioningVerificationRequestRepository(DataSource dataSource) {
+        return new JdbcProvisioningVerificationRequestRepository(dataSource);
+    }
+
+    @Bean
+    Clock authClock() {
+        return Clock.systemUTC();
+    }
+
+    @Bean
     EstablishCurrentUserContextUseCase establishCurrentUserContextUseCase(
             RegisteredUserIdentityRepository registeredUserIdentityRepository
     ) {
@@ -53,6 +67,14 @@ class AuthConfiguration {
             AuthSystemRoleDirectory authSystemRoleDirectory
     ) {
         return new ProvisionRegisteredUserIdentityUseCase(registeredUserIdentityRepository, authSystemRoleDirectory);
+    }
+
+    @Bean
+    ConfirmProvisioningIdentityVerificationUseCase confirmProvisioningIdentityVerificationUseCase(
+            ProvisioningVerificationRequestRepository provisioningVerificationRequestRepository,
+            Clock authClock
+    ) {
+        return new ConfirmProvisioningIdentityVerificationUseCase(provisioningVerificationRequestRepository, authClock);
     }
 
     @Bean
