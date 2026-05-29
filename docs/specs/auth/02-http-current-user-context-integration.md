@@ -39,6 +39,11 @@ This header is an adapter mechanism only.
 It does not introduce a security model or bounded-context-specific permission
 rule.
 
+Auth Spec 09 supersedes this demo transport for protected HTTP command
+requests. After Spec 09, protected command current user context is resolved from
+the `ORCA_SESSION` cookie and auth-owned server-side session state instead of
+`X-User-Id`.
+
 ## Scenario
 
 ### Scenario: HTTP adapter establishes current user context for a protected request

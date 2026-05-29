@@ -161,6 +161,11 @@ The resolved value is passed to the application layer as the actor/creator/invit
 This header is an adapter mechanism only.
 It does not introduce a security model or domain rule.
 
+Auth Spec 09 supersedes this demo transport for protected HTTP command
+requests. After Spec 09, protected command current user context is resolved from
+the `ORCA_SESSION` cookie and auth-owned server-side session state instead of
+`X-User-Id`.
+
 ## Scenarios
 
 ### Scenario: HTTP client creates a group
