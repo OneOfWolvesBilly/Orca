@@ -12,7 +12,7 @@ final class AuthWebExceptionHandler {
 
     @ExceptionHandler(UnauthenticatedHttpRequestException.class)
     ResponseEntity<ProblemDetail> unauthenticated(UnauthenticatedHttpRequestException ex) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Missing authenticated user");
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Unauthenticated");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problem);
     }
 

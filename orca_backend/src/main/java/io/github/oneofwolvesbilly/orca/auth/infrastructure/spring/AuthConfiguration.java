@@ -10,6 +10,7 @@ import io.github.oneofwolvesbilly.orca.auth.application.PasswordLoginUseCase;
 import io.github.oneofwolvesbilly.orca.auth.application.ProvisionRegisteredUserIdentityUseCase;
 import io.github.oneofwolvesbilly.orca.auth.application.ProvisioningVerificationRequestRepository;
 import io.github.oneofwolvesbilly.orca.auth.application.RegisteredUserIdentityRepository;
+import io.github.oneofwolvesbilly.orca.auth.application.ResolveCurrentUserContextFromSessionUseCase;
 import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcAuthenticatedSessionRepository;
 import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcAuthSystemRoleDirectory;
 import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcLoginCredentialVerifier;
@@ -123,10 +124,23 @@ class AuthConfiguration {
     }
 
     @Bean
-    CurrentUserContextResolver currentUserContextResolver(
-            EstablishCurrentUserContextUseCase establishCurrentUserContextUseCase
+    ResolveCurrentUserContextFromSessionUseCase resolveCurrentUserContextFromSessionUseCase(
+            AuthenticatedSessionRepository authenticatedSessionRepository,
+            EstablishCurrentUserContextUseCase establishCurrentUserContextUseCase,
+            Clock authClock
     ) {
-        return new CurrentUserContextResolver(establishCurrentUserContextUseCase);
+        return new ResolveCurrentUserContextFromSessionUseCase(
+                authenticatedSessionRepository,
+                establishCurrentUserContextUseCase,
+                authClock
+        );
+    }
+
+    @Bean
+    CurrentUserContextResolver currentUserContextResolver(
+            ResolveCurrentUserContextFromSessionUseCase resolveCurrentUserContextFromSessionUseCase
+    ) {
+        return new CurrentUserContextResolver(resolveCurrentUserContextFromSessionUseCase);
     }
 
     @Bean

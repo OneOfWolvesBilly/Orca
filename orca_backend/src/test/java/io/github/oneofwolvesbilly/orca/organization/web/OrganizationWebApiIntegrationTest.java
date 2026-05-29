@@ -1,6 +1,7 @@
 package io.github.oneofwolvesbilly.orca.organization.web;
 
 import io.github.oneofwolvesbilly.orca.OrcaApplication;
+import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcLoginCredentialVerifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ class OrganizationWebApiIntegrationTest {
 
     private static final Pattern GROUP_ID = Pattern.compile("\"groupId\"\\s*:\\s*\"([^\"]+)\"");
     private static final Pattern INVITATION_ID = Pattern.compile("\"invitationId\"\\s*:\\s*\"([^\"]+)\"");
+    private static final String AUTH_SESSION_COOKIE_NAME = "ORCA_SESSION";
 
     @LocalServerPort
     private int port;
@@ -49,10 +51,14 @@ class OrganizationWebApiIntegrationTest {
         registerAuthUser("admin");
         registerAuthUser("user-1");
         registerAuthUser("outsider");
+        createSession("session-admin", "admin", "2026-05-29 00:00:00", "2999-01-01 00:00:00");
+        createSession("session-user-1", "user-1", "2026-05-29 00:00:00", "2999-01-01 00:00:00");
+        createSession("session-outsider", "outsider", "2026-05-29 00:00:00", "2999-01-01 00:00:00");
+        createSession("session-expired", "admin", "2000-01-01 00:00:00", "2000-01-01 08:00:00");
     }
 
     @Test
-    void create_group_uses_authenticated_user_and_returns_group_id() throws Exception {
+    void create_group_uses_session_authenticated_user_and_returns_group_id() throws Exception {
         HttpResponse<String> response = post("/api/groups", "admin", """
                 {
                   "name": "Core Team",
@@ -62,6 +68,36 @@ class OrganizationWebApiIntegrationTest {
 
         assertEquals(200, response.statusCode());
         assertFalse(extract(GROUP_ID, response.body()).isBlank());
+    }
+
+    @Test
+    void create_group_accepts_session_cookie_issued_by_password_login() throws Exception {
+        jdbcTemplate.update(
+                "INSERT INTO auth_login_credentials (login_identifier, password_hash, user_id) VALUES (?, ?, ?)",
+                "admin-login",
+                JdbcLoginCredentialVerifier.hashPasswordForStorage("correct-password"),
+                "admin"
+        );
+        HttpResponse<String> loginResponse = postLogin("""
+                {
+                  "loginIdentifier": "admin-login",
+                  "password": "correct-password"
+                }
+                """);
+        String sessionCookie = loginResponse.headers().firstValue("Set-Cookie")
+                .map(value -> value.split(";", 2)[0])
+                .orElseThrow(() -> new AssertionError("Login response did not issue a session cookie"));
+
+        HttpResponse<String> createGroupResponse = postWithCookie("/api/groups", sessionCookie, """
+                {
+                  "name": "Core Team",
+                  "description": "Platform"
+                }
+                """);
+
+        assertEquals(204, loginResponse.statusCode());
+        assertEquals(200, createGroupResponse.statusCode());
+        assertFalse(extract(GROUP_ID, createGroupResponse.body()).isBlank());
     }
 
     @Test
@@ -110,7 +146,7 @@ class OrganizationWebApiIntegrationTest {
     }
 
     @Test
-    void command_endpoints_reject_missing_authenticated_user() throws Exception {
+    void command_endpoints_reject_missing_session_cookie() throws Exception {
         String groupId = createGroup("admin");
         String invitationId = inviteMember(groupId, "admin", "user-1");
 
@@ -146,32 +182,32 @@ class OrganizationWebApiIntegrationTest {
     }
 
     @Test
-    void command_endpoints_reject_blank_authenticated_user() throws Exception {
+    void command_endpoints_reject_blank_session_id() throws Exception {
         String groupId = createGroup("admin");
         String invitationId = inviteMember(groupId, "admin", "user-1");
 
-        HttpResponse<String> createGroupResponse = post("/api/groups", "   ", """
+        HttpResponse<String> createGroupResponse = postWithSessionId("/api/groups", "   ", """
                 {
                   "name": "Core Team"
                 }
                 """);
-        HttpResponse<String> inviteMemberResponse = post("/api/groups/%s/invitations".formatted(groupId), "   ", """
+        HttpResponse<String> inviteMemberResponse = postWithSessionId("/api/groups/%s/invitations".formatted(groupId), "   ", """
                 {
                   "inviteeUserId": "outsider",
                   "intendedRole": "MEMBER"
                 }
                 """);
-        HttpResponse<String> acceptResponse = post(
+        HttpResponse<String> acceptResponse = postWithSessionId(
                 "/api/group-invitations/%s/accept".formatted(invitationId),
                 "   ",
                 "{}"
         );
-        HttpResponse<String> rejectResponse = post(
+        HttpResponse<String> rejectResponse = postWithSessionId(
                 "/api/group-invitations/%s/reject".formatted(invitationId),
                 "   ",
                 "{}"
         );
-        HttpResponse<String> revokeResponse = post(
+        HttpResponse<String> revokeResponse = postWithSessionId(
                 "/api/group-invitations/%s/revoke".formatted(invitationId),
                 "   ",
                 "{}"
@@ -185,24 +221,34 @@ class OrganizationWebApiIntegrationTest {
     }
 
     @Test
-    void command_endpoints_reject_multiple_authenticated_user_headers() throws Exception {
-        HttpResponse<String> createGroupResponse = post("/api/groups", java.util.List.of("admin", "outsider"), """
+    void command_endpoints_reject_unknown_and_expired_sessions_with_same_response() throws Exception {
+        HttpResponse<String> unknownSessionResponse = postWithSessionId("/api/groups", "missing-session", """
+                {
+                  "name": "Core Team"
+                }
+                """);
+        HttpResponse<String> expiredSessionResponse = postWithSessionId("/api/groups", "session-expired", """
                 {
                   "name": "Core Team"
                 }
                 """);
 
-        assertEquals(401, createGroupResponse.statusCode());
+        assertEquals(401, unknownSessionResponse.statusCode());
+        assertEquals(401, expiredSessionResponse.statusCode());
+        assertEquals(unknownSessionResponse.body(), expiredSessionResponse.body());
     }
 
     @Test
-    void command_endpoints_reject_unknown_authenticated_user() throws Exception {
-        HttpResponse<String> response = post("/api/groups", "missing-user", """
-                {
-                  "name": "Core Team"
-                }
-                """);
+    void command_endpoints_reject_x_user_id_without_valid_session() throws Exception {
+        HttpRequest request = requestBuilder("/api/groups", HttpRequest.BodyPublishers.ofString("""
+                        {
+                          "name": "Core Team"
+                        }
+                        """))
+                .header("X-User-Id", "admin")
+                .build();
 
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(401, response.statusCode());
     }
 
@@ -398,17 +444,25 @@ class OrganizationWebApiIntegrationTest {
     }
 
     private HttpResponse<String> post(String path, String actorUserId, String body) throws Exception {
-        return post(path, java.util.List.of(actorUserId), body);
+        return postWithSessionId(path, "session-" + actorUserId, body);
     }
 
-    private HttpResponse<String> post(String path, java.util.List<String> actorUserIds, String body) throws Exception {
+    private HttpResponse<String> postWithSessionId(String path, String sessionId, String body) throws Exception {
+        return postWithCookie(path, "%s=%s".formatted(AUTH_SESSION_COOKIE_NAME, sessionId), body);
+    }
+
+    private HttpResponse<String> postWithCookie(String path, String cookie, String body) throws Exception {
         HttpRequest request = requestBuilder(path, HttpRequest.BodyPublishers.ofString(body))
+                .header("Cookie", cookie)
                 .build();
-        HttpRequest.Builder rebased = HttpRequest.newBuilder(request.uri())
-                .method(request.method(), request.bodyPublisher().orElse(HttpRequest.BodyPublishers.noBody()));
-        request.headers().map().forEach((name, values) -> values.forEach(value -> rebased.header(name, value)));
-        actorUserIds.forEach(actorUserId -> rebased.header("X-User-Id", actorUserId));
-        request = rebased.build();
+        return client.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> postLogin(String body) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:%d/api/auth/login".formatted(port)))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
         return client.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
@@ -419,7 +473,7 @@ class OrganizationWebApiIntegrationTest {
 
     private HttpResponse<String> postWithoutBody(String path, String actorUserId) throws Exception {
         HttpRequest request = requestBuilder(path, HttpRequest.BodyPublishers.noBody())
-                .header("X-User-Id", actorUserId)
+                .header("Cookie", "%s=session-%s".formatted(AUTH_SESSION_COOKIE_NAME, actorUserId))
                 .build();
         return client.send(request, HttpResponse.BodyHandlers.ofString());
     }
@@ -439,5 +493,15 @@ class OrganizationWebApiIntegrationTest {
 
     private void registerAuthUser(String userId) {
         jdbcTemplate.update("INSERT INTO auth_registered_users (user_id) VALUES (?)", userId);
+    }
+
+    private void createSession(String sessionId, String userId, String createdAt, String expiresAt) {
+        jdbcTemplate.update(
+                "INSERT INTO auth_authenticated_sessions (session_id, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)",
+                sessionId,
+                userId,
+                createdAt,
+                expiresAt
+        );
     }
 }

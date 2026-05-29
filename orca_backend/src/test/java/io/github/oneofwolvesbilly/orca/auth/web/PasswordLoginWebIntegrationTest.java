@@ -112,7 +112,7 @@ class PasswordLoginWebIntegrationTest {
     }
 
     @Test
-    void existing_protected_commands_still_reject_missing_x_user_id_after_login_slice() throws Exception {
+    void protected_commands_reject_missing_session_cookie() throws Exception {
         HttpRequest request = HttpRequest.newBuilder(URI.create("http://localhost:%d/api/groups".formatted(port)))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString("""

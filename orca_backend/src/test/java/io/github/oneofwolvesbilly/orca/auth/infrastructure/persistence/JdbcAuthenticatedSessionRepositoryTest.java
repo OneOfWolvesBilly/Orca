@@ -15,6 +15,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JdbcAuthenticatedSessionRepositoryTest {
 
@@ -62,6 +63,51 @@ class JdbcAuthenticatedSessionRepositoryTest {
         assertEquals("user-1", userId);
         assertEquals(CREATED_AT, createdAt.toInstant());
         assertEquals(EXPIRES_AT, expiresAt.toInstant());
+    }
+
+    @Test
+    void finds_authenticated_user_id_for_existing_unexpired_session() {
+        repository.save(AuthenticatedSession.create(
+                AuthenticatedSessionId.of(SESSION_ID),
+                AuthenticatedUserId.of("user-1"),
+                CREATED_AT,
+                EXPIRES_AT
+        ));
+
+        var result = repository.findAuthenticatedUserIdBySessionId(
+                AuthenticatedSessionId.of(SESSION_ID),
+                CREATED_AT.plusSeconds(60)
+        );
+
+        assertTrue(result.isPresent());
+        assertEquals("user-1", result.orElseThrow().value());
+    }
+
+    @Test
+    void returns_empty_for_missing_session() {
+        var result = repository.findAuthenticatedUserIdBySessionId(
+                AuthenticatedSessionId.of(SESSION_ID),
+                CREATED_AT.plusSeconds(60)
+        );
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void returns_empty_for_expired_session() {
+        repository.save(AuthenticatedSession.create(
+                AuthenticatedSessionId.of(SESSION_ID),
+                AuthenticatedUserId.of("user-1"),
+                CREATED_AT,
+                EXPIRES_AT
+        ));
+
+        var result = repository.findAuthenticatedUserIdBySessionId(
+                AuthenticatedSessionId.of(SESSION_ID),
+                EXPIRES_AT
+        );
+
+        assertTrue(result.isEmpty());
     }
 
     private static DataSource newDataSource() {
