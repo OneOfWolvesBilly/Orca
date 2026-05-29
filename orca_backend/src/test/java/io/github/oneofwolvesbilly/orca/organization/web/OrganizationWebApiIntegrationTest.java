@@ -41,6 +41,8 @@ class OrganizationWebApiIntegrationTest {
         jdbcTemplate.update("DELETE FROM group_invitations");
         jdbcTemplate.update("DELETE FROM group_members");
         jdbcTemplate.update("DELETE FROM organization_groups");
+        jdbcTemplate.update("DELETE FROM auth_authenticated_sessions");
+        jdbcTemplate.update("DELETE FROM auth_login_credentials");
         jdbcTemplate.update("DELETE FROM auth_system_role_assignments");
         jdbcTemplate.update("DELETE FROM auth_registered_users");
 

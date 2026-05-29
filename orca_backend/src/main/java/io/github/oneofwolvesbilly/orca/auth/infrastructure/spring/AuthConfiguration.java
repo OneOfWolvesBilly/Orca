@@ -1,14 +1,21 @@
 package io.github.oneofwolvesbilly.orca.auth.infrastructure.spring;
 
+import io.github.oneofwolvesbilly.orca.auth.application.AuthenticatedSessionIdGenerator;
+import io.github.oneofwolvesbilly.orca.auth.application.AuthenticatedSessionRepository;
 import io.github.oneofwolvesbilly.orca.auth.application.EstablishCurrentUserContextUseCase;
 import io.github.oneofwolvesbilly.orca.auth.application.AuthSystemRoleDirectory;
 import io.github.oneofwolvesbilly.orca.auth.application.ConfirmProvisioningIdentityVerificationUseCase;
+import io.github.oneofwolvesbilly.orca.auth.application.LoginCredentialVerifier;
+import io.github.oneofwolvesbilly.orca.auth.application.PasswordLoginUseCase;
 import io.github.oneofwolvesbilly.orca.auth.application.ProvisionRegisteredUserIdentityUseCase;
 import io.github.oneofwolvesbilly.orca.auth.application.ProvisioningVerificationRequestRepository;
 import io.github.oneofwolvesbilly.orca.auth.application.RegisteredUserIdentityRepository;
+import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcAuthenticatedSessionRepository;
 import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcAuthSystemRoleDirectory;
+import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcLoginCredentialVerifier;
 import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcProvisioningVerificationRequestRepository;
 import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcRegisteredUserIdentityRepository;
+import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.UuidAuthenticatedSessionIdGenerator;
 import io.github.oneofwolvesbilly.orca.auth.web.CurrentUserContextArgumentResolver;
 import io.github.oneofwolvesbilly.orca.auth.web.CurrentUserContextInterceptor;
 import io.github.oneofwolvesbilly.orca.auth.web.CurrentUserContextResolver;
@@ -21,6 +28,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.sql.DataSource;
 import java.time.Clock;
+import java.time.Duration;
 import java.util.List;
 
 @Configuration
@@ -50,8 +58,28 @@ class AuthConfiguration {
     }
 
     @Bean
+    LoginCredentialVerifier loginCredentialVerifier(DataSource dataSource) {
+        return new JdbcLoginCredentialVerifier(dataSource);
+    }
+
+    @Bean
+    AuthenticatedSessionRepository authenticatedSessionRepository(DataSource dataSource) {
+        return new JdbcAuthenticatedSessionRepository(dataSource);
+    }
+
+    @Bean
+    AuthenticatedSessionIdGenerator authenticatedSessionIdGenerator() {
+        return new UuidAuthenticatedSessionIdGenerator();
+    }
+
+    @Bean
     Clock authClock() {
         return Clock.systemUTC();
+    }
+
+    @Bean
+    Duration authSessionLifetime() {
+        return Duration.ofHours(8);
     }
 
     @Bean
@@ -75,6 +103,23 @@ class AuthConfiguration {
             Clock authClock
     ) {
         return new ConfirmProvisioningIdentityVerificationUseCase(provisioningVerificationRequestRepository, authClock);
+    }
+
+    @Bean
+    PasswordLoginUseCase passwordLoginUseCase(
+            LoginCredentialVerifier loginCredentialVerifier,
+            AuthenticatedSessionRepository authenticatedSessionRepository,
+            AuthenticatedSessionIdGenerator authenticatedSessionIdGenerator,
+            Clock authClock,
+            Duration authSessionLifetime
+    ) {
+        return new PasswordLoginUseCase(
+                loginCredentialVerifier,
+                authenticatedSessionRepository,
+                authenticatedSessionIdGenerator,
+                authClock,
+                authSessionLifetime
+        );
     }
 
     @Bean
