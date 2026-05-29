@@ -33,6 +33,10 @@ Why:
 Credential verification is not modeled as an aggregate in this slice. It is an
 auth application capability backed by server-side credential state.
 
+Login failure references and login audit records are not modeled in this slice.
+They require their own behavior specification before any domain, application,
+or persistence model is derived for them.
+
 ---
 
 ## Minimum Model Additions
@@ -86,6 +90,7 @@ auth application capability backed by server-side credential state.
   - returns only session cookie issuance data needed by the web adapter
   - rejects invalid login attempts through one indistinguishable failure
     category
+  - does not return login failure reference ids or audit references
 
 ### Web Adapter
 
@@ -115,6 +120,8 @@ auth application capability backed by server-side credential state.
   session is created.
 - Failed login attempts create no session.
 - Failed login attempts return one indistinguishable failure category.
+- Failed login attempts do not create or return login failure references in this
+  slice.
 - Credential state and registered-user state remain auth-owned.
 
 ### Infrastructure rules
@@ -123,6 +130,7 @@ auth application capability backed by server-side credential state.
   long as verification behavior matches the spec.
 - Session persistence stores auth-owned server-side session state.
 - Session id generation must produce opaque identifiers.
+- Login audit persistence is not derived in this slice.
 
 ### Web adapter rules
 
@@ -157,9 +165,20 @@ auth application capability backed by server-side credential state.
 - Session renewal or sliding expiration.
 - Protected HTTP session context establishment.
 - Replacing existing protected HTTP command mapping.
+- Login failure reference ids.
+- Login audit records.
 - User profile or current-user endpoint.
 - Frontend UI.
 - Organization behavior changes.
+
+---
+
+## Follow-up Slice Boundaries
+
+- `auth-09` should derive how protected HTTP requests consume session cookies to
+  establish current user context.
+- `auth-10` should derive any login failure reference, login attempt audit, or
+  operational troubleshooting model.
 
 ---
 
@@ -192,5 +211,6 @@ auth application capability backed by server-side credential state.
     profile data
   - failed login returns one indistinguishable failure response
   - failed login does not issue a session cookie
+  - failed login does not return a reference id in this slice
   - existing protected command mappings are not migrated to session consumption
     in this slice

@@ -10,6 +10,11 @@ This slice introduces password credential verification and session
 establishment. It does not make protected HTTP command endpoints consume the
 session cookie; that belongs to a later slice.
 
+This slice also does not introduce login failure reference ids or login audit
+records. Failed login attempts are intentionally indistinguishable to the
+client in this slice; operational troubleshooting references belong to a later
+login audit slice.
+
 ## Domain Terms
 
 - Login Identifier
@@ -56,6 +61,9 @@ Successful login returns a `Set-Cookie` response header containing the session
 cookie. The success response must not expose user id, employee id, name, email,
 department, supervisor information, system role, organization role, or profile
 data.
+
+Failed login responses use one indistinguishable failure response shape. This
+slice does not require or define a client-visible login failure reference id.
 
 ## Scenarios
 
@@ -119,6 +127,8 @@ data.
 - A failed login MUST NOT issue a session cookie.
 - Login failure responses MUST NOT reveal whether the login identifier,
   password, credential state, or registered-user state caused the rejection.
+- Login failure responses MUST NOT include a login failure reference id or audit
+  reference in this slice.
 - The frontend MUST NOT receive user id, employee id, name, email, department,
   supervisor information, system role, organization role, or profile data from
   this login behavior.
@@ -174,6 +184,18 @@ data.
 - Session renewal or sliding expiration.
 - Protected HTTP session context establishment.
 - Replacing existing protected HTTP command mapping.
+- Login failure reference ids.
+- Login audit records.
 - User profile or current-user endpoint.
 - Frontend UI.
 - Changing organization behavior.
+
+## Follow-up Slice Boundaries
+
+- `auth-09` is expected to define protected HTTP session context establishment:
+  protected requests present the session cookie, auth resolves server-side
+  session state, and current user context is established from that session.
+- `auth-10` is expected to define login failure reference and audit behavior:
+  failed login attempts may receive an opaque troubleshooting reference without
+  revealing credential, registered-user, personnel, role, organization, or
+  failure-reason details.

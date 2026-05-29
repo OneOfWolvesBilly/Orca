@@ -57,7 +57,7 @@ organization slice, not as a separate frontend bounded context.
 | `auth-05` | [Registered User Identity Integration](specs/auth/05-registered-user-identity-integration.md) | [DDD](ddd/auth/05-registered-user-identity-integration.md) | Done |
 | `auth-06` | [Admin-managed User Provisioning](specs/auth/06-admin-managed-user-provisioning.md) | [DDD](ddd/auth/06-admin-managed-user-provisioning.md) | Done |
 | `auth-07` | [Provisioning Identity Verification](specs/auth/07-provisioning-identity-verification.md) | [DDD](ddd/auth/07-provisioning-identity-verification.md) | Done |
-| `auth-08` | [Password Login with Server-side Session](specs/auth/08-password-login-with-server-side-session.md) | [DDD](ddd/auth/08-password-login-with-server-side-session.md) | In Progress |
+| `auth-08` | [Password Login with Server-side Session](specs/auth/08-password-login-with-server-side-session.md) | [DDD](ddd/auth/08-password-login-with-server-side-session.md) | In Review |
 
 ## Planned Contexts
 
