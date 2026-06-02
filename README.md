@@ -1,6 +1,6 @@
 # Orca
 
-Orca is a demonstration project that showcases a disciplined **Specification-Driven Development (SDD)**, **Domain-Driven Design (DDD)**, and **Test-Driven Development (TDD)** workflow.
+Orca is an enterprise application core reference project that showcases a disciplined **Specification-Driven Development (SDD)**, **Domain-Driven Design (DDD)**, and **Test-Driven Development (TDD)** workflow.
 
 It is not a production system; all design and implementation decisions are derived from explicit specifications to ensure the workflow is verifiable and repeatable.
 
@@ -167,6 +167,7 @@ orca/
 │  │  └─ <bounded-context>/   # Context-scoped behavior slices
 │  ├─ ddd/                   # Derived context-scoped design notes
 │  │  └─ <bounded-context>/
+│  ├─ product/               # Product / SA baseline and workflow maps
 │  ├─ slice-map.md           # Derived slice index
 │  ├─ constraints.md         # Non-negotiable engineering rules
 │  └─ document-map.md        # Documentation authority and reading order
@@ -189,6 +190,8 @@ This README intentionally does not enumerate them.
 The authoritative behavior definitions live in `docs/specs/<bounded-context>/*`.
 Derived DDD notes live in `docs/ddd/<bounded-context>/*`; they explain
 modeling decisions derived from specs and must not introduce behavior.
+Product / SA baseline documents live in `docs/product/*`; they explain product
+positioning, workflow gaps, capability maps, and future slice intake rules.
 The derived slice index lives in `docs/slice-map.md`.
 
 ---
@@ -199,10 +202,14 @@ New contributors should read documents in the following order:
 
 1. `docs/document-map.md` — document authority and structure
 2. `docs/constraints.md` — non-negotiable engineering constraints
-3. `docs/specs/<bounded-context>/` — authoritative behavior definitions
-4. `docs/ddd/<bounded-context>/` — derived DDD notes for those specs
-5. `docs/slice-map.md` — derived slice index
-6. Other derived documents (architecture, design notes), if present
+3. `docs/product/orca-sa-baseline.md` — product / SA baseline
+4. `docs/product/workflow-map.md` — workflow support, gaps, and unknowns
+5. `docs/product/capability-map.md` — workflow-derived capability map
+6. `docs/product/slice-intake-gate.md` — gate for future slices
+7. `docs/specs/<bounded-context>/` — authoritative behavior definitions
+8. `docs/ddd/<bounded-context>/` — derived DDD notes for those specs
+9. `docs/slice-map.md` — derived slice index
+10. Other derived documents (architecture, design notes), if present
 
 If a document cannot be placed in this order,
 it likely does not belong in the repository.

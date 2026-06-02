@@ -11,14 +11,21 @@ If documents conflict, implementation must follow the highest-authority source.
 
 ### 1.1 Authoritative (Drives Implementation)
 
-These documents define truth and may directly drive code and tests:
+These documents define project truth and may directly guide future code and
+tests:
 
 - `README.md`
 - `docs/document-map.md`
 - `docs/constraints.md`
+- `docs/product/orca-sa-baseline.md`
+- `docs/product/workflow-map.md`
+- `docs/product/capability-map.md`
+- `docs/product/slice-intake-gate.md`
 - `docs/specs/<bounded-context>/*`
 
-Behavior changes must start here.
+Product / SA documents define product positioning, workflow gaps, capability
+maps, and slice intake rules. Behavior changes still require authoritative
+specs under `docs/specs/<bounded-context>/*` before implementation.
 
 ---
 
@@ -50,12 +57,14 @@ They must never drive implementation unless explicitly requested.
 ## 2. Update Rules
 
 - To change behavior:
-  1) update `docs/specs/<bounded-context>/*` first
-  2) regenerate/update derived notes if needed
-  3) update tests and code to match the spec
+  1) verify the slice traces to a product workflow gap in `docs/product/*`
+  2) update `docs/specs/<bounded-context>/*`
+  3) regenerate/update derived notes if needed
+  4) update tests and code to match the spec
 
 - Architecture documents must be updated only after specs/tests are stable.
 - Code must not introduce behavior not described by specs.
+- Future slices that cannot be traced to a workflow gap must not enter SDD.
 
 ---
 
@@ -66,10 +75,14 @@ Recommended reading order for new contributors:
 1) `README.md`
 2) `docs/document-map.md`
 3) `docs/constraints.md`
-4) `docs/specs/<bounded-context>/*`
-5) `docs/ddd/<bounded-context>/*`
-6) `docs/slice-map.md`
-7) Other derived documents (`docs/orca-architecture.md`, etc.)
+4) `docs/product/orca-sa-baseline.md`
+5) `docs/product/workflow-map.md`
+6) `docs/product/capability-map.md`
+7) `docs/product/slice-intake-gate.md`
+8) `docs/specs/<bounded-context>/*`
+9) `docs/ddd/<bounded-context>/*`
+10) `docs/slice-map.md`
+11) Other derived documents (`docs/orca-architecture.md`, etc.)
 
 If a document cannot be placed in this order, it likely does not belong in the repo.
 
@@ -106,3 +119,6 @@ Frontend slices are delivery slices, not a bounded context by default.
 Place frontend specs under the bounded context whose behavior they expose.
 Only introduce a separate frontend/platform context for cross-context shell behavior
 after that behavior is explicitly specified.
+
+Future slice ids should be assigned only after the slice intake gate confirms
+the slice is traceable to a workflow gap or existing workflow protection need.

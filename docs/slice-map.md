@@ -27,6 +27,10 @@ The Spec column links to authoritative behavior definitions. The DDD column
 links to derived notes that explain model decisions and must not introduce
 behavior.
 
+Future slices must also be traceable to a workflow gap or existing workflow
+protection need described in `docs/product/*`. A technical category, framework
+feature, or cache/logging idea is not enough by itself to create a slice.
+
 Frontend work is normally a delivery slice inside the bounded context it exposes.
 For example, an organization UI command console should be tracked as an
 organization slice, not as a separate frontend bounded context.
