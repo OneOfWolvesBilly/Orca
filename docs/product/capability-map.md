@@ -1,14 +1,126 @@
 # Orca Capability Map
 
-This document derives capability groups from product workflows.
+This document derives capability groups from product workflows and current
+development state.
 
-It must not invent capabilities from technology categories alone. A capability
-belongs here only when it supports a known workflow, planned workflow gap, or
-existing workflow protection need.
+It is not a feature checklist and must not invent capabilities from technology
+categories alone. A capability belongs here only when it supports a known
+workflow, planned workflow gap, or existing workflow protection need.
 
 ---
 
-## Capability Group: Identity Registry and Provisioning
+## How To Read This Map
+
+This map is organized by Orca's development posture, not by a generic enterprise
+capability dependency list.
+
+Current posture:
+
+1. Organization membership is the completed baseline.
+2. Auth is the active development track.
+3. Cross-cutting reference-core capabilities come after those baselines and
+   protect or expose existing workflows.
+
+This ordering keeps future work clear:
+
+- organization slices are completed and should not be reopened unless a new
+  workflow gap explicitly changes organization behavior
+- auth may continue with `auth-10+` slices
+- logging, exception handling, cache, API documentation, and frontend shell are
+  reference-core support capabilities, not organization or auth domain behavior
+
+---
+
+## Track 1: Completed Organization Baseline
+
+Development status: completed baseline / currently stable.
+
+This track records what Orca already supports for organization membership. It is
+listed first because organization was the first completed workflow area.
+
+### Capability Group: Group Membership Lifecycle
+
+Related workflow:
+
+- Organization Membership
+
+Existing slices:
+
+- `organization-01`
+- `organization-02`
+- `organization-03`
+- `organization-04`
+- `organization-05`
+- `organization-06`
+- `organization-07`
+- `organization-08`
+
+Existing capabilities:
+
+- create group
+- invite registered user
+- accept invitation
+- reject invitation
+- revoke invitation
+- persist group and invitation state
+- expose the completed commands through HTTP
+
+Missing capabilities / possible future slices:
+
+- list groups
+- list group members
+- list pending invitations
+- invitation notification delivery
+- invitation expiration
+- reinvite policy
+- membership role changes
+
+Sequencing notes:
+
+- These missing items should not be treated as automatic next work.
+- A new organization slice should enter SDD only when a concrete organization
+  workflow gap is selected.
+- Query/read slices should identify the user workflow that needs the read model.
+
+### Capability Group: Organization Role Boundary
+
+Related workflow:
+
+- Organization Membership
+
+Existing slices:
+
+- `organization-01` through `organization-08`
+
+Existing capabilities:
+
+- group-scoped `GroupAdmin` role
+- member role from group creation and invitation acceptance
+- permission checks for invite, accept, reject, and revoke invitation commands
+- separation between organization group roles and auth system roles
+
+Missing capabilities / possible future slices:
+
+- organization role change after membership creation
+- group role listing
+- role delegation policy
+
+Sequencing notes:
+
+- Do not add generic role management from this gap alone.
+- Future role work must name the actor, resource, and operation it protects.
+
+---
+
+## Track 2: Active Auth Development
+
+Development status: active / expected to continue.
+
+This track records the identity and access capabilities already implemented by
+auth and the auth gaps that are reasonable candidates for future `auth-*`
+slices.
+
+### Capability Group: Identity Registry and Provisioning
 
 Related workflow:
 
@@ -26,6 +138,7 @@ Existing capabilities:
 - registered-user existence checks for auth and organization
 - IT admin-managed regular user provisioning
 - provisioning verification confirmation
+- separation between `IT_ADMIN` auth system role and organization group roles
 
 Missing capabilities / possible future slices:
 
@@ -42,9 +155,7 @@ Sequencing notes:
 - Account disable should define how disabled accounts affect login, sessions,
   and organization operations.
 
----
-
-## Capability Group: Authentication and Session
+### Capability Group: Authentication and Session
 
 Related workflow:
 
@@ -83,90 +194,51 @@ Sequencing notes:
 
 - `auth-10` is expected by existing docs to cover login failure audit/reference.
 - Logout and revocation should be specified before session cache is considered.
-- External login should come after the internal auth/session semantics are stable.
+- External login should come after internal auth/session semantics are stable.
 
----
+### Capability Group: Auth System Role Boundary
 
-## Capability Group: Role Boundary and Authorization Checks
-
-Related workflows:
+Related workflow:
 
 - User Provisioning / Identity Preparation
-- Organization Membership
-- future resource-scoped reference-core workflows
+- Authentication and Session
 
 Existing slices:
 
 - `auth-06`
-- `organization-01` through `organization-08`
 
 Existing capabilities:
 
-- auth system role boundary for `IT_ADMIN`
-- group-scoped role boundary for `GroupAdmin`
-- separation between auth system roles and organization group roles
-- permission checks for invite, accept, reject, and revoke invitation commands
+- `IT_ADMIN` as an auth-owned system role
+- `IT_ADMIN` authorizes auth user provisioning only
+- regular provisioned users do not receive system roles by default
 
 Missing capabilities / possible future slices:
 
-- auth system role assignment / revocation / listing
-- organization role change after membership creation
-- reusable permission decision boundary
-- resource-scoped access checks for future capabilities
+- auth system role assignment
+- auth system role revocation
+- auth system role listing
+- disabled/suspended user policy
 
 Sequencing notes:
 
 - Do not introduce a generic RBAC framework before a workflow needs it.
-- Future authorization slices should start from a concrete protected operation
-  and explain which actor is allowed to do it.
+- Future auth role slices should start from a concrete protected operation and
+  explain which actor is allowed to do it.
 
 ---
 
-## Capability Group: Group Membership Lifecycle
+## Track 3: Cross-Cutting Reference Core
 
-Related workflow:
+Development status: planned / gap.
 
-- Organization Membership
+These capabilities are not organization or auth domain behavior. They are
+shared reference-core capabilities that make existing and future workflows
+stable, supportable, observable, and frontend-consumable.
 
-Existing slices:
+They should be developed after the relevant predecessor workflow exists.
 
-- `organization-01`
-- `organization-02`
-- `organization-03`
-- `organization-04`
-- `organization-05`
-- `organization-06`
-- `organization-07`
-- `organization-08`
-
-Existing capabilities:
-
-- create group
-- invite registered user
-- accept invitation
-- reject invitation
-- revoke invitation
-- persist and expose these commands through HTTP
-
-Missing capabilities / possible future slices:
-
-- list groups
-- list group members
-- list pending invitations
-- invitation notification delivery
-- invitation expiration
-- reinvite policy
-- membership role changes
-
-Sequencing notes:
-
-- Query/read slices should identify a user workflow that needs the read model.
-- Notification and expiration should not be added until the user operation and
-  operational owner are clear.
-
----
-
-## Capability Group: Error and Exception Contract
+### Capability Group: Error and Exception Contract
 
 Related workflows:
 
@@ -193,18 +265,17 @@ Missing capabilities / possible future slices:
 
 Sequencing notes:
 
-- This should precede a serious frontend shell so UI error states can rely on a
-  stable backend contract.
+- This should come before serious frontend shell work.
 - It must not expose sensitive auth/session failure details.
+- It should preserve existing endpoint behavior unless a spec changes it.
 
----
-
-## Capability Group: Logging, Audit, and Observability
+### Capability Group: Logging, Audit, and Observability
 
 Related workflows:
 
 - Login Failure Support / Audit
 - Logging, Observability, and Operations
+- all protected command workflows
 
 Existing slices:
 
@@ -226,19 +297,21 @@ Missing capabilities / possible future slices:
 
 Sequencing notes:
 
-- Login failure audit should remain separate from general logging if it has
-  support or security workflow semantics.
+- Login failure audit belongs to the active auth track when it defines login
+  support behavior.
+- General logging and observability are cross-cutting support capabilities.
 - Logs and audit must not store passwords, raw session cookie values, or
   credential secrets.
+- A logging slice should not reopen organization behavior just because
+  organization commands are audit/log sources.
 
----
-
-## Capability Group: Performance and Cache
+### Capability Group: Performance and Cache
 
 Related workflows:
 
 - Performance Cache for Existing Lookups
 - Organization Membership
+- User Provisioning / Identity Preparation
 
 Existing slices:
 
@@ -264,10 +337,10 @@ Sequencing notes:
   specified.
 - Positive registered-user existence cache is a safer first cache slice than
   session cache.
+- Cache work is an infrastructure optimization and must preserve existing
+  workflow behavior.
 
----
-
-## Capability Group: API Contract and Documentation
+### Capability Group: API Contract and Documentation
 
 Related workflows:
 
@@ -294,9 +367,7 @@ Sequencing notes:
 - API docs should follow stable behavior and error contracts.
 - API docs must not become the source of behavior truth ahead of specs.
 
----
-
-## Capability Group: Frontend Reference Shell
+### Capability Group: Frontend Reference Shell
 
 Related workflow:
 
@@ -323,6 +394,19 @@ Sequencing notes:
 - Frontend must not re-implement business rules.
 - Frontend slices should live under the bounded context whose behavior they
   expose unless cross-context shell behavior is explicitly specified.
+
+---
+
+## Cross-Track Dependency Notes
+
+- Organization is stable enough to serve as a workflow source for logging,
+  audit, API docs, and frontend shell.
+- Auth remains active and may produce predecessor slices for logging, audit,
+  cache, frontend, and external login capabilities.
+- Cross-cutting support slices should say which completed or active workflow
+  they protect.
+- A cross-cutting slice must not silently add domain behavior to organization
+  or auth.
 
 ---
 
