@@ -214,6 +214,16 @@ Planned / gap:
 - invitation expiration / reinvite policy
 - role changes after membership creation
 
+---
+
+## Reference Core Support Areas
+
+These areas are not product workflows. They are cross-cutting support areas
+that make Orca usable as an enterprise application core reference.
+
+Support areas may justify future slices only when they protect, expose, or make
+supportable an existing product workflow or an explicitly planned workflow gap.
+
 ### Operational Reliability
 
 Makes the reference core observable, supportable, and stable under expected
@@ -236,7 +246,7 @@ Planned / gap:
 
 ### Performance and Cache
 
-Improves repeated lookup paths without changing user-visible behavior.
+Improves repeated lookup paths without changing product workflow behavior.
 
 Already supported:
 
@@ -290,7 +300,8 @@ workflow gap but must not create future slices by themselves.
 - cache infrastructure slice
 - frontend delivery slice
 
-Every future slice must identify which workflow gap it serves.
+Every future slice must identify which product workflow gap or reference-core
+support gap it serves.
 
 ---
 
