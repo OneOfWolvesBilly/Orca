@@ -294,26 +294,258 @@ Every future slice must identify which workflow gap it serves.
 
 ---
 
-## Reference Core Direction
+## Reference Core Capability Baseline
 
-The reference-core direction is allowed to guide future planning, but each
-planned capability still needs SDD before implementation.
+The reference-core direction is allowed to guide future planning. This section
+lists the enterprise core capabilities discussed for Orca and records their
+current status.
 
-Reference-core capabilities that may be introduced later:
+Each planned capability still needs SDD before implementation. The list below
+does not create behavior by itself.
 
-- stable API error contract and global exception handling
-- structured logs with correlation id
-- security and user-operation audit trail
+### Stable Error and Exception Management
+
+Status: planned / gap.
+
+Purpose:
+
+- provide a stable API error response shape
+- centralize global exception handling
+- map validation, unauthenticated, unauthorized, not found, conflict, and
+  application/domain errors consistently
+- support frontend error display without exposing internal exception details
+
+Current support:
+
+- existing web specs define some endpoint-level error expectations
+- no global error contract exists yet
+
+SDD entry condition:
+
+- define the API error contract and the workflows that consume it
+- preserve existing endpoint semantics unless an authoritative spec changes them
+
+### Log Management and Correlation
+
+Status: planned / gap.
+
+Purpose:
+
+- produce structured application logs
+- propagate request / correlation id
+- make backend behavior diagnosable without leaking secrets
+- distinguish application logs from audit records
+
+Current support:
+
+- no explicit logging workflow or structured logging slice exists yet
+
+Required safety boundaries:
+
+- do not log passwords
+- do not log raw session cookie values
+- do not log credential secrets
+- do not log sensitive profile details unless a future policy explicitly allows
+  it
+
+### Audit and Operational Support
+
+Status: planned / gap.
+
+Purpose:
+
+- record security-relevant and user-operation events where a support or audit
+  workflow exists
+- support login failure troubleshooting without exposing credential state
+- support future audit of provisioning and organization membership commands
+
+Current support:
+
+- `auth-08` and `auth-09` explicitly exclude login failure audit/reference
+- `organization-01` mentions auditable creation, but there is no complete audit
+  workflow or audit storage model
+
+Expected first auth-related slice:
+
+- `auth-10` login failure audit / troubleshooting reference, if adopted
+
+Unknown / to be discovered:
+
+- audit retention
+- audit reader actor
+- access policy
+- whether support references are client-visible
+
+### Complete Login and Session Management
+
+Status: partially supported / active auth development.
+
+Already supported:
+
+- password login through auth-owned credential verification
+- opaque server-side session
+- `ORCA_SESSION` cookie
+- protected command context from server-side session state
+
+Planned / gap:
+
 - login failure audit / troubleshooting reference
-- logout and session revocation
-- credential setup and password reset
-- account disable / reactivation lifecycle
-- registered-user existence positive cache
-- health/readiness/liveness and metrics
-- OpenAPI / API docs
-- small frontend shell
+- logout
+- session revocation
+- credential setup
+- password reset / credential recovery
+- account disabled / suspended login checks
+- current-user endpoint, if required by frontend workflow
+
+External login options, planned / gap only:
+
+- email-based login identifier support
+- employee-id login identifier support
 - Google / OAuth login
 - SSO / OIDC login
+- MFA, if explicitly adopted
+
+Required boundaries:
+
+- login identifier types must not expose personnel, role, organization, or
+  profile meaning unless a future spec defines that mapping
+- external login must not replace existing auth/session semantics without a
+  migration workflow
+- SSO / OIDC provider rules are unknown / to be discovered
+
+### Account Lifecycle Management
+
+Status: planned / gap.
+
+Purpose:
+
+- disable, suspend, reactivate, or otherwise restrict registered users when an
+  account lifecycle workflow exists
+- define how account state affects login, session use, and protected commands
+
+Current support:
+
+- user provisioning exists
+- disabling, deleting, suspending, or reactivating users is explicitly outside
+  existing auth slices
+
+Unknown / to be discovered:
+
+- disable versus delete policy
+- session revocation after disable
+- audit requirements
+- who can manage account lifecycle
+
+### Authorization and Role Management
+
+Status: role boundaries supported / full role management gap.
+
+Already supported:
+
+- `IT_ADMIN` auth system role for user provisioning
+- `GroupAdmin` organization group role for membership invitation behavior
+- separation between auth system roles and organization group roles
+
+Planned / gap:
+
+- auth system role assignment / revocation / listing
+- organization role changes after membership creation
+- resource-scoped permission decision boundary
+- full permission model, if future workflows require it
+
+Required boundary:
+
+- do not introduce a generic RBAC framework before a concrete workflow requires
+  it
+
+### Cache and Performance
+
+Status: planned / gap.
+
+Purpose:
+
+- optimize repeated lookup paths while preserving existing workflow behavior
+
+Recommended first cache candidate:
+
+- positive registered-user existence lookup cache for invitation workflows
+
+Required safety boundaries:
+
+- do not cache passwords
+- do not cache credential secrets
+- do not cache profile details
+- do not cache role-detail payloads
+- do not cache raw session cookie values
+- delay session lookup cache until logout / revocation behavior is specified
+- avoid negative registered-user cache unless a stale-data rule is explicitly
+  specified
+
+### Observability and Runtime Health
+
+Status: planned / gap.
+
+Purpose:
+
+- expose health, readiness, liveness, and metrics needed by a reference core
+- support deployment and operational diagnostics
+
+Current support:
+
+- no explicit observability workflow is defined yet
+
+Unknown / to be discovered:
+
+- metrics backend
+- deployment profile
+- retention and alerting policy
+
+### API Contract and Documentation
+
+Status: planned / gap.
+
+Purpose:
+
+- publish API contracts that frontend and external clients can consume
+- document stable error shapes after the error contract exists
+
+Current support:
+
+- specs document HTTP behavior in prose
+- no OpenAPI contract exists yet
+
+Required boundary:
+
+- OpenAPI/API docs must follow specs and must not become the source of behavior
+  truth ahead of SDD
+
+### Frontend Reference Shell
+
+Status: planned / gap.
+
+Purpose:
+
+- show how a frontend consumes Orca's backend reference core
+- demonstrate login, protected route/session state, organization commands, and
+  stable error display
+
+Current support:
+
+- no frontend workflow is currently specified or implemented
+
+Planned / gap:
+
+- login screen
+- protected route
+- current session state
+- organization command console
+- error display using the stable API error contract
+
+Required boundary:
+
+- frontend must not re-implement backend business rules
+- frontend slices should live under the bounded context whose behavior they
+  expose unless cross-context shell behavior is explicitly specified
 
 Capabilities that should not be added unless a project workflow explicitly
 adopts them:
