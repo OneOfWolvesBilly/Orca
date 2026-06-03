@@ -1,5 +1,7 @@
 package io.github.oneofwolvesbilly.orca.auth.web;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.oneofwolvesbilly.orca.OrcaApplication;
 import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcLoginCredentialVerifier;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,7 +16,9 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -31,9 +35,11 @@ class PasswordLoginWebIntegrationTest {
     private JdbcTemplate jdbcTemplate;
 
     private final HttpClient client = HttpClient.newHttpClient();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
+        jdbcTemplate.update("DELETE FROM auth_login_failure_audits");
         jdbcTemplate.update("DELETE FROM auth_authenticated_sessions");
         jdbcTemplate.update("DELETE FROM auth_login_credentials");
         jdbcTemplate.update("DELETE FROM auth_system_role_assignments");
@@ -77,10 +83,16 @@ class PasswordLoginWebIntegrationTest {
                 "user-1"
         );
         assertEquals(1, sessionCount);
+
+        Integer failureAuditCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM auth_login_failure_audits",
+                Integer.class
+        );
+        assertEquals(0, failureAuditCount);
     }
 
     @Test
-    void login_failure_returns_same_unauthorized_response_without_session_cookie() throws Exception {
+    void login_failure_returns_same_unauthorized_response_with_opaque_reference_without_session_cookie() throws Exception {
         HttpResponse<String> unknownIdentifier = postLogin("""
                 {
                   "loginIdentifier": "missing-login",
@@ -104,11 +116,28 @@ class PasswordLoginWebIntegrationTest {
         assertLoginRejectedWithoutCookie(wrongPassword);
         assertLoginRejectedWithoutCookie(blankIdentifier);
 
+        Map<String, Object> unknownBody = responseBody(unknownIdentifier);
+        Map<String, Object> wrongPasswordBody = responseBody(wrongPassword);
+        Map<String, Object> blankIdentifierBody = responseBody(blankIdentifier);
+
+        assertOpaqueReference(unknownBody);
+        assertOpaqueReference(wrongPasswordBody);
+        assertOpaqueReference(blankIdentifierBody);
+
+        assertEquals(referenceAgnosticShape(unknownBody), referenceAgnosticShape(wrongPasswordBody));
+        assertEquals(referenceAgnosticShape(unknownBody), referenceAgnosticShape(blankIdentifierBody));
+
         Integer sessionCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM auth_authenticated_sessions",
                 Integer.class
         );
         assertEquals(0, sessionCount);
+
+        Integer failureAuditCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM auth_login_failure_audits",
+                Integer.class
+        );
+        assertEquals(3, failureAuditCount);
     }
 
     @Test
@@ -141,5 +170,28 @@ class PasswordLoginWebIntegrationTest {
         assertFalse(response.body().contains("missing-login"));
         assertFalse(response.body().contains("wrong-password"));
         assertFalse(response.body().contains("employee-login-001"));
+        assertFalse(response.body().contains("INVALID_INPUT"));
+        assertFalse(response.body().contains("INVALID_CREDENTIALS"));
+    }
+
+    private Map<String, Object> responseBody(HttpResponse<String> response) throws Exception {
+        return objectMapper.readValue(response.body(), new TypeReference<>() {
+        });
+    }
+
+    private static void assertOpaqueReference(Map<String, Object> body) {
+        Object reference = body.get("loginFailureReferenceId");
+        assertTrue(reference instanceof String);
+        assertFalse(((String) reference).isBlank());
+        assertFalse(((String) reference).contains("missing-login"));
+        assertFalse(((String) reference).contains("employee-login-001"));
+        assertFalse(((String) reference).contains("wrong-password"));
+        assertFalse(((String) reference).contains("INVALID"));
+    }
+
+    private static Map<String, Object> referenceAgnosticShape(Map<String, Object> body) {
+        Map<String, Object> shape = new LinkedHashMap<>(body);
+        shape.put("loginFailureReferenceId", "<opaque-reference>");
+        return shape;
     }
 }

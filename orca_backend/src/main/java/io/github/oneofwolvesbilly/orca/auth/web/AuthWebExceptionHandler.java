@@ -19,6 +19,9 @@ final class AuthWebExceptionHandler {
     @ExceptionHandler(LoginRejectedException.class)
     ResponseEntity<ProblemDetail> loginRejected(LoginRejectedException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Invalid login credentials");
+        if (ex.loginFailureReferenceId() != null) {
+            problem.setProperty("loginFailureReferenceId", ex.loginFailureReferenceId().value());
+        }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problem);
     }
 }

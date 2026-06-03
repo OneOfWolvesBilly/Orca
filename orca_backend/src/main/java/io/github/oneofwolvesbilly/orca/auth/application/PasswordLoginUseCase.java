@@ -3,6 +3,9 @@ package io.github.oneofwolvesbilly.orca.auth.application;
 import io.github.oneofwolvesbilly.orca.auth.domain.AuthenticatedSession;
 import io.github.oneofwolvesbilly.orca.auth.domain.AuthenticatedSessionId;
 import io.github.oneofwolvesbilly.orca.auth.domain.AuthenticatedUserId;
+import io.github.oneofwolvesbilly.orca.auth.domain.LoginFailureAuditRecord;
+import io.github.oneofwolvesbilly.orca.auth.domain.LoginFailureReason;
+import io.github.oneofwolvesbilly.orca.auth.domain.LoginFailureReferenceId;
 import io.github.oneofwolvesbilly.orca.auth.domain.LoginIdentifier;
 import io.github.oneofwolvesbilly.orca.auth.domain.SubmittedPassword;
 
@@ -16,6 +19,8 @@ public final class PasswordLoginUseCase {
     private final LoginCredentialVerifier credentialVerifier;
     private final AuthenticatedSessionRepository sessionRepository;
     private final AuthenticatedSessionIdGenerator sessionIdGenerator;
+    private final LoginFailureAuditRecordRepository loginFailureAuditRecordRepository;
+    private final LoginFailureReferenceIdGenerator loginFailureReferenceIdGenerator;
     private final Clock clock;
     private final Duration sessionLifetime;
 
@@ -23,12 +28,18 @@ public final class PasswordLoginUseCase {
             LoginCredentialVerifier credentialVerifier,
             AuthenticatedSessionRepository sessionRepository,
             AuthenticatedSessionIdGenerator sessionIdGenerator,
+            LoginFailureAuditRecordRepository loginFailureAuditRecordRepository,
+            LoginFailureReferenceIdGenerator loginFailureReferenceIdGenerator,
             Clock clock,
             Duration sessionLifetime
     ) {
         this.credentialVerifier = Objects.requireNonNull(credentialVerifier, "credentialVerifier");
         this.sessionRepository = Objects.requireNonNull(sessionRepository, "sessionRepository");
         this.sessionIdGenerator = Objects.requireNonNull(sessionIdGenerator, "sessionIdGenerator");
+        this.loginFailureAuditRecordRepository =
+                Objects.requireNonNull(loginFailureAuditRecordRepository, "loginFailureAuditRecordRepository");
+        this.loginFailureReferenceIdGenerator =
+                Objects.requireNonNull(loginFailureReferenceIdGenerator, "loginFailureReferenceIdGenerator");
         this.clock = Objects.requireNonNull(clock, "clock");
         this.sessionLifetime = Objects.requireNonNull(sessionLifetime, "sessionLifetime");
     }
@@ -37,10 +48,15 @@ public final class PasswordLoginUseCase {
         Objects.requireNonNull(command, "command");
 
         LoginIdentifier loginIdentifier = parseLoginIdentifier(command.loginIdentifier());
-        SubmittedPassword password = parsePassword(command.password());
-        AuthenticatedUserId authenticatedUserId = credentialVerifier.verify(loginIdentifier, password);
+        SubmittedPassword password = parsePassword(command.password(), command.loginIdentifier());
+        AuthenticatedUserId authenticatedUserId;
+        try {
+            authenticatedUserId = credentialVerifier.verify(loginIdentifier, password);
+        } catch (LoginRejectedException ex) {
+            throw recordAndReject(command.loginIdentifier(), LoginFailureReason.INVALID_CREDENTIALS);
+        }
         if (authenticatedUserId == null) {
-            throw new LoginRejectedException();
+            throw recordAndReject(command.loginIdentifier(), LoginFailureReason.INVALID_CREDENTIALS);
         }
 
         Instant createdAt = clock.instant();
@@ -55,15 +71,27 @@ public final class PasswordLoginUseCase {
         try {
             return LoginIdentifier.of(value);
         } catch (IllegalArgumentException | NullPointerException ex) {
-            throw new LoginRejectedException();
+            throw recordAndReject(value, LoginFailureReason.INVALID_INPUT);
         }
     }
 
-    private SubmittedPassword parsePassword(String value) {
+    private SubmittedPassword parsePassword(String value, String submittedLoginIdentifier) {
         try {
             return SubmittedPassword.of(value);
         } catch (IllegalArgumentException | NullPointerException ex) {
-            throw new LoginRejectedException();
+            throw recordAndReject(submittedLoginIdentifier, LoginFailureReason.INVALID_INPUT);
         }
+    }
+
+    private LoginRejectedException recordAndReject(String submittedLoginIdentifier, LoginFailureReason reason) {
+        LoginFailureReferenceId referenceId = loginFailureReferenceIdGenerator.generate();
+        LoginFailureAuditRecord record = LoginFailureAuditRecord.create(
+                referenceId,
+                clock.instant(),
+                submittedLoginIdentifier,
+                reason
+        );
+        loginFailureAuditRecordRepository.save(record);
+        return new LoginRejectedException(referenceId);
     }
 }

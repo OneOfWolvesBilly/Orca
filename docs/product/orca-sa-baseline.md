@@ -232,6 +232,7 @@ enterprise application conditions.
 Already supported:
 
 - only limited endpoint-level error behavior from existing specs
+- login failure audit and troubleshooting reference
 
 Planned / gap:
 
@@ -240,7 +241,6 @@ Planned / gap:
 - structured application logging
 - correlation / request id propagation
 - security and user-operation audit trail
-- login failure audit and troubleshooting reference
 - health, readiness, liveness, and metrics
 - OpenAPI / API contract publication
 
@@ -372,20 +372,21 @@ Purpose:
 
 Current support:
 
-- `auth-08` and `auth-09` explicitly exclude login failure audit/reference
+- `auth-10` defines auth-owned login failure audit records and opaque
+  troubleshooting references
 - `organization-01` mentions auditable creation, but there is no complete audit
   workflow or audit storage model
 
-Expected first auth-related slice:
+Completed first auth-related slice:
 
-- `auth-10` login failure audit / troubleshooting reference, if adopted
+- `auth-10` login failure audit / troubleshooting reference
 
 Unknown / to be discovered:
 
 - audit retention
 - audit reader actor
 - access policy
-- whether support references are client-visible
+- audit lookup workflow
 
 ### Complete Login and Session Management
 
@@ -397,10 +398,10 @@ Already supported:
 - opaque server-side session
 - `ORCA_SESSION` cookie
 - protected command context from server-side session state
+- login failure audit / troubleshooting reference
 
 Planned / gap:
 
-- login failure audit / troubleshooting reference
 - logout
 - session revocation
 - credential setup

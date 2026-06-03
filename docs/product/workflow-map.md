@@ -237,17 +237,18 @@ Explicit unknowns:
 
 ## Workflow: Login Failure Support / Audit
 
-Status: planned / gap.
+Status: partially supported.
 
 Primary actor:
 
-- Unknown support or operator actor
-- Login user is the actor whose failed attempt may receive a safe reference
+- Login user whose failed attempt receives a safe reference
+- Unknown support or operator actor, if a future audit lookup workflow is
+  specified
 
 Supporting actor:
 
 - Auth
-- Operational audit store, if specified later
+- Auth-owned login failure audit state
 
 Goal:
 
@@ -258,36 +259,46 @@ client.
 Preconditions:
 
 - Password login behavior from `auth-08` exists.
-- Login failure responses remain indistinguishable to the client unless a later
-  spec defines a safe opaque troubleshooting reference.
+- Login failure responses remain indistinguishable to the client.
 
 Main success flow:
 
-Not yet specified.
+1. Login user submits a login identifier and password to
+   `POST /api/auth/login`.
+2. Auth rejects the login attempt without creating a session or issuing an
+   `ORCA_SESSION` cookie.
+3. Auth creates an auth-owned server-side login failure audit record.
+4. Auth returns an indistinguishable failed login response containing an opaque
+   login failure reference id.
+5. Audit details beyond the opaque reference remain server-side.
 
 Alternative / failure flows:
 
-Not yet specified.
+- Missing input, blank input, unknown identifier, wrong password, invalid
+  credential state, invalid registered-user state, invalid account state, no
+  authenticated user result, and ambiguous authenticated user results all remain
+  indistinguishable to the client.
+- Successful login creates no login failure audit record and returns no login
+  failure reference.
+- Login failure audit does not define support lookup, query, retention, or
+  access-policy behavior.
 
 Currently supported slices:
 
-- None as implemented behavior.
-- `auth-08` and `auth-09` explicitly exclude login failure audit/reference
-  behavior.
+- `auth-10` login failure audit
+- `auth-08` password login with server-side session
+- `auth-09` protected HTTP session context
 
 Known gaps:
 
-- login failure reference id
-- login attempt audit record
 - support lookup workflow
 - audit retention and access rules
-- log/audit safety rules
+- broader log/audit safety rules beyond login failure audit
 
 Explicit unknowns:
 
 - who can inspect login audit
 - retention period
-- whether the reference is client-visible
 - whether audit is stored with application logs or a separate audit store
 - privacy and security policy
 

@@ -5,6 +5,8 @@ import io.github.oneofwolvesbilly.orca.auth.application.AuthenticatedSessionRepo
 import io.github.oneofwolvesbilly.orca.auth.application.EstablishCurrentUserContextUseCase;
 import io.github.oneofwolvesbilly.orca.auth.application.AuthSystemRoleDirectory;
 import io.github.oneofwolvesbilly.orca.auth.application.ConfirmProvisioningIdentityVerificationUseCase;
+import io.github.oneofwolvesbilly.orca.auth.application.LoginFailureAuditRecordRepository;
+import io.github.oneofwolvesbilly.orca.auth.application.LoginFailureReferenceIdGenerator;
 import io.github.oneofwolvesbilly.orca.auth.application.LoginCredentialVerifier;
 import io.github.oneofwolvesbilly.orca.auth.application.PasswordLoginUseCase;
 import io.github.oneofwolvesbilly.orca.auth.application.ProvisionRegisteredUserIdentityUseCase;
@@ -13,10 +15,12 @@ import io.github.oneofwolvesbilly.orca.auth.application.RegisteredUserIdentityRe
 import io.github.oneofwolvesbilly.orca.auth.application.ResolveCurrentUserContextFromSessionUseCase;
 import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcAuthenticatedSessionRepository;
 import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcAuthSystemRoleDirectory;
+import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcLoginFailureAuditRecordRepository;
 import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcLoginCredentialVerifier;
 import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcProvisioningVerificationRequestRepository;
 import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcRegisteredUserIdentityRepository;
 import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.UuidAuthenticatedSessionIdGenerator;
+import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.UuidLoginFailureReferenceIdGenerator;
 import io.github.oneofwolvesbilly.orca.auth.web.CurrentUserContextArgumentResolver;
 import io.github.oneofwolvesbilly.orca.auth.web.CurrentUserContextInterceptor;
 import io.github.oneofwolvesbilly.orca.auth.web.CurrentUserContextResolver;
@@ -69,8 +73,18 @@ class AuthConfiguration {
     }
 
     @Bean
+    LoginFailureAuditRecordRepository loginFailureAuditRecordRepository(DataSource dataSource) {
+        return new JdbcLoginFailureAuditRecordRepository(dataSource);
+    }
+
+    @Bean
     AuthenticatedSessionIdGenerator authenticatedSessionIdGenerator() {
         return new UuidAuthenticatedSessionIdGenerator();
+    }
+
+    @Bean
+    LoginFailureReferenceIdGenerator loginFailureReferenceIdGenerator() {
+        return new UuidLoginFailureReferenceIdGenerator();
     }
 
     @Bean
@@ -111,6 +125,8 @@ class AuthConfiguration {
             LoginCredentialVerifier loginCredentialVerifier,
             AuthenticatedSessionRepository authenticatedSessionRepository,
             AuthenticatedSessionIdGenerator authenticatedSessionIdGenerator,
+            LoginFailureAuditRecordRepository loginFailureAuditRecordRepository,
+            LoginFailureReferenceIdGenerator loginFailureReferenceIdGenerator,
             Clock authClock,
             Duration authSessionLifetime
     ) {
@@ -118,6 +134,8 @@ class AuthConfiguration {
                 loginCredentialVerifier,
                 authenticatedSessionRepository,
                 authenticatedSessionIdGenerator,
+                loginFailureAuditRecordRepository,
+                loginFailureReferenceIdGenerator,
                 authClock,
                 authSessionLifetime
         );

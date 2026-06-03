@@ -170,6 +170,7 @@ Existing slices:
 - `auth-05`
 - `auth-08`
 - `auth-09`
+- `auth-10`
 
 Existing capabilities:
 
@@ -178,10 +179,10 @@ Existing capabilities:
 - password login
 - opaque server-side session
 - session-backed actor context for protected commands
+- login failure audit and opaque troubleshooting reference
 
 Missing capabilities / possible future slices:
 
-- login failure audit / troubleshooting reference
 - logout and session revocation
 - credential setup
 - password reset / credential recovery
@@ -192,7 +193,8 @@ Missing capabilities / possible future slices:
 
 Sequencing notes:
 
-- `auth-10` is expected by existing docs to cover login failure audit/reference.
+- `auth-10` covers login failure audit/reference without defining support
+  lookup, retention, or audit-reader access policy.
 - Logout and revocation should be specified before session cache is considered.
 - External login should come after internal auth/session semantics are stable.
 
@@ -279,26 +281,27 @@ Related workflows:
 
 Existing slices:
 
-- No dedicated logging or observability slice.
-- `auth-08` and `auth-09` explicitly exclude login failure audit/reference.
+- `auth-10` for login failure audit/reference.
+- No dedicated general logging or observability slice.
 
 Existing capabilities:
 
-- none as explicit product / SA behavior
+- auth-owned login failure audit records
+- opaque login failure troubleshooting references
+- login failure audit safety rules that forbid password, raw credential secret,
+  and raw session cookie value storage
 
 Missing capabilities / possible future slices:
 
 - structured application logging
 - correlation / request id propagation
 - safe logging policy for auth inputs, cookies, and credentials
-- login failure audit / troubleshooting reference
 - security audit trail for provisioning and organization membership commands
 - health, readiness, liveness, and metrics
 
 Sequencing notes:
 
-- Login failure audit belongs to the active auth track when it defines login
-  support behavior.
+- Login failure audit is covered by the active auth track.
 - General logging and observability are cross-cutting support capabilities.
 - Logs and audit must not store passwords, raw session cookie values, or
   credential secrets.
