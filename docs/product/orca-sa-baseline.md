@@ -316,7 +316,7 @@ does not create behavior by itself.
 
 ### Stable Error and Exception Management
 
-Status: planned / gap.
+Status: implemented baseline.
 
 Purpose:
 
@@ -329,11 +329,12 @@ Purpose:
 Current support:
 
 - existing web specs define some endpoint-level error expectations
-- no global error contract exists yet
+- `reference-core-01` defines the authoritative stable API error contract
+- `reference-core-01` implements the global HTTP error contract
 
-SDD entry condition:
+Future change boundary:
 
-- define the API error contract and the workflows that consume it
+- follow the `reference-core-01` API error contract
 - preserve existing endpoint semantics unless an authoritative spec changes them
 
 ### Log Management and Correlation

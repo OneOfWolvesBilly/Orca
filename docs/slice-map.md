@@ -35,6 +35,10 @@ Frontend work is normally a delivery slice inside the bounded context it exposes
 For example, an organization UI command console should be tracked as an
 organization slice, not as a separate frontend bounded context.
 
+Cross-cutting support behavior that protects multiple bounded contexts may use
+the `reference-core` support scope after passing slice intake. Reference-core
+slices do not own or redefine bounded-context business rules.
+
 ---
 
 ## Organization
@@ -65,9 +69,16 @@ organization slice, not as a separate frontend bounded context.
 | `auth-09` | [Protected HTTP Session Context](specs/auth/09-protected-http-session-context.md) | [DDD](ddd/auth/09-protected-http-session-context.md) | Done |
 | `auth-10` | [Login Failure Audit](specs/auth/10-login-failure-audit.md) | [DDD](ddd/auth/10-login-failure-audit.md) | Done |
 
+## Reference Core
+
+| Slice | Spec | DDD | Status |
+| --- | --- | --- | --- |
+| `reference-core-01` | [Stable API Error Contract](specs/reference-core/01-stable-api-error-contract.md) | [DDD](ddd/reference-core/01-stable-api-error-contract.md) | Done |
+
 ## Planned Contexts
 
-No additional bounded contexts beyond `organization` and `auth` are
-authoritative yet.
+No additional domain bounded contexts beyond `organization` and `auth` are
+authoritative yet. `reference-core` is a cross-cutting support scope, not a
+domain bounded context.
 Introduce `issue` or other bounded contexts only by adding their first
 authoritative spec under `docs/specs/<bounded-context>/`.

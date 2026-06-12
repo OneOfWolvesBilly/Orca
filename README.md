@@ -44,8 +44,9 @@ Each user-visible behavior is captured as a specification using:
 * error cases
 * explicit non-goals
 
-Specifications live under `docs/specs/<bounded-context>/` and are the
-**authoritative source of truth**.
+Specifications live under `docs/specs/<bounded-context>/` or the approved
+`docs/specs/reference-core/` support scope and are the **authoritative source
+of truth**.
 
 A specification answers one question only:
 
@@ -122,14 +123,19 @@ Orca grows **behavior by behavior**, not module by module.
 * A **bounded context** is a semantic domain
   (e.g. `organization`, `issue`)
 
-Each slice:
+Each domain behavior slice:
 
 * adds or extends code *inside* an existing bounded context
 * does **not** introduce new layers or ad-hoc modules
 
 This prevents architectural sprawl and keeps ownership clear.
 
-Slice identifiers are scoped by bounded context:
+Cross-cutting support behavior that protects or exposes multiple bounded
+contexts may use the `reference-core` support scope after passing slice intake.
+`reference-core` is not a domain bounded context and must not own or redefine
+bounded-context business rules.
+
+Slice identifiers are scoped by bounded context or an approved support scope:
 
 ```text
 <bounded-context>-<NN>
@@ -141,6 +147,7 @@ Examples:
 organization-01
 organization-08
 auth-01
+reference-core-01
 ```
 
 The file layout mirrors that scope:
@@ -148,6 +155,13 @@ The file layout mirrors that scope:
 ```text
 docs/specs/organization/08-web-api-integration.md
 docs/ddd/organization/08-web-api-integration.md
+```
+
+Cross-cutting support slices mirror the same layout:
+
+```text
+docs/specs/reference-core/01-stable-api-error-contract.md
+docs/ddd/reference-core/01-stable-api-error-contract.md
 ```
 
 Frontend work is not a bounded context by default.
@@ -164,9 +178,11 @@ only when its behavior is explicitly specified.
 orca/
 ├─ docs/
 │  ├─ specs/                 # Authoritative behavior specifications
-│  │  └─ <bounded-context>/   # Context-scoped behavior slices
-│  ├─ ddd/                   # Derived context-scoped design notes
-│  │  └─ <bounded-context>/
+│  │  ├─ <bounded-context>/   # Context-scoped behavior slices
+│  │  └─ reference-core/      # Cross-cutting support behavior slices
+│  ├─ ddd/                   # Derived design notes
+│  │  ├─ <bounded-context>/
+│  │  └─ reference-core/
 │  ├─ product/               # Product / SA baseline and workflow maps
 │  ├─ slice-map.md           # Derived slice index
 │  ├─ constraints.md         # Non-negotiable engineering rules
@@ -174,11 +190,13 @@ orca/
 │
 ├─ orca_backend/
 │  └─ src/main/java/io/github/oneofwolvesbilly/orca/
-│     └─ <bounded-context>/
-│        ├─ domain/
-│        ├─ application/
-│        ├─ infrastructure/
-│        └─ web/
+│     ├─ <bounded-context>/
+│     │  ├─ domain/
+│     │  ├─ application/
+│     │  ├─ infrastructure/
+│     │  └─ web/
+│     └─ referencecore/
+│        └─ web/             # Cross-cutting HTTP support, not a domain context
 │
 ├─ orca_frontend/
 ├─ deploy/
@@ -187,9 +205,10 @@ orca/
 
 Bounded contexts are introduced by behavior slices.
 This README intentionally does not enumerate them.
-The authoritative behavior definitions live in `docs/specs/<bounded-context>/*`.
-Derived DDD notes live in `docs/ddd/<bounded-context>/*`; they explain
-modeling decisions derived from specs and must not introduce behavior.
+The authoritative behavior definitions live in `docs/specs/<bounded-context>/*`
+and approved `docs/specs/reference-core/*` support slices. Derived DDD notes
+live in `docs/ddd/<bounded-context>/*` and `docs/ddd/reference-core/*`; they
+explain modeling decisions derived from specs and must not introduce behavior.
 Product / SA baseline documents live in `docs/product/*`; they explain product
 positioning, workflow gaps, capability maps, and future slice intake rules.
 The derived slice index lives in `docs/slice-map.md`.

@@ -250,24 +250,26 @@ Related workflows:
 
 Existing slices:
 
-- No dedicated slice.
+- `reference-core-01` stable API error contract is implemented.
 - Existing web specs contain endpoint-specific error expectations.
 
 Existing capabilities:
 
 - limited endpoint-level error mapping in current specs
+- authoritative stable API error response shape and safety boundary
+- global HTTP exception boundary for current auth, organization, and framework
+  failure categories
 
 Missing capabilities / possible future slices:
 
-- global exception handler
-- stable API error response shape
-- validation error response
-- unauthenticated / unauthorized / not found / conflict mapping
 - correlation id exposure in error responses
+- future conflict mappings only when an authoritative endpoint spec requires
+  them
 
 Sequencing notes:
 
-- This should come before serious frontend shell work.
+- `reference-core-01` is complete and available as a predecessor for serious
+  frontend shell work.
 - It must not expose sensitive auth/session failure details.
 - It should preserve existing endpoint behavior unless a spec changes it.
 
@@ -394,6 +396,8 @@ Missing capabilities / possible future slices:
 
 Sequencing notes:
 
+- `reference-core-01` is an implemented predecessor for stable frontend error
+  handling.
 - Frontend must not re-implement business rules.
 - Frontend slices should live under the bounded context whose behavior they
   expose unless cross-context shell behavior is explicitly specified.

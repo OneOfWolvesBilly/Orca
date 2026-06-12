@@ -120,6 +120,9 @@ class PasswordLoginWebIntegrationTest {
         Map<String, Object> wrongPasswordBody = responseBody(wrongPassword);
         Map<String, Object> blankIdentifierBody = responseBody(blankIdentifier);
 
+        assertStableLoginRejectedError(unknownBody);
+        assertStableLoginRejectedError(wrongPasswordBody);
+        assertStableLoginRejectedError(blankIdentifierBody);
         assertOpaqueReference(unknownBody);
         assertOpaqueReference(wrongPasswordBody);
         assertOpaqueReference(blankIdentifierBody);
@@ -187,6 +190,13 @@ class PasswordLoginWebIntegrationTest {
         assertFalse(((String) reference).contains("employee-login-001"));
         assertFalse(((String) reference).contains("wrong-password"));
         assertFalse(((String) reference).contains("INVALID"));
+    }
+
+    private static void assertStableLoginRejectedError(Map<String, Object> body) {
+        assertEquals(401, body.get("status"));
+        assertEquals("LOGIN_REJECTED", body.get("code"));
+        assertEquals("Login was rejected", body.get("message"));
+        assertEquals(4, body.size());
     }
 
     private static Map<String, Object> referenceAgnosticShape(Map<String, Object> body) {

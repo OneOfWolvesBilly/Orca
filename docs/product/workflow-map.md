@@ -306,7 +306,7 @@ Explicit unknowns:
 
 ## Workflow: Error and Exception Handling
 
-Status: planned / gap.
+Status: partially supported.
 
 Primary actor:
 
@@ -329,26 +329,30 @@ Preconditions:
 
 Main success flow:
 
-Not yet specified.
+1. An API client submits a request to an existing Orca HTTP workflow.
+2. A validation, authentication, authorization, not-found, application,
+   framework-level, or unexpected failure occurs.
+3. The web boundary returns the `reference-core-01` stable API error response.
+4. The client handles the failure by stable status and coarse error code without
+   parsing exception messages.
+5. Sensitive and internal failure details remain server-side.
 
 Currently supported slices:
 
-- Existing web specs define some endpoint-level error expectations, but no
-  global error contract exists.
+- `reference-core-01` specifies and implements the stable API error contract.
+- Existing web specs define endpoint-level error expectations.
 
 Known gaps:
 
-- global exception handling
-- stable API error response shape
-- validation error response policy
-- unauthenticated / unauthorized / not found / conflict mapping policy
 - correlation id in error responses
+- structured logging and operator diagnostics
 
 Explicit unknowns:
 
-- exact error schema
 - localization
-- public error code taxonomy
+- complete public error code taxonomy
+- generic troubleshooting reference
+- response timestamp and path fields
 - frontend error display requirements
 
 ---
@@ -475,7 +479,7 @@ re-implementing business rules.
 Preconditions:
 
 - Login/session and organization command APIs exist.
-- Stable API error contract exists or is planned as predecessor work.
+- Stable API error contract is implemented by `reference-core-01`.
 
 Main success flow:
 

@@ -22,10 +22,14 @@ tests:
 - `docs/product/capability-map.md`
 - `docs/product/slice-intake-gate.md`
 - `docs/specs/<bounded-context>/*`
+- `docs/specs/reference-core/*` for cross-cutting support behavior
 
 Product / SA documents define product positioning, workflow gaps, capability
 maps, and slice intake rules. Behavior changes still require authoritative
 specs under `docs/specs/<bounded-context>/*` before implementation.
+Cross-cutting reference-core behavior may be specified under
+`docs/specs/reference-core/*` only when slice intake confirms that no single
+domain bounded context owns the behavior.
 
 ---
 
@@ -38,6 +42,7 @@ Examples:
 
 - `docs/orca-architecture.md`
 - `docs/ddd/<bounded-context>/*` (derivation notes per slice)
+- `docs/ddd/reference-core/*` (cross-cutting support derivation notes)
 - `docs/slice-map.md` (derived slice index)
 - any roadmap/system-design notes
 
@@ -58,7 +63,8 @@ They must never drive implementation unless explicitly requested.
 
 - To change behavior:
   1) verify the slice traces to a product workflow gap in `docs/product/*`
-  2) update `docs/specs/<bounded-context>/*`
+  2) update `docs/specs/<bounded-context>/*` or the approved
+     `docs/specs/reference-core/*` support scope
   3) regenerate/update derived notes if needed
   4) update tests and code to match the spec
 
@@ -79,8 +85,8 @@ Recommended reading order for new contributors:
 5) `docs/product/workflow-map.md`
 6) `docs/product/capability-map.md`
 7) `docs/product/slice-intake-gate.md`
-8) `docs/specs/<bounded-context>/*`
-9) `docs/ddd/<bounded-context>/*`
+8) `docs/specs/<bounded-context>/*` and `docs/specs/reference-core/*`
+9) `docs/ddd/<bounded-context>/*` and `docs/ddd/reference-core/*`
 10) `docs/slice-map.md`
 11) Other derived documents (`docs/orca-architecture.md`, etc.)
 
@@ -99,6 +105,17 @@ docs/specs/<bounded-context>/<NN>-<behavior-or-integration>.md
 docs/ddd/<bounded-context>/<NN>-<behavior-or-integration>.md
 ```
 
+Cross-cutting support behavior that does not belong to one domain bounded
+context uses:
+
+```text
+docs/specs/reference-core/<NN>-<behavior-or-integration>.md
+docs/ddd/reference-core/<NN>-<behavior-or-integration>.md
+```
+
+`reference-core` is a support scope, not a domain bounded context. It must not
+own or redefine bounded-context business rules.
+
 The spec file is authoritative for behavior. The matching DDD file is derived
 from the spec and explains model boundaries, rule placement, and test-layer
 placement without adding behavior.
@@ -114,6 +131,7 @@ Examples:
 - `organization-01`
 - `organization-08`
 - `auth-01`
+- `reference-core-01`
 
 Frontend slices are delivery slices, not a bounded context by default.
 Place frontend specs under the bounded context whose behavior they expose.

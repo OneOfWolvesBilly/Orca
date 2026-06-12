@@ -1,5 +1,7 @@
 package io.github.oneofwolvesbilly.orca.organization.web;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.oneofwolvesbilly.orca.OrcaApplication;
 import io.github.oneofwolvesbilly.orca.auth.infrastructure.persistence.JdbcLoginCredentialVerifier;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +18,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpRequest.BodyPublisher;
 import java.util.Optional;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -36,6 +39,7 @@ class OrganizationWebApiIntegrationTest {
     private JdbcTemplate jdbcTemplate;
 
     private final HttpClient client = HttpClient.newHttpClient();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUpUsers() {
@@ -309,6 +313,8 @@ class OrganizationWebApiIntegrationTest {
         assertEquals(400, malformedAcceptResponse.statusCode());
         assertEquals(400, missingRejectBodyResponse.statusCode());
         assertEquals(400, missingRevokeBodyResponse.statusCode());
+        assertError(missingNameResponse, 400, "VALIDATION_ERROR", "Request validation failed");
+        assertError(missingRejectBodyResponse, 400, "VALIDATION_ERROR", "Request validation failed");
     }
 
     @Test
@@ -339,6 +345,8 @@ class OrganizationWebApiIntegrationTest {
         assertEquals(404, missingAcceptInvitationResponse.statusCode());
         assertEquals(404, missingRejectInvitationResponse.statusCode());
         assertEquals(404, missingRevokeInvitationResponse.statusCode());
+        assertError(missingGroupResponse, 404, "NOT_FOUND", "Requested resource was not found");
+        assertError(missingAcceptInvitationResponse, 404, "NOT_FOUND", "Requested resource was not found");
     }
 
     @Test
@@ -377,6 +385,8 @@ class OrganizationWebApiIntegrationTest {
         assertEquals(403, acceptForbiddenResponse.statusCode());
         assertEquals(403, rejectForbiddenResponse.statusCode());
         assertEquals(403, revokeForbiddenResponse.statusCode());
+        assertError(inviteForbiddenResponse, 403, "FORBIDDEN", "Operation is forbidden");
+        assertError(acceptForbiddenResponse, 403, "FORBIDDEN", "Operation is forbidden");
     }
 
     @Test
@@ -418,6 +428,13 @@ class OrganizationWebApiIntegrationTest {
         assertEquals(400, duplicatePendingInvitationRetryResponse.statusCode());
         assertEquals(400, inviteUnknownUserResponse.statusCode());
         assertEquals(400, acceptAlreadyAcceptedResponse.statusCode());
+        assertError(
+                duplicatePendingInvitationRetryResponse,
+                400,
+                "APPLICATION_REJECTED",
+                "Request was rejected"
+        );
+        assertFalse(duplicatePendingInvitationRetryResponse.body().contains("Pending invitation already exists"));
     }
 
     private String createGroup(String actorUserId) throws Exception {
@@ -489,6 +506,15 @@ class OrganizationWebApiIntegrationTest {
                 .filter(matcher -> matcher.find())
                 .map(matcher -> matcher.group(1))
                 .orElseThrow(() -> new AssertionError("Response body did not match " + pattern + ": " + body));
+    }
+
+    private void assertError(HttpResponse<String> response, int status, String code, String message) throws Exception {
+        Map<String, Object> body = objectMapper.readValue(response.body(), new TypeReference<>() {
+        });
+        assertEquals(status, body.get("status"));
+        assertEquals(code, body.get("code"));
+        assertEquals(message, body.get("message"));
+        assertEquals(3, body.size());
     }
 
     private void registerAuthUser(String userId) {
