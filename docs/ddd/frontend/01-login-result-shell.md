@@ -1,6 +1,6 @@
 # DDD Derivation - Frontend 01 Login Result Shell
 
-Status: Approved / derived from amended reusable presentation behavior.
+Status: Approved / React reference implemented / Vue and Angular ports planned.
 
 This note is **derived from**
 `docs/specs/frontend/01-login-result-shell.md`.
@@ -50,19 +50,28 @@ Why:
 
 ## Frontend Delivery Boundary
 
-The first frontend module should live under:
+Frontend framework applications should live under:
 
 ```text
 orca_frontend/
+  react/
+  vue/       # planned
+  angular/   # planned
 ```
 
-This location is already reserved by the repository structure in `README.md`.
+`orca_frontend/` is the framework application container reserved by the
+repository structure in `README.md`. It is not itself a React application.
 
-The module is a frontend delivery adapter for the existing backend API. It does
-not introduce separate domain, application, or infrastructure layers.
+Each framework application is a frontend delivery adapter for the same existing
+backend API. Each application owns its framework runtime, package manifest,
+build configuration, source files, and tests.
 
-The amended reusable presentation behavior justifies three small component
-boundaries:
+Framework applications must not import UI components from one another. The
+specification, stable backend contract, scenario definitions, and acceptance
+criteria are shared; framework component implementations are not.
+
+The amended reusable presentation behavior justifies three small conceptual
+component responsibilities in each framework implementation:
 
 - `AuthShell` receives product identity and supporting copy and provides the
   authentication page frame.
@@ -71,9 +80,29 @@ boundaries:
   results.
 
 The application entry point supplies Orca presentation values and connects the
-shared form to the login API adapter. These component boundaries are frontend
-presentation composition, not domain layers or a complete frontend
-architecture.
+form to that framework application's login API adapter. These responsibilities
+are frontend presentation composition, not cross-framework component classes,
+domain layers, or a complete frontend architecture.
+
+## Framework Delivery Strategy
+
+Target implementations:
+
+| Framework | Location | Delivery status |
+| --- | --- | --- |
+| React | `orca_frontend/react/` | Reference implementation |
+| Vue | `orca_frontend/vue/` | Planned |
+| Angular | `orca_frontend/angular/` | Planned |
+
+The React application is moved under `orca_frontend/react/` before the first
+slice is closed. Empty Vue or Angular applications are not scaffolded because
+they would imply unsupported production behavior.
+
+Future Vue and Angular ports derive their behavior from the same authoritative
+specification. They should reproduce the framework-neutral request and result
+model locally unless a later intake proves that a separately versioned shared
+TypeScript package removes meaningful duplication without coupling the
+applications.
 
 ## Reusable Product Presentation Boundary
 
@@ -190,7 +219,7 @@ not an authoritative session state signal for frontend behavior.
 
 ## Technology Selection
 
-Recommended first frontend stack:
+React reference implementation stack:
 
 - Vite
 - React
@@ -209,9 +238,9 @@ Rationale:
 - A router, global state management library, design system, generated API
   client, and localization framework would be premature for this slice.
 
-This selection is a reference implementation choice, not a project-wide
-frontend framework comparison. Additional framework adapters should wait until
-the reference flow is stable and a portability workflow is explicitly selected.
+React is the first implementation choice, not the only frontend target. Vue and
+Angular are selected planned ports. Their framework-specific tooling and
+component design must be derived when each port enters implementation.
 
 ## Local Development Boundary
 
@@ -273,6 +302,9 @@ Frontend tests should validate presentation and adapter behavior:
 - error handling does not expose raw exception or response details
 - refresh/initial load shows the login shell and does not infer session state
 
+Each framework port must run an equivalent behavior suite in its own framework
+test tooling. Passing React tests does not mark Vue or Angular as implemented.
+
 Backend tests are not required by this slice unless implementing the frontend
 reveals a defect in existing backend behavior.
 
@@ -324,5 +356,7 @@ Board/main workspace behavior is not derived in this slice.
 - Logout or session revocation.
 - Router, global state management, design system, or localization framework.
 - Cross-repository package publication or a complete branding framework.
+- Vue or Angular scaffolding in the React reference delivery.
+- Cross-framework UI component inheritance or wrapper abstractions.
 - Backend CORS behavior.
 - OpenAPI generation.

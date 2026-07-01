@@ -269,17 +269,20 @@ Shows how a frontend consumes the backend reference core.
 
 Already supported:
 
-- no frontend production behavior is currently implemented
+- React frontend login result shell
+- stable login result and error presentation in the React reference
 
-Specified / not yet implemented:
+Planned framework ports:
 
-- frontend login result shell
+- Vue frontend login result shell
+- Angular frontend login result shell
 
 Planned / gap:
 
 - protected route/session state
 - organization command console
 - stable error display beyond the login shell
+- Vue and Angular parity for implemented frontend behaviors
 
 Unknown / to be discovered:
 
@@ -537,7 +540,7 @@ Required boundary:
 
 ### Frontend Reference Shell
 
-Status: partially specified / not yet implemented.
+Status: React reference implemented / Vue and Angular ports planned.
 
 Purpose:
 
@@ -547,8 +550,11 @@ Purpose:
 
 Current support:
 
-- `frontend-01` specifies the first frontend login result shell.
-- no frontend production code is currently implemented
+- `frontend-01` specifies the login result shell behavior for React, Vue, and
+  Angular.
+- the React reference implementation is available under
+  `orca_frontend/react/`
+- Vue and Angular ports remain planned
 
 Planned / gap:
 
@@ -556,6 +562,7 @@ Planned / gap:
 - current session state
 - organization command console
 - stable error display beyond the login shell
+- Vue and Angular parity for the login result shell
 
 Required boundary:
 

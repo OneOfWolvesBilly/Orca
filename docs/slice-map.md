@@ -83,7 +83,7 @@ domain or application behavior.
 
 | Slice | Spec | DDD | Status |
 | --- | --- | --- | --- |
-| `frontend-01` | [Frontend Login Result Shell](specs/frontend/01-login-result-shell.md) | [DDD](ddd/frontend/01-login-result-shell.md) | In Progress |
+| `frontend-01` | [Frontend Login Result Shell](specs/frontend/01-login-result-shell.md) | [DDD](ddd/frontend/01-login-result-shell.md) | React Done / Vue and Angular Planned |
 
 ## Planned Contexts
 

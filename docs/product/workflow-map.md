@@ -458,7 +458,7 @@ Explicit unknowns:
 
 ## Workflow: Frontend Reference Shell
 
-Status: partially specified / not yet implemented.
+Status: React reference implemented / Vue and Angular ports planned.
 
 Primary actor:
 
@@ -494,11 +494,12 @@ Main success flow:
 
 Currently supported slices:
 
-- None.
+- `frontend-01` React frontend login result shell
 
-Specified slices:
+Planned framework ports:
 
-- `frontend-01` frontend login result shell
+- `frontend-01` Vue implementation
+- `frontend-01` Angular implementation
 
 Known gaps:
 
@@ -506,6 +507,7 @@ Known gaps:
 - organization command console
 - non-login API error display beyond the login shell
 - frontend terminology aligned with backend domain terms
+- Vue and Angular parity for the login result shell
 
 Explicit unknowns:
 
@@ -513,3 +515,4 @@ Explicit unknowns:
 - route structure
 - state management approach
 - whether frontend should include admin provisioning screens
+- Vue and Angular framework-specific tooling

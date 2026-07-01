@@ -1,6 +1,19 @@
 # Orca Frontend
 
-This module contains Orca's reference frontend delivery slices.
+This directory contains Orca's independently buildable frontend framework
+applications.
+
+## Framework Targets
+
+| Framework | Location | Status |
+| --- | --- | --- |
+| React | `react/` | Reference implementation |
+| Vue | `vue/` | Planned |
+| Angular | `angular/` | Planned |
+
+React is implemented first. Vue and Angular will implement the same
+authoritative frontend behavior in their own framework applications. Framework
+applications do not import UI components from one another.
 
 ## Requirements
 
@@ -10,6 +23,7 @@ This module contains Orca's reference frontend delivery slices.
 ## Local Startup
 
 ```bash
+cd react
 npm install
 npm run dev
 ```
@@ -23,10 +37,11 @@ a real login result requires the Orca backend and its local database state.
 ## Verification
 
 ```bash
+cd react
 npm test
 npm run build
 npm audit
 ```
 
-Frontend 01 does not inspect session state after login and does not provide a
-protected route or organization command UI.
+The React reference for Frontend 01 does not inspect session state after login
+and does not provide a protected route or organization command UI.

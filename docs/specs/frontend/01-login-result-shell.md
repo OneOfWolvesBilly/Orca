@@ -1,6 +1,6 @@
 # Frontend 01 - Login Result Shell
 
-Status: Approved / amended for reusable product presentation.
+Status: Approved / React reference implemented / Vue and Angular ports planned.
 
 ## Goal
 
@@ -16,6 +16,17 @@ command surface.
 The login capability is a reusable frontend core. Product identity and
 supporting copy may vary without duplicating login submission, result handling,
 or stable API error presentation behavior.
+
+The same authoritative login behavior targets three frontend framework
+implementations:
+
+- React
+- Vue
+- Angular
+
+React is the first reference implementation. Vue and Angular are planned ports
+of this behavior and are not part of the current production-code delivery.
+Framework implementations must remain separately buildable applications.
 
 ## Workflow Traceability
 
@@ -136,6 +147,24 @@ Other unsuccessful API responses use the stable API error contract from
   roadmap panel.
 - Product-specific presentation does not change login request, session, or
   stable API error behavior.
+
+### Scenario: A framework implements the shared login behavior
+
+**Given**
+- React, Vue, and Angular are the selected frontend framework targets.
+- This specification is authoritative for all three targets.
+
+**When**
+- A framework implementation delivers the login result shell.
+
+**Then**
+- The implementation preserves the request, result, error, cookie, and
+  sensitive-data behavior defined by this specification.
+- The implementation remains independently installable, buildable, testable,
+  and runnable.
+- The implementation does not import UI components from another framework.
+- React is delivered first as the reference implementation.
+- Missing Vue and Angular ports remain explicitly visible as planned work.
 
 ### Scenario: User submits valid login credentials
 
@@ -268,6 +297,14 @@ Other unsuccessful API responses use the stable API error contract from
   roadmap content.
 - Product presentation changes MUST NOT duplicate or alter login submission,
   stable API error parsing, or login result behavior.
+- React, Vue, and Angular implementations MUST conform to the same
+  authoritative behavior in this specification.
+- Each framework implementation MUST remain independently installable,
+  buildable, testable, and runnable.
+- A framework implementation MUST NOT depend on UI components or framework
+  runtime code from another framework implementation.
+- The repository MUST identify React as implemented and Vue and Angular as
+  planned until their ports pass their own verification.
 - The frontend MUST NOT define Orca's main board or any post-login product
   workspace.
 - The frontend MUST NOT claim session validity after refresh without a future
@@ -284,6 +321,7 @@ Other unsuccessful API responses use the stable API error contract from
   reference-core behavior.
 - Shared login form and result behavior remain independent of product-specific
   supporting copy.
+- Framework parity means behavioral equivalence, not shared UI component code.
 - Client-visible login failure details are limited to the stable error response
   and the opaque `loginFailureReferenceId`.
 - The raw `ORCA_SESSION` cookie value remains opaque and is not client-visible
@@ -319,7 +357,6 @@ Other unsuccessful API responses use the stable API error contract from
 - logout and session revocation
 - production frontend deployment model
 - design system
-- frontend framework portability beyond the first reference implementation
 - how local test credentials are provisioned for manual visual testing
 
 ## Non-Goals
@@ -336,6 +373,8 @@ Other unsuccessful API responses use the stable API error contract from
 - Design system.
 - A distributable cross-repository component package.
 - A complete product theming or branding framework.
+- Vue or Angular production implementation in the React reference delivery.
+- A framework abstraction layer that wraps React, Vue, and Angular.
 - Localization.
 - OpenAPI generation.
 - Backend CORS policy.

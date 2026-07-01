@@ -380,15 +380,19 @@ Related workflow:
 
 Existing slices:
 
-- None.
-
-Specified slices:
-
-- `frontend-01` frontend login result shell
+- `frontend-01` React frontend login result shell
 
 Existing capabilities:
 
-- none
+- browser-operated React login shell
+- stable login success and rejection display
+- safe `loginFailureReferenceId` presentation
+- reusable product presentation inputs
+
+Planned framework ports:
+
+- `frontend-01` Vue implementation
+- `frontend-01` Angular implementation
 
 Missing capabilities / possible future slices:
 
@@ -396,6 +400,7 @@ Missing capabilities / possible future slices:
 - organization command console
 - non-login error display beyond the login shell
 - possibly admin provisioning screens, if the workflow is adopted
+- Vue and Angular parity for the login result shell
 
 Sequencing notes:
 

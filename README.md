@@ -198,7 +198,10 @@ orca/
 │     └─ referencecore/
 │        └─ web/             # Cross-cutting HTTP support, not a domain context
 │
-├─ orca_frontend/
+├─ orca_frontend/              # Framework application container
+│  ├─ react/                   # Reference implementation
+│  ├─ vue/                     # Planned framework port
+│  └─ angular/                 # Planned framework port
 ├─ deploy/
 └─ README.md
 ```
