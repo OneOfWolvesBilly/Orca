@@ -1,6 +1,6 @@
 # DDD Derivation - Frontend 01 Login Result Shell
 
-Status: Draft / awaiting intake approval.
+Status: Approved.
 
 This note is **derived from**
 `docs/specs/frontend/01-login-result-shell.md`.
