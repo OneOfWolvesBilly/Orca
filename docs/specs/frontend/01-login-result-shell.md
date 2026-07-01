@@ -1,6 +1,6 @@
 # Frontend 01 - Login Result Shell
 
-Status: Approved.
+Status: Approved / amended for reusable product presentation.
 
 ## Goal
 
@@ -12,6 +12,10 @@ This slice demonstrates how a frontend consumes the auth login endpoint and the
 stable API error contract without re-implementing backend business rules. It is
 not Orca's main product board, not a protected route, and not an organization
 command surface.
+
+The login capability is a reusable frontend core. Product identity and
+supporting copy may vary without duplicating login submission, result handling,
+or stable API error presentation behavior.
 
 ## Workflow Traceability
 
@@ -114,6 +118,24 @@ Other unsuccessful API responses use the stable API error contract from
 - The shell does not claim that the user is authenticated.
 - The shell does not inspect, display, or depend on the raw session cookie.
 - The shell does not show a board, protected route, or organization command UI.
+
+### Scenario: A product presents the reusable login core
+
+**Given**
+- A product uses the frontend login core.
+- The product provides its product name and supporting login copy.
+
+**When**
+- The product renders the login shell.
+
+**Then**
+- The shell displays the provided product identity and supporting copy.
+- The login form and result behavior remain the same across product
+  presentations.
+- The shared login core does not require a fixed Orca marketing, workflow, or
+  roadmap panel.
+- Product-specific presentation does not change login request, session, or
+  stable API error behavior.
 
 ### Scenario: User submits valid login credentials
 
@@ -240,6 +262,12 @@ Other unsuccessful API responses use the stable API error contract from
   details, role details, organization details, or profile details.
 - The frontend MUST NOT re-implement backend login, credential verification,
   session, authorization, or organization business rules.
+- The frontend MUST allow product name and supporting login copy to be supplied
+  separately from shared login form and result behavior.
+- Shared login behavior MUST NOT depend on fixed Orca marketing, workflow, or
+  roadmap content.
+- Product presentation changes MUST NOT duplicate or alter login submission,
+  stable API error parsing, or login result behavior.
 - The frontend MUST NOT define Orca's main board or any post-login product
   workspace.
 - The frontend MUST NOT claim session validity after refresh without a future
@@ -252,6 +280,10 @@ Other unsuccessful API responses use the stable API error contract from
   creation, session cookie attributes, and login failure references.
 - Reference-core remains authoritative for stable API error response shape.
 - The frontend is an API consumer and presentation layer only.
+- Product identity is presentation input and is not part of auth or
+  reference-core behavior.
+- Shared login form and result behavior remain independent of product-specific
+  supporting copy.
 - Client-visible login failure details are limited to the stable error response
   and the opaque `loginFailureReferenceId`.
 - The raw `ORCA_SESSION` cookie value remains opaque and is not client-visible
@@ -302,6 +334,8 @@ Other unsuccessful API responses use the stable API error contract from
 - User profile UI.
 - Complete frontend architecture.
 - Design system.
+- A distributable cross-repository component package.
+- A complete product theming or branding framework.
 - Localization.
 - OpenAPI generation.
 - Backend CORS policy.

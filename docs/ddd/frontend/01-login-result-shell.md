@@ -1,6 +1,6 @@
 # DDD Derivation - Frontend 01 Login Result Shell
 
-Status: Approved.
+Status: Approved / derived from amended reusable presentation behavior.
 
 This note is **derived from**
 `docs/specs/frontend/01-login-result-shell.md`.
@@ -58,10 +58,49 @@ orca_frontend/
 
 This location is already reserved by the repository structure in `README.md`.
 
-The module is a frontend delivery adapter for the existing backend API. It
-should not introduce separate domain, application, or infrastructure layers
-until a future slice proves that those boundaries are useful for frontend
-behavior.
+The module is a frontend delivery adapter for the existing backend API. It does
+not introduce separate domain, application, or infrastructure layers.
+
+The amended reusable presentation behavior justifies three small component
+boundaries:
+
+- `AuthShell` receives product identity and supporting copy and provides the
+  authentication page frame.
+- `LoginForm` owns credential input, submit progress, and password clearing.
+- `LoginResultView` renders safe success, stable error, and generic failure
+  results.
+
+The application entry point supplies Orca presentation values and connects the
+shared form to the login API adapter. These component boundaries are frontend
+presentation composition, not domain layers or a complete frontend
+architecture.
+
+## Reusable Product Presentation Boundary
+
+Product-specific inputs for this slice are limited to:
+
+- product name
+- supporting login copy
+
+The shared login core owns:
+
+- login identifier and password input behavior
+- submit progress behavior
+- password clearing after submission
+- safe login result presentation
+- stable API error and `loginFailureReferenceId` presentation
+
+The shared shell must not require an Orca-specific marketing, workflow, roadmap,
+or split-screen information panel. A future product may compose additional
+content outside the shared login core, but that content is not required by this
+slice.
+
+This boundary does not create:
+
+- a distributable component package
+- a theme token system
+- a design system
+- runtime product configuration
 
 ## Minimum Frontend Model
 
@@ -221,6 +260,7 @@ Frontend application code and UI must not expose:
 
 Frontend tests should validate presentation and adapter behavior:
 
+- product name and supporting copy can change without changing login behavior
 - login form submits `loginIdentifier` and `password`
 - successful `204` response shows a safe success result
 - successful result does not display user, role, organization, profile, session
@@ -283,5 +323,6 @@ Board/main workspace behavior is not derived in this slice.
 - Admin provisioning UI.
 - Logout or session revocation.
 - Router, global state management, design system, or localization framework.
+- Cross-repository package publication or a complete branding framework.
 - Backend CORS behavior.
 - OpenAPI generation.
