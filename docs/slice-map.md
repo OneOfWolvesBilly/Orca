@@ -75,6 +75,16 @@ slices do not own or redefine bounded-context business rules.
 | --- | --- | --- | --- |
 | `reference-core-01` | [Stable API Error Contract](specs/reference-core/01-stable-api-error-contract.md) | [DDD](ddd/reference-core/01-stable-api-error-contract.md) | Done |
 
+## Frontend
+
+Frontend slices are delivery slices identified explicitly by the `frontend`
+prefix. They consume bounded-context APIs without taking ownership of backend
+domain or application behavior.
+
+| Slice | Spec | DDD | Status |
+| --- | --- | --- | --- |
+| `frontend-01` | [Frontend Login Result Shell](specs/frontend/01-login-result-shell.md) | [DDD](ddd/frontend/01-login-result-shell.md) | Draft / awaiting intake approval |
+
 ## Planned Contexts
 
 No additional domain bounded contexts beyond `organization` and `auth` are

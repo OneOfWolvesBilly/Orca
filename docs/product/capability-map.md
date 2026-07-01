@@ -382,16 +382,19 @@ Existing slices:
 
 - None.
 
+Specified slices:
+
+- `frontend-01` frontend login result shell
+
 Existing capabilities:
 
 - none
 
 Missing capabilities / possible future slices:
 
-- login page
 - protected route/session state
 - organization command console
-- error display based on stable API contract
+- non-login error display beyond the login shell
 - possibly admin provisioning screens, if the workflow is adopted
 
 Sequencing notes:

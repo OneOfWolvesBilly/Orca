@@ -269,14 +269,17 @@ Shows how a frontend consumes the backend reference core.
 
 Already supported:
 
-- no frontend workflow is currently specified
+- no frontend production behavior is currently implemented
+
+Specified / not yet implemented:
+
+- frontend login result shell
 
 Planned / gap:
 
-- login screen
 - protected route/session state
 - organization command console
-- stable error display based on API error contract
+- stable error display beyond the login shell
 
 Unknown / to be discovered:
 
@@ -534,7 +537,7 @@ Required boundary:
 
 ### Frontend Reference Shell
 
-Status: planned / gap.
+Status: partially specified / not yet implemented.
 
 Purpose:
 
@@ -544,15 +547,15 @@ Purpose:
 
 Current support:
 
-- no frontend workflow is currently specified or implemented
+- `frontend-01` specifies the first frontend login result shell.
+- no frontend production code is currently implemented
 
 Planned / gap:
 
-- login screen
 - protected route
 - current session state
 - organization command console
-- error display using the stable API error contract
+- stable error display beyond the login shell
 
 Required boundary:
 

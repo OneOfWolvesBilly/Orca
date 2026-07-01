@@ -458,7 +458,7 @@ Explicit unknowns:
 
 ## Workflow: Frontend Reference Shell
 
-Status: planned / gap.
+Status: partially specified / not yet implemented.
 
 Primary actor:
 
@@ -483,18 +483,28 @@ Preconditions:
 
 Main success flow:
 
-Not yet specified.
+1. A registered user opens the frontend login shell.
+2. The user submits a login identifier and password.
+3. The frontend submits the existing backend password login request.
+4. The frontend shows a safe login success result or a stable login rejection
+   result.
+5. Login rejection displays the opaque `loginFailureReferenceId`.
+6. Protected route/session state and organization command behavior remain
+   outside the first frontend slice.
 
 Currently supported slices:
 
 - None.
 
+Specified slices:
+
+- `frontend-01` frontend login result shell
+
 Known gaps:
 
-- login screen
 - protected route/session state
 - organization command console
-- API error display
+- non-login API error display beyond the login shell
 - frontend terminology aligned with backend domain terms
 
 Explicit unknowns:
