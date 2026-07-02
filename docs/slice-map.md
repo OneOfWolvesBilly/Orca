@@ -74,6 +74,7 @@ slices do not own or redefine bounded-context business rules.
 | Slice | Spec | DDD | Status |
 | --- | --- | --- | --- |
 | `reference-core-01` | [Stable API Error Contract](specs/reference-core/01-stable-api-error-contract.md) | [DDD](ddd/reference-core/01-stable-api-error-contract.md) | Done |
+| `reference-core-02` | [Client Diagnostics Foundation](specs/reference-core/02-client-diagnostics-foundation.md) | [DDD](ddd/reference-core/02-client-diagnostics-foundation.md) | Approved / implementation pending |
 
 ## Frontend
 

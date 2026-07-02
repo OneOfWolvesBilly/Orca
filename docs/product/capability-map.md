@@ -284,7 +284,9 @@ Related workflows:
 Existing slices:
 
 - `auth-10` for login failure audit/reference.
-- No dedicated general logging or observability slice.
+- `reference-core-02` client diagnostics foundation is specified and awaiting
+  implementation.
+- No dedicated general application logging or observability slice.
 
 Existing capabilities:
 
@@ -293,10 +295,20 @@ Existing capabilities:
 - login failure audit safety rules that forbid password, raw credential secret,
   and raw session cookie value storage
 
+Specified foundation:
+
+- database-backed allowlisted client diagnostic records
+- opaque client failure references returned only after persistence
+- exact-reference diagnostic lookup restricted to `IT_ADMIN`
+- separation between auth-owned login failure references and reference-core
+  client failure references
+
 Missing capabilities / possible future slices:
 
+- frontend client failure reporting
 - structured application logging
 - correlation / request id propagation
+- diagnostic retention and cleanup
 - safe logging policy for auth inputs, cookies, and credentials
 - security audit trail for provisioning and organization membership commands
 - health, readiness, liveness, and metrics
@@ -304,6 +316,8 @@ Missing capabilities / possible future slices:
 Sequencing notes:
 
 - Login failure audit is covered by the active auth track.
+- `reference-core-02` must be implemented before frontend behavior displays a
+  queryable client failure reference.
 - General logging and observability are cross-cutting support capabilities.
 - Logs and audit must not store passwords, raw session cookie values, or
   credential secrets.

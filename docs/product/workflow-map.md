@@ -359,7 +359,8 @@ Explicit unknowns:
 
 ## Workflow: Logging, Observability, and Operations
 
-Status: planned / gap.
+Status: client diagnostics foundation specified / broader workflow remains a
+gap.
 
 Primary actor:
 
@@ -368,6 +369,8 @@ Primary actor:
 Supporting actor:
 
 - Application runtime
+- Client application
+- Backend client diagnostics store
 - Logging / metrics backend, if adopted
 
 Goal:
@@ -378,19 +381,31 @@ logs, correlation, health, readiness, liveness, and metrics.
 Preconditions:
 
 - Existing backend application runtime exists.
+- `reference-core-01` stable API error contract exists.
+- Authenticated `IT_ADMIN` role checks exist.
 
 Main success flow:
 
-Not yet specified.
+1. A client submits one allowlisted client diagnostic record.
+2. Reference-core assigns an opaque client failure reference and server
+   timestamp.
+3. The record is persisted before the reference is returned.
+4. An authenticated `IT_ADMIN` looks up the safe record by exact reference.
 
 Currently supported slices:
 
-- None as explicit workflow behavior.
+- `auth-10` supports auth-owned login failure audit.
+
+Specified / implementation pending:
+
+- `reference-core-02` client diagnostics foundation.
 
 Known gaps:
 
 - structured logs
 - correlation / request id propagation
+- client-side failure reporting behavior
+- diagnostic retention and cleanup
 - safe logging rules for auth/session data
 - health, readiness, and liveness endpoints
 - metrics
@@ -398,7 +413,7 @@ Known gaps:
 
 Explicit unknowns:
 
-- logging backend
+- general application logging backend
 - metrics backend
 - retention policy
 - deployment environment

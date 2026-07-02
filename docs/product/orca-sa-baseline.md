@@ -233,11 +233,11 @@ Already supported:
 
 - only limited endpoint-level error behavior from existing specs
 - login failure audit and troubleshooting reference
+- stable API error contract and global exception handling
 
 Planned / gap:
 
-- stable API error contract
-- global exception handling
+- `reference-core-02` client diagnostics foundation implementation
 - structured application logging
 - correlation / request id propagation
 - security and user-operation audit trail
@@ -345,7 +345,7 @@ Future change boundary:
 
 ### Log Management and Correlation
 
-Status: planned / gap.
+Status: client diagnostics foundation specified / broader logging remains a gap.
 
 Purpose:
 
@@ -356,7 +356,9 @@ Purpose:
 
 Current support:
 
-- no explicit logging workflow or structured logging slice exists yet
+- `reference-core-02` specifies database-backed safe client diagnostic
+  ingestion and exact-reference lookup by `IT_ADMIN`
+- no general structured application logging slice exists yet
 
 Required safety boundaries:
 
