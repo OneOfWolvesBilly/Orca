@@ -4,6 +4,8 @@ import io.github.oneofwolvesbilly.orca.auth.application.LoginRejectedException;
 import io.github.oneofwolvesbilly.orca.auth.web.UnauthenticatedHttpRequestException;
 import io.github.oneofwolvesbilly.orca.organization.domain.DomainError;
 import io.github.oneofwolvesbilly.orca.organization.domain.DomainException;
+import io.github.oneofwolvesbilly.orca.referencecore.application.ClientDiagnosticForbiddenException;
+import io.github.oneofwolvesbilly.orca.referencecore.application.ClientDiagnosticNotFoundException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -31,6 +33,16 @@ final class GlobalApiExceptionHandler extends ResponseEntityExceptionHandler {
                 : ex.loginFailureReferenceId().value();
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ApiErrorResponse.loginRejected(referenceId));
+    }
+
+    @ExceptionHandler(ClientDiagnosticForbiddenException.class)
+    ResponseEntity<ApiErrorResponse> clientDiagnosticForbidden() {
+        return error(HttpStatus.FORBIDDEN, "FORBIDDEN", "Operation is forbidden");
+    }
+
+    @ExceptionHandler(ClientDiagnosticNotFoundException.class)
+    ResponseEntity<ApiErrorResponse> clientDiagnosticNotFound() {
+        return error(HttpStatus.NOT_FOUND, "NOT_FOUND", "Requested resource was not found");
     }
 
     @ExceptionHandler(DomainException.class)

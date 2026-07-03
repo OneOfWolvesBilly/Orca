@@ -44,7 +44,8 @@ class AuthConfiguration {
             "/api/groups/{groupId}/invitations",
             "/api/group-invitations/{invitationId}/accept",
             "/api/group-invitations/{invitationId}/reject",
-            "/api/group-invitations/{invitationId}/revoke"
+            "/api/group-invitations/{invitationId}/revoke",
+            "/api/client-diagnostics/lookup"
     };
 
     @Bean

@@ -1,6 +1,6 @@
 # Spec 02 - Client Diagnostics Foundation
 
-Status: Approved / implementation pending.
+Status: Approved / Implemented.
 
 ## Goal
 

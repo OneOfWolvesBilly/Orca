@@ -1,6 +1,6 @@
 # DDD Derivation - 02 Client Diagnostics Foundation
 
-Status: Approved / implementation pending.
+Status: Approved / Implemented.
 
 This note is **derived from**
 `docs/specs/reference-core/02-client-diagnostics-foundation.md`.

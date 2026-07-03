@@ -359,7 +359,7 @@ Explicit unknowns:
 
 ## Workflow: Logging, Observability, and Operations
 
-Status: client diagnostics foundation specified / broader workflow remains a
+Status: client diagnostics foundation implemented / broader workflow remains a
 gap.
 
 Primary actor:
@@ -396,7 +396,7 @@ Currently supported slices:
 
 - `auth-10` supports auth-owned login failure audit.
 
-Specified / implementation pending:
+Currently supported reference-core foundation:
 
 - `reference-core-02` client diagnostics foundation.
 
