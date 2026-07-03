@@ -394,6 +394,12 @@ Related workflow:
 Existing slices:
 
 - `frontend-01` React frontend login result shell
+- `reference-core-02` client diagnostics foundation
+
+Approved / implementation pending:
+
+- `frontend-02` client failure observability with React as the first reference
+  implementation
 
 Existing capabilities:
 
@@ -412,6 +418,7 @@ Missing capabilities / possible future slices:
 - protected route/session state
 - organization command console
 - non-login error display beyond the login shell
+- Vue and Angular frontend-02 ports
 - possibly admin provisioning screens, if the workflow is adopted
 - Vue and Angular parity for the login result shell
 

@@ -85,6 +85,7 @@ domain or application behavior.
 | Slice | Spec | DDD | Status |
 | --- | --- | --- | --- |
 | `frontend-01` | [Frontend Login Result Shell](specs/frontend/01-login-result-shell.md) | [DDD](ddd/frontend/01-login-result-shell.md) | React Done / Vue and Angular Planned |
+| `frontend-02` | [Client Failure Observability](specs/frontend/02-client-failure-observability.md) | [DDD](ddd/frontend/02-client-failure-observability.md) | Approved / React implementation pending / Vue and Angular planned |
 
 ## Planned Contexts
 

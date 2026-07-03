@@ -283,6 +283,7 @@ Planned / gap:
 - protected route/session state
 - organization command console
 - stable error display beyond the login shell
+- React client failure observability implementation
 - Vue and Angular parity for implemented frontend behaviors
 
 Unknown / to be discovered:
@@ -558,6 +559,10 @@ Current support:
   Angular.
 - the React reference implementation is available under
   `orca_frontend/react/`
+- `reference-core-02` provides the safe client diagnostic destination required
+  by frontend-02
+- `frontend-02` specifies client failure observability behavior for React, Vue,
+  and Angular
 - Vue and Angular ports remain planned
 
 Planned / gap:
@@ -566,6 +571,7 @@ Planned / gap:
 - current session state
 - organization command console
 - stable error display beyond the login shell
+- React frontend-02 reference implementation
 - Vue and Angular parity for the login result shell
 
 Required boundary:
