@@ -1,6 +1,6 @@
 # DDD Derivation - Frontend 02 Client Failure Observability
 
-Status: Approved / React implementation pending / Vue and Angular ports planned.
+Status: Approved / React reference implemented / Vue and Angular ports planned.
 
 This note is **derived from**
 `docs/specs/frontend/02-client-failure-observability.md`.
@@ -118,7 +118,7 @@ framework is derived.
 
 | Framework | Location | frontend-02 status |
 | --- | --- | --- |
-| React | `orca_frontend/react/` | Reference implementation pending |
+| React | `orca_frontend/react/` | Reference implementation |
 | Vue | `orca_frontend/vue/` | Planned |
 | Angular | `orca_frontend/angular/` | Planned |
 

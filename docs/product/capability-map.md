@@ -394,12 +394,8 @@ Related workflow:
 Existing slices:
 
 - `frontend-01` React frontend login result shell
+- `frontend-02` React client failure observability
 - `reference-core-02` client diagnostics foundation
-
-Approved / implementation pending:
-
-- `frontend-02` client failure observability with React as the first reference
-  implementation
 
 Existing capabilities:
 
@@ -407,6 +403,9 @@ Existing capabilities:
 - stable login success and rejection display
 - safe `loginFailureReferenceId` presentation
 - reusable product presentation inputs
+- framework-local client error catalog and unified error presentation
+- safe client failure classification and diagnostic submission
+- optional `clientFailureReferenceId` presentation after persistence
 
 Planned framework ports:
 

@@ -1,8 +1,5 @@
 import type { LoginResult } from "../api/login";
 
-const GENERIC_ERROR_MESSAGE =
-  "We could not complete the login request. Please try again.";
-
 type LoginResultViewProps = {
   result: LoginResult | null;
 };
@@ -22,27 +19,18 @@ export default function LoginResultView({ result }: LoginResultViewProps) {
     );
   }
 
-  if (result.kind === "stable-error") {
-    return (
-      <div className="result error" role="alert">
-        <p className="result-label">{result.code}</p>
-        <h2>Login request was not completed</h2>
-        <p>{result.message}</p>
-        {result.loginFailureReferenceId && (
-          <p className="reference">
-            <span>Failure reference</span>
-            <code>{result.loginFailureReferenceId}</code>
-          </p>
-        )}
-      </div>
-    );
-  }
-
+  const { presentation } = result;
   return (
     <div className="result error" role="alert">
-      <p className="result-label">REQUEST_UNAVAILABLE</p>
+      <p className="result-label">{presentation.code}</p>
       <h2>Login request was not completed</h2>
-      <p>{GENERIC_ERROR_MESSAGE}</p>
+      <p>{presentation.message}</p>
+      {presentation.supportReference && (
+        <p className="reference">
+          <span>{presentation.supportReference.label}</span>
+          <code>{presentation.supportReference.value}</code>
+        </p>
+      )}
     </div>
   );
 }

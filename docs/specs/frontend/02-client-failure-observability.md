@@ -1,6 +1,6 @@
 # Frontend 02 - Client Failure Observability
 
-Status: Approved / React implementation pending / Vue and Angular ports planned.
+Status: Approved / React reference implemented / Vue and Angular ports planned.
 
 ## Goal
 

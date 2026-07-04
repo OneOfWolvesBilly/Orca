@@ -272,6 +272,7 @@ Already supported:
 
 - React frontend login result shell
 - stable login result and error presentation in the React reference
+- React client failure observability and safe diagnostic reference presentation
 
 Planned framework ports:
 
@@ -283,7 +284,6 @@ Planned / gap:
 - protected route/session state
 - organization command console
 - stable error display beyond the login shell
-- React client failure observability implementation
 - Vue and Angular parity for implemented frontend behaviors
 
 Unknown / to be discovered:
@@ -563,6 +563,8 @@ Current support:
   by frontend-02
 - `frontend-02` specifies client failure observability behavior for React, Vue,
   and Angular
+- the React frontend-02 reference implementation is available under
+  `orca_frontend/react/`
 - Vue and Angular ports remain planned
 
 Planned / gap:
@@ -571,7 +573,6 @@ Planned / gap:
 - current session state
 - organization command console
 - stable error display beyond the login shell
-- React frontend-02 reference implementation
 - Vue and Angular parity for the login result shell
 
 Required boundary:

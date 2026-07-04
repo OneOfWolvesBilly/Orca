@@ -510,6 +510,7 @@ Main success flow:
 Currently supported slices:
 
 - `frontend-01` React frontend login result shell
+- `frontend-02` React client failure observability
 - `reference-core-02` client diagnostics foundation
 
 Planned framework ports:
@@ -522,7 +523,6 @@ Known gaps:
 - protected route/session state
 - organization command console
 - non-login API error display beyond the login shell
-- `frontend-02` React client failure observability implementation
 - frontend terminology aligned with backend domain terms
 - Vue and Angular parity for the login result shell
 

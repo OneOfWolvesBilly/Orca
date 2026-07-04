@@ -45,3 +45,9 @@ npm audit
 
 The React reference for Frontend 01 does not inspect session state after login
 and does not provide a protected route or organization command UI.
+
+The React reference for Frontend 02 classifies client-observed login request
+failures, attempts one safe client diagnostic submission, and displays a client
+failure reference only after the diagnostic is persisted. If both login and
+diagnostic requests are unavailable, the loaded login shell keeps the form
+available and displays `REQUEST_UNAVAILABLE` without a reference.

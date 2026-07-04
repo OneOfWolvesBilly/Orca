@@ -79,11 +79,12 @@ describe("frontend login result shell", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("LOGIN_REJECTED");
     expect(screen.getByRole("alert")).toHaveTextContent("Login was rejected");
+    expect(screen.getByText("Login failure reference")).toBeVisible();
     expect(screen.getByText("login-ref-123")).toBeVisible();
   });
 
   it("does not show a login reference for another stable API error", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       Response.json(
         {
           status: 400,
@@ -101,6 +102,7 @@ describe("frontend login result shell", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("INVALID_REQUEST");
     expect(screen.queryByText("must-not-be-shown")).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("shows a generic result for a malformed API error", async () => {
@@ -136,6 +138,164 @@ describe("frontend login result shell", () => {
       "We could not complete the login request",
     );
     expect(screen.queryByText("internal connection details")).not.toBeInTheDocument();
+  });
+
+  it("records a transport failure and displays the persisted client reference", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockRejectedValueOnce(new Error("internal connection details"))
+      .mockResolvedValueOnce(
+        Response.json(
+          { clientFailureReferenceId: "client-ref-transport" },
+          { status: 201 },
+        ),
+      );
+    const user = userEvent.setup();
+
+    render(<App />);
+    await submitLogin(user);
+
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "/api/client-diagnostics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        category: "TRANSPORT_FAILURE",
+        operation: "PASSWORD_LOGIN",
+        clientApplication: "REACT",
+      }),
+    });
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "REQUEST_UNAVAILABLE",
+    );
+    expect(screen.getByText("Client failure reference")).toBeVisible();
+    expect(screen.getByText("client-ref-transport")).toBeVisible();
+    expect(screen.queryByText("TRANSPORT_FAILURE")).not.toBeInTheDocument();
+  });
+
+  it("records a malformed unsuccessful response without copying its body", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response("sensitive backend implementation details", {
+          status: 500,
+        }),
+      )
+      .mockResolvedValueOnce(
+        Response.json(
+          { clientFailureReferenceId: "client-ref-malformed" },
+          { status: 201 },
+        ),
+      );
+    const user = userEvent.setup();
+
+    render(<App />);
+    await submitLogin(user);
+
+    const diagnosticRequest = fetchMock.mock.calls[1]?.[1];
+    expect(diagnosticRequest).toEqual({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        category: "MALFORMED_RESPONSE",
+        operation: "PASSWORD_LOGIN",
+        clientApplication: "REACT",
+        responseStatus: 500,
+      }),
+    });
+    expect(JSON.stringify(diagnosticRequest)).not.toContain(
+      "sensitive backend implementation details",
+    );
+    expect(await screen.findByText("client-ref-malformed")).toBeVisible();
+  });
+
+  it("treats a stable error status mismatch as malformed", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        Response.json(
+          {
+            status: 400,
+            code: "INTERNAL_ERROR",
+            message: "Safe message",
+          },
+          { status: 500 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        Response.json(
+          { clientFailureReferenceId: "client-ref-status-mismatch" },
+          { status: 201 },
+        ),
+      );
+    const user = userEvent.setup();
+
+    render(<App />);
+    await submitLogin(user);
+
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "/api/client-diagnostics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        category: "MALFORMED_RESPONSE",
+        operation: "PASSWORD_LOGIN",
+        clientApplication: "REACT",
+        responseStatus: 500,
+      }),
+    });
+    expect(await screen.findByText("client-ref-status-mismatch")).toBeVisible();
+  });
+
+  it("records an unexpected successful response", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json({ accepted: true }, { status: 200 }))
+      .mockResolvedValueOnce(
+        Response.json(
+          { clientFailureReferenceId: "client-ref-unexpected" },
+          { status: 201 },
+        ),
+      );
+    const user = userEvent.setup();
+
+    render(<App />);
+    await submitLogin(user);
+
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "/api/client-diagnostics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        category: "UNEXPECTED_RESPONSE",
+        operation: "PASSWORD_LOGIN",
+        clientApplication: "REACT",
+        responseStatus: 200,
+      }),
+    });
+    expect(await screen.findByText("client-ref-unexpected")).toBeVisible();
+  });
+
+  it("keeps request unavailable without a reference when diagnostics fail", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockRejectedValueOnce(new Error("login transport detail"))
+      .mockRejectedValueOnce(new Error("diagnostic transport detail"));
+    const user = userEvent.setup();
+
+    render(<App />);
+    await submitLogin(user);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "REQUEST_UNAVAILABLE",
+    );
+    expect(
+      screen.queryByText("Client failure reference"),
+    ).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText("login transport detail")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("diagnostic transport detail"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Password")).toHaveValue("");
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeEnabled();
   });
 });
 

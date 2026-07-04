@@ -1,3 +1,12 @@
+import {
+  createClientErrorPresentation,
+  type ErrorPresentation,
+} from "../errors/clientErrorCatalog";
+import {
+  recordClientDiagnostic,
+  type ClientDiagnosticCategory,
+} from "./clientDiagnostics";
+
 export type LoginRequest = {
   loginIdentifier: string;
   password: string;
@@ -5,13 +14,8 @@ export type LoginRequest = {
 
 export type LoginResult =
   | { kind: "success" }
-  | {
-      kind: "stable-error";
-      code: string;
-      message: string;
-      loginFailureReferenceId?: string;
-    }
-  | { kind: "generic-error" };
+  | { kind: "stable-error"; presentation: ErrorPresentation }
+  | { kind: "generic-error"; presentation: ErrorPresentation };
 
 type StableApiError = {
   status: number;
@@ -21,39 +25,47 @@ type StableApiError = {
 };
 
 export async function submitLogin(request: LoginRequest): Promise<LoginResult> {
+  let response: Response;
   try {
-    const response = await fetch("/api/auth/login", {
+    response = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify(request),
     });
+  } catch {
+    return clientFailure("TRANSPORT_FAILURE");
+  }
 
-    if (response.status === 204) {
-      return { kind: "success" };
-    }
+  if (response.status === 204) {
+    return { kind: "success" };
+  }
 
-    if (response.ok) {
-      return { kind: "generic-error" };
-    }
+  if (response.ok) {
+    return clientFailure("UNEXPECTED_RESPONSE", response.status);
+  }
 
-    const error = await parseStableApiError(response);
-    if (!error) {
-      return { kind: "generic-error" };
-    }
+  const error = await parseStableApiError(response);
+  if (!error) {
+    return clientFailure("MALFORMED_RESPONSE", response.status);
+  }
 
-    return {
-      kind: "stable-error",
+  const loginReference =
+    error.code === "LOGIN_REJECTED" && error.loginFailureReferenceId
+      ? {
+          label: "Login failure reference",
+          value: error.loginFailureReferenceId,
+        }
+      : undefined;
+
+  return {
+    kind: "stable-error",
+    presentation: {
       code: error.code,
       message: error.message,
-      loginFailureReferenceId:
-        error.code === "LOGIN_REJECTED"
-          ? error.loginFailureReferenceId
-          : undefined,
-    };
-  } catch {
-    return { kind: "generic-error" };
-  }
+      ...(loginReference ? { supportReference: loginReference } : {}),
+    },
+  };
 }
 
 async function parseStableApiError(
@@ -73,6 +85,7 @@ async function parseStableApiError(
   const { status, code, message, loginFailureReferenceId } = body;
   if (
     typeof status !== "number" ||
+    status !== response.status ||
     typeof code !== "string" ||
     code.length === 0 ||
     typeof message !== "string" ||
@@ -97,6 +110,22 @@ async function parseStableApiError(
       typeof loginFailureReferenceId === "string"
         ? loginFailureReferenceId
         : undefined,
+  };
+}
+
+async function clientFailure(
+  category: ClientDiagnosticCategory,
+  responseStatus?: number,
+): Promise<LoginResult> {
+  const reference = await recordClientDiagnostic(category, responseStatus);
+  return {
+    kind: "generic-error",
+    presentation: createClientErrorPresentation(
+      "REQUEST_UNAVAILABLE",
+      reference
+        ? { label: "Client failure reference", value: reference }
+        : undefined,
+    ),
   };
 }
 
