@@ -1,12 +1,13 @@
-# DDD - Deployment 01 - Secure Local Runtime Boundary
+# DDD - Deployment 01 - Local Runtime Build Plan
 
-Status: Derived from `docs/specs/deployment/01-secure-local-runtime-boundary.md`.
+Status: Draft / derived from
+`docs/specs/deployment/01-secure-local-runtime-boundary.md`.
 
 ## Purpose
 
 This note derives the model boundary and rule placement for `deployment-01`.
-It explains how the deployment support scope should be understood before any
-future executable runtime assets are created.
+It explains how the deployment support scope should be understood while the
+first local runtime plan is still a draft.
 
 It must not introduce behavior beyond the deployment spec.
 
@@ -17,14 +18,15 @@ It must not introduce behavior beyond the deployment spec.
 It is not a domain bounded context because it does not own business concepts,
 domain invariants, aggregates, repositories, or application commands.
 
-The slice describes runtime boundaries around existing behavior:
+The slice describes planning boundaries around existing behavior:
 
-- frontend runtime entry point
-- backend runtime component
-- MariaDB runtime component
+- clean-machine local runtime build plan
 - local environment preflight inventory
+- installation and upgrade decision gates
+- runtime component boundary
 - external runtime configuration
 - local secret handling boundary
+- internal database endpoint
 
 ## Model Boundary
 
@@ -32,13 +34,18 @@ No domain aggregate is introduced.
 
 The useful modeling terms are support-scope terms:
 
-- Local Runtime Boundary
+- Local Runtime Build Plan
+- Local Environment Preflight
+- Build Strategy Decision
+- Installation Gate
+- Runtime Asset Gate
+- Runtime Execution Gate
 - Runtime Component
 - Runtime Configuration
-- Local Environment Preflight
 - Sensitive Runtime Value
 - Local Secret Mechanism
 - Internal Database Endpoint
+- Stop Condition
 
 These terms help prevent misplaced business rules. They are not new domain
 entities and should not be implemented as domain model objects.
@@ -49,18 +56,20 @@ entities and should not be implemented as domain model objects.
 
 Deployment support owns rules about:
 
+- which machine state must be inspected before installation, upgrade, runtime
+  asset creation, or runtime execution
+- which build-strategy decisions must be made after preflight
+- which installation and upgrade decisions require explicit approval
 - which runtime components are part of the first local boundary
 - which values are sensitive runtime values
 - which runtime values must stay out of Git
-- which future work must inspect the local machine before install, upgrade,
-  runtime asset creation, or runtime execution
 - which future work must choose an explicit secret mechanism
 - which future work must keep MariaDB backend-internal
 - which future work must preserve browser cookie behavior
 
 These rules belong in deployment documentation first. A later implementation
-slice may translate them into manifests, scripts, or verification checks only
-after its own spec approves those assets.
+slice may translate them into commands, manifests, scripts, ignored local
+files, or verification checks only after its own spec approves those assets.
 
 ### Auth Rules
 
@@ -123,6 +132,8 @@ introduce:
 - documentation-only changes need documentation review and link verification
 - local environment preflight work needs safe command review and sample output
   review that confirms no secret values are printed
+- installation or upgrade instructions need version-policy verification and
+  stop-condition review
 - runtime asset generation may need static file checks
 - backend runtime configuration changes may need integration tests
 - frontend routing changes may need frontend or browser-level verification
@@ -139,19 +150,33 @@ Deployment is an adapter/support concern. Treating it as a bounded context
 would imply ownership over behavior that belongs to auth, organization,
 reference-core, or frontend.
 
-### Decision: Start with documentation authority
+### Decision: Mark deployment-01 as draft
 
-The first deployment slice defines the support boundary before creating
-runtime assets. This keeps later Kubernetes, Docker, or secret work from
-appearing as unreviewed implementation detail.
+The first deployment slice needs to describe a clean-machine path, not only a
+runtime boundary. Draft status prevents future work from treating the current
+plan as executable deployment approval before preflight commands, build
+strategy, installation policy, and runtime execution are reviewed.
 
-### Decision: Require local environment preflight first
+### Decision: Start from local environment preflight
 
 Installation, upgrade, and runtime execution depend on the developer machine's
 current state. A future deployment slice must inspect existing tools, versions,
 ports, volumes, profiles, and local secret storage before changing anything.
 This prevents accidental upgrades, conflicting installations, port collisions,
 or unsafe secret handling.
+
+### Decision: Separate build strategy from execution
+
+A clean open-source user may have no local runtime tooling installed. The
+build strategy must therefore be chosen after preflight and before concrete
+runtime assets or execution commands exist.
+
+### Decision: Gate installation and upgrade work
+
+Installing or upgrading Java, Node.js, Docker, Kubernetes, MariaDB, or any
+other runtime tool changes the user's machine. Deployment work must name the
+tool, reason, version policy, verification command, and stop condition before
+making that change.
 
 ### Decision: Keep MariaDB internal to backend runtime access
 
@@ -175,6 +200,11 @@ implementation slice.
 
 ## Risk Notes
 
+- Skipping local environment preflight could overwrite working tools, hide
+  incompatible versions, collide with existing ports, or run unsafe commands
+  before the developer understands the machine state.
+- Treating draft planning as executable approval could create manifests,
+  scripts, or secrets before the local strategy is reviewed.
 - Hard-coded credentials would turn runtime setup into source-controlled
   secrets.
 - Committed local manifests with real values would make the repository unsafe
@@ -185,9 +215,6 @@ implementation slice.
   ownership.
 - Duplicating auth or frontend rules inside deployment would make future
   behavior changes inconsistent.
-- Skipping local environment preflight could overwrite working tools, hide
-  incompatible versions, collide with existing ports, or run unsafe commands
-  before the developer understands the machine state.
 
 ## Non-Goals Confirmed
 
@@ -195,7 +222,9 @@ implementation slice.
 - No Kubernetes Secrets.
 - No ConfigMaps.
 - No Dockerfiles or compose files.
+- No ignored local env files.
 - No runtime execution.
+- No tool installation or upgrade.
 - No production deployment baseline.
 - No local seed data workflow.
 - No health/readiness/liveness behavior.

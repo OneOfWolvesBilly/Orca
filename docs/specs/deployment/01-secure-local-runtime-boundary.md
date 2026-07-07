@@ -1,18 +1,19 @@
-# Deployment 01 - Secure Local Runtime Boundary
+# Deployment 01 - Local Runtime Build Plan
 
-Status: Approved / documentation authority only.
+Status: Draft / build plan authority only.
 
 ## Goal
 
-Define the first deployment support slice for Orca: a secure local runtime
-boundary for practicing the already-specified frontend, backend, and MariaDB
-runtime shape without committing sensitive runtime configuration or changing
-business behavior.
+Define the first deployment support slice for Orca as a from-zero local runtime
+build plan for open-source users who may start with a clean machine.
 
-This slice establishes deployment authority for local runtime wiring,
-configuration boundaries, and safety rules. It does not create Kubernetes
-manifests, Docker runtime files, Secrets, ConfigMaps, scripts, production
-deployment assets, or executable runtime changes.
+The immediate purpose is to make the database-backed login runtime supportable:
+frontend, backend, and MariaDB must eventually run together without changing
+auth, organization, reference-core, or frontend business behavior.
+
+This slice is a planning and safety slice. It defines the required equipment
+inspection, build plan, installation decision points, execution gates, and
+runtime safety boundaries before any concrete deployment assets are created.
 
 `deployment` is a delivery/runtime support scope, not a bounded context.
 
@@ -21,17 +22,17 @@ deployment assets, or executable runtime changes.
 - Workflows:
   - Authentication and Session
   - Frontend Reference Shell
-  - Error and Exception Handling
   - Logging, Observability, and Operations
 - Workflow gap:
-  - backend and frontend behavior can be built and tested, but there is no
-    authoritative deployment spec for safe local runtime practice
-  - local runtime practice risks placing secrets in source files, terminal
-    logs, manifests, or Git history without an explicit boundary
-  - frontend/backend/database separation needs a documented runtime shape that
-    preserves already-specified behavior
+  - Orca has login and frontend behavior that can be implemented and tested,
+    but a clean open-source user has no authoritative path for preparing the
+    local database-backed runtime needed to practice login.
+  - Installation, upgrade, and runtime execution can change a developer machine
+    and must not begin before the current machine state is inspected.
+  - Runtime setup can leak credentials into source files, terminal output, or
+    Git history unless the plan defines secret handling before execution.
 - Primary actor:
-  - Developer
+  - Developer or open-source contributor
 - Supporting actors:
   - local frontend runtime
   - local backend runtime
@@ -47,9 +48,11 @@ deployment assets, or executable runtime changes.
 
 ## Deployment Support Scope
 
-`deployment-01` describes how already-specified Orca behavior may be run
-locally as separated runtime components. It does not own auth, organization,
-reference-core, or frontend behavior.
+`deployment-01` describes how a clean local machine should be inspected and
+planned before Orca's already-specified behavior is run as separated runtime
+components.
+
+It does not own auth, organization, reference-core, or frontend behavior.
 
 Auth remains authoritative for:
 
@@ -76,49 +79,46 @@ Organization remains authoritative for:
 - group creation and invitation lifecycle behavior
 - organization command authorization and rejection rules
 
-## Local Runtime Boundary
+## From-Zero Local Runtime Build Plan
 
-The first local runtime boundary is:
+The intended runtime shape is:
 
 ```text
 Browser
   -> local frontend entry point
   -> frontend runtime component
   -> backend runtime component
-  -> MariaDB runtime component
+  -> internal MariaDB runtime component
 ```
 
-The local runtime may later be implemented with Kubernetes, but this slice does
-not select or create the concrete implementation. A future implementation slice
-must decide the local cluster target, file layout, and executable assets before
-creating them.
+The plan assumes the developer may have none of the required tools installed.
+The first implementation work must therefore proceed in phases.
 
-The local runtime boundary must preserve these rules:
+### Phase 0: Confirm Authority And Scope
 
-- Local environment inventory happens before any install, upgrade, runtime
-  asset creation, Docker action, Kubernetes action, or secret creation.
-- The browser reaches only the local user-facing entry point required for
-  manual practice.
-- The backend receives runtime configuration from external runtime sources, not
-  hard-coded source values.
-- MariaDB is reachable by the backend runtime only.
-- MariaDB must not be exposed through a browser-facing route, public ingress,
-  host port, or NodePort-equivalent path.
-- Database schema remains owned by Flyway migrations.
-- Runtime topology must not change auth, organization, reference-core, or
-  frontend business behavior.
+Before executing any local runtime command, the future implementation slice
+must confirm:
 
-## Local Environment Preflight
+- the work is still deployment support, not a bounded context
+- the target is local runtime support for existing login/frontend/database
+  behavior
+- no auth, organization, reference-core, or frontend business rule is being
+  added, replaced, or reinterpreted
+- no production deployment claim is being made
 
-Every future deployment implementation, installation, upgrade, or runtime asset
-slice must start by inspecting the developer machine's current state.
+### Phase 1: Inspect The Local Machine
+
+The first executable step of any future installation, upgrade, runtime asset
+creation, or runtime execution is a local environment preflight inventory.
 
 The preflight inventory must happen before:
 
-- installing a local runtime tool
-- upgrading an existing runtime tool
+- installing Java, Node.js, Docker, Kubernetes, MariaDB, package managers, or
+  any local runtime tool
+- upgrading an existing local runtime tool
 - selecting a local Kubernetes target
-- creating manifests, scripts, Secrets, ConfigMaps, or ignored local files
+- creating manifests, scripts, Secrets, ConfigMaps, Dockerfiles, compose files,
+  ignored local files, or runtime profiles
 - running Docker, Kubernetes, database, backend, or frontend runtime commands
 - changing ports, volumes, runtime profiles, or local secret storage
 
@@ -142,12 +142,85 @@ The preflight output must not print secret values. If a command could reveal
 secret values, the future slice must use a safer inspection method or document
 why the check is skipped.
 
-If the current machine state conflicts with the planned installation or
-upgrade, the future slice must stop before changing the machine and record the
-conflict, risk, and required decision.
+If the current machine state conflicts with the planned installation, upgrade,
+port usage, volume usage, profile usage, or secret-storage path, the future
+slice must stop before changing the machine and record the conflict, risk, and
+required decision.
 
-This slice does not run the preflight inventory. It makes that inventory a
-mandatory first step for future executable deployment work.
+### Phase 2: Decide The Local Build Strategy
+
+After preflight, the future implementation slice must choose and document:
+
+- required Java version policy and whether an existing Java installation is
+  acceptable
+- required Node.js and package manager policy for the frontend runtime
+- whether Docker is required for the first local runtime
+- whether Kubernetes is required for the first local runtime
+- the local database strategy for MariaDB
+- the local secret mechanism
+- frontend-to-backend routing approach that preserves browser cookie behavior
+  for `ORCA_SESSION`
+- expected local ports and collision handling
+- runtime profile names and environment variable names
+- local reset or cleanup boundary
+
+The decision must prefer the smallest runtime shape that lets a clean
+open-source user run the login-facing database environment safely.
+
+### Phase 3: Authorize Installation Or Upgrade
+
+Installation and upgrade instructions may be introduced only after Phase 1
+preflight and Phase 2 build strategy are documented.
+
+Future installation or upgrade work must:
+
+- state which tool is being installed or upgraded
+- state why the tool is required for the selected build strategy
+- state the minimum supported version and the accepted existing-version range
+- stop before changing the machine when an incompatible existing installation
+  is found
+- avoid replacing a user's working tools without explicit approval
+- provide verification commands that do not print secrets
+
+This draft does not install, upgrade, or execute any tool.
+
+### Phase 4: Authorize Runtime Assets
+
+Concrete runtime assets may be created only after the build strategy is
+accepted.
+
+Future runtime assets may include Kubernetes manifests, Dockerfiles, compose
+files, scripts, ignored local env files, or secret instructions only when a
+future authoritative deployment spec explicitly allows them.
+
+Before any runtime asset is created, the future slice must define:
+
+- file locations
+- secret placeholders and secret creation process
+- validation steps that confirm real secret values are not staged or committed
+- database exposure boundary
+- frontend-to-backend routing boundary
+- rollback or cleanup expectations
+
+This draft does not create runtime assets.
+
+### Phase 5: Execute The Local Runtime
+
+Runtime execution may begin only after preflight, build strategy, installation
+or upgrade decisions, and runtime assets have been approved by a future slice.
+
+Execution must prove:
+
+- the frontend entry point is reachable locally
+- backend runtime configuration is external to application source code
+- MariaDB is reachable by the backend runtime only
+- Flyway remains the schema ownership boundary
+- login behavior remains owned by auth specs
+- frontend behavior remains owned by frontend specs
+- error and diagnostic behavior remains owned by reference-core specs
+
+This draft does not execute Docker, Kubernetes, database, backend, or frontend
+runtime commands.
 
 ## Configuration Boundary
 
@@ -169,30 +242,6 @@ not expose credentials, user data, session data, or environment-specific secret
 material. Examples may include local service names, non-secret ports, profile
 names, and component names.
 
-## Secret Safety Rules
-
-A future implementation slice must choose an explicit local secret mechanism
-before creating runtime assets.
-
-Allowed categories for the future mechanism include:
-
-- manually created local Kubernetes Secret values
-- generated local-only secret values
-- ignored local files loaded by an explicit local process
-
-This slice does not choose one mechanism.
-
-Secret handling must satisfy:
-
-- Secret values must not be stored in committed manifests.
-- Secret values must not be printed as required terminal output.
-- Secret values must not appear in documentation examples except as obvious
-  placeholders.
-- Secret values must not be used as test fixtures, seed data, or product
-  behavior.
-- A future implementation must document how to verify that no secret value is
-  staged or committed.
-
 ## Local Database Topology Boundary
 
 The first runtime topology is standalone local MariaDB.
@@ -204,15 +253,14 @@ backend runtime component
   -> persistent local storage boundary, if the chosen runtime supports it
 ```
 
+MariaDB must not be exposed through a browser-facing route, public ingress,
+host port intended for product users, or NodePort-equivalent user path.
+
 Primary/replica MariaDB, database operators, cloud-managed databases, backup
 strategy, restore strategy, and production database ownership are outside this
 slice. They may be proposed only as separate future slices.
 
-Frontend and backend behavior must not depend on whether the database is
-standalone, replicated, local, or managed. Backend runtime configuration must
-provide the database endpoint and credentials.
-
-## Frontend to Backend Boundary
+## Frontend To Backend Boundary
 
 The local frontend must consume the backend through a local arrangement that
 preserves browser cookie behavior for `ORCA_SESSION`.
@@ -231,24 +279,50 @@ Any future routing choice must preserve:
 
 ## Scenarios
 
-### Scenario: Developer identifies the local runtime boundary
+### Scenario: Clean-machine contributor starts from zero
 
 **Given**
-- Orca has implemented backend and frontend behavior from the predecessor
-  slices.
-- A developer wants to practice running Orca locally as separated runtime
-  components.
+- A contributor wants to run Orca's login-facing local runtime.
+- The contributor may not have Java, Node.js, Docker, Kubernetes, or MariaDB
+  tooling installed.
 
 **When**
-- The developer reads the deployment support specification.
+- The contributor starts deployment work.
 
 **Then**
-- The developer can identify the intended local frontend, backend, and MariaDB
-  runtime boundary.
-- The developer can identify that deployment is a support scope, not a bounded
-  context.
-- The developer can identify that this slice does not create executable
-  runtime assets.
+- The first executable step is local environment preflight.
+- The current machine state is recorded before install, upgrade, asset
+  creation, or runtime execution.
+- The plan stops before changing the machine if a conflict is found.
+
+### Scenario: Build strategy is selected after preflight
+
+**Given**
+- The local environment preflight has recorded existing tools, versions, ports,
+  profiles, volumes, and secret-storage paths.
+
+**When**
+- A future deployment slice selects the local runtime strategy.
+
+**Then**
+- The slice documents whether Java, Node.js, Docker, Kubernetes, and MariaDB
+  tooling must be installed, upgraded, reused, or skipped.
+- The slice documents the selected local database and routing strategy.
+- The slice documents why the selected strategy is the smallest safe path for
+  the login-facing runtime.
+
+### Scenario: Installation is gated by explicit approval
+
+**Given**
+- A future deployment slice needs to install or upgrade a local runtime tool.
+
+**When**
+- The slice prepares installation instructions.
+
+**Then**
+- The slice states the tool, reason, version policy, and verification command.
+- The slice stops before replacing an incompatible existing installation.
+- The slice does not print secret values during verification.
 
 ### Scenario: Sensitive runtime configuration is kept out of Git
 
@@ -260,30 +334,13 @@ Any future routing choice must preserve:
 - A future implementation slice defines the runtime assets.
 
 **Then**
-- The implementation must use an explicit local secret mechanism.
-- The secret values must not be committed.
-- Documentation examples must use placeholders rather than real values.
-- The implementation must include a verification step for staged or committed
+- The implementation uses an explicit local secret mechanism.
+- The secret values are not committed.
+- Documentation examples use placeholders rather than real values.
+- The implementation includes a verification step for staged or committed
   secret values.
 
-### Scenario: Future runtime work starts with local machine inventory
-
-**Given**
-- A future deployment slice proposes installing, upgrading, configuring, or
-  running local runtime tooling.
-
-**When**
-- The future slice begins implementation planning.
-
-**Then**
-- The first executable step is a local environment preflight inventory.
-- The inventory records existing tool versions and relevant local runtime
-  state before changes are made.
-- The inventory avoids printing secret values.
-- Installation, upgrade, runtime asset creation, Docker actions, Kubernetes
-  actions, and secret creation wait until the inventory is complete.
-
-### Scenario: Local runtime preserves existing behavior ownership
+### Scenario: Runtime preserves existing behavior ownership
 
 **Given**
 - A future local runtime runs frontend, backend, and MariaDB components.
@@ -301,28 +358,17 @@ Any future routing choice must preserve:
 - Organization remains authoritative for organization command behavior.
 - Deployment runtime wiring does not reinterpret or rewrite those rules.
 
-### Scenario: Database remains internal to the local runtime
-
-**Given**
-- A future local runtime includes MariaDB.
-
-**When**
-- The runtime exposes a user-facing entry point.
-
-**Then**
-- The database is not exposed as a browser-facing route.
-- The database is not published for direct user access.
-- Backend-to-database access uses runtime configuration.
-- Flyway remains the schema ownership boundary.
-
 ## Acceptance Criteria
 
 - Deployment MUST be treated as a delivery/runtime support scope, not a bounded
   context.
-- This slice MUST NOT create Kubernetes manifests, Secrets, ConfigMaps, Docker
-  runtime files, scripts, or executable runtime changes.
-- This slice MUST define only the support authority and safety boundary for
-  future local runtime work.
+- This slice MUST be treated as Draft until the preflight command set, build
+  strategy, installation policy, and runtime execution plan are reviewed.
+- This slice MUST define a from-zero local runtime build plan for an
+  open-source user who may have no local runtime tools installed.
+- This slice MUST NOT create Kubernetes manifests, Secrets, ConfigMaps,
+  Docker runtime files, scripts, ignored local env files, or executable runtime
+  changes.
 - Future deployment implementation, installation, upgrade, or runtime asset
   work MUST begin with a local environment preflight inventory.
 - The local environment preflight inventory MUST happen before installing,
@@ -332,6 +378,8 @@ Any future routing choice must preserve:
 - If the local environment preflight finds a version, port, volume, profile, or
   secret-storage conflict, the future slice MUST stop before changing the
   machine and record the required decision.
+- Future installation or upgrade instructions MUST name the tool, reason,
+  version policy, verification command, and stop condition.
 - Future local runtime implementation MUST preserve auth, organization,
   reference-core, and frontend business behavior.
 - Future local runtime implementation MUST keep sensitive runtime values out of
@@ -358,9 +406,14 @@ Any future routing choice must preserve:
 - Runtime wiring is an adapter concern around already-specified behavior.
 - Sensitive runtime values are not source-controlled behavior.
 - Database schema ownership remains separate from runtime wiring.
+- Machine-changing work is not allowed before local environment preflight.
 
 ## Error Cases
 
+- A proposed deployment change installs or upgrades a tool before preflight ->
+  reject before changing the machine.
+- A proposed deployment change creates runtime assets before build strategy
+  approval -> reject before implementation.
 - A proposed deployment change commits a real secret value -> reject before
   implementation.
 - A proposed deployment change exposes MariaDB through a user-facing route ->
@@ -369,20 +422,22 @@ Any future routing choice must preserve:
   `ORCA_SESSION` -> reject as a frontend/auth boundary violation.
 - A proposed deployment change changes login, session, login audit, diagnostic,
   or organization command behavior -> reject as a scope violation.
-- A proposed deployment change treats local manifests as production-ready ->
-  reject as a production deployment boundary violation.
-- A proposed install, upgrade, or runtime execution starts without local
-  environment preflight -> reject before changing the machine.
+- A proposed deployment change treats local runtime setup as production-ready
+  -> reject as a production deployment boundary violation.
 - A preflight command would print secret values -> replace it with a safer
   check or skip it with an explicit risk note.
 
 ## Unknown / To Be Discovered
 
-- concrete local Kubernetes target
+- exact preflight command set for each supported developer machine
+- accepted Java version range and upgrade policy
+- accepted Node.js and package manager version range
+- whether the first local runtime should require Docker
+- whether the first local runtime should require Kubernetes
+- concrete local Kubernetes target, if Kubernetes is selected
 - future runtime asset path
 - exact local secret creation mechanism
 - exact frontend-to-backend routing pattern
-- exact preflight command set for each supported developer machine
 - whether local routing uses port-forwarding, local ingress, or reverse proxy
 - local developer reset workflow
 - production deployment model
@@ -395,9 +450,13 @@ Any future routing choice must preserve:
 - Creating Kubernetes Secrets.
 - Creating ConfigMaps.
 - Creating Dockerfiles, compose files, or image build scripts.
+- Creating ignored local env files.
 - Executing Docker.
 - Executing Kubernetes commands.
-- Selecting Docker Desktop, minikube, kind, or another local cluster target.
+- Installing or upgrading Java, Node.js, Docker, Kubernetes, MariaDB, or any
+  other runtime tool in this slice.
+- Selecting Docker Desktop, minikube, kind, or another local cluster target in
+  this slice.
 - Production Kubernetes deployment.
 - Cloud provider selection.
 - CI/CD pipeline setup.
