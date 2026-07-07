@@ -1,6 +1,6 @@
 # Deployment 01 - Local Runtime Build Plan
 
-Status: Draft / build plan authority only.
+Status: Approved / support gate and build-plan authority only.
 
 ## Goal
 
@@ -196,7 +196,7 @@ Future installation or upgrade work must:
 - avoid replacing a user's working tools without explicit approval
 - provide verification commands that do not print secrets
 
-This draft does not install, upgrade, or execute any tool.
+This approved build plan does not install, upgrade, or execute any tool.
 
 ### Phase 4: Authorize Runtime Assets
 
@@ -216,7 +216,7 @@ Before any runtime asset is created, the future slice must define:
 - frontend-to-backend routing boundary
 - rollback or cleanup expectations
 
-This draft does not create runtime assets.
+This approved build plan does not create runtime assets.
 
 ### Phase 5: Execute The Local Runtime
 
@@ -233,8 +233,8 @@ Execution must prove:
 - frontend behavior remains owned by frontend specs
 - error and diagnostic behavior remains owned by reference-core specs
 
-This draft does not execute Docker, Kubernetes, database, backend, or frontend
-runtime commands.
+This approved build plan does not execute Docker, Kubernetes, database,
+backend, or frontend runtime commands.
 
 ## Configuration Boundary
 
@@ -378,8 +378,9 @@ Any future routing choice must preserve:
   context.
 - Local environment preflight MUST be treated as a deployment support workflow
   gate, not as Orca application behavior or a domain behavior slice.
-- This slice MUST be treated as Draft until the preflight command set, build
-  strategy, installation policy, and runtime execution plan are reviewed.
+- This slice MUST be treated as approved support-gate and build-plan authority,
+  not as approval for implementation commands, installation steps, runtime
+  assets, or runtime execution.
 - This slice MUST define a from-zero local runtime build plan for an
   open-source user who may have no local runtime tools installed.
 - This slice MUST NOT create Kubernetes manifests, Secrets, ConfigMaps,
@@ -412,6 +413,8 @@ Any future routing choice must preserve:
 - Frontend-to-backend local routing MUST NOT require backend business behavior
   changes.
 - Production deployment MUST remain a separate future slice.
+- Implementation commands, installation steps, runtime assets, and execution
+  remain unapproved until reviewed in future deployment work.
 
 ## Invariants
 

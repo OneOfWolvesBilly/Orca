@@ -115,7 +115,7 @@ is non-authoritative and may only be used as intake background.
 
 | Slice | Spec | DDD | Status |
 | --- | --- | --- | --- |
-| `deployment-01` | [Local Runtime Build Plan](specs/deployment/01-secure-local-runtime-boundary.md) | [DDD](ddd/deployment/01-secure-local-runtime-boundary.md) | Draft |
+| `deployment-01` | [Local Runtime Build Plan](specs/deployment/01-secure-local-runtime-boundary.md) | [DDD](ddd/deployment/01-secure-local-runtime-boundary.md) | Approved support gate / no runtime assets |
 
 ## Planned Contexts
 

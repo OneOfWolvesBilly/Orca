@@ -1,13 +1,13 @@
 # DDD - Deployment 01 - Local Runtime Build Plan
 
-Status: Draft / derived from
+Status: Derived from
 `docs/specs/deployment/01-secure-local-runtime-boundary.md`.
 
 ## Purpose
 
 This note derives the model boundary and rule placement for `deployment-01`.
-It explains how the deployment support scope should be understood while the
-first local runtime plan is still a draft.
+It explains how the deployment support scope should be understood as approved
+support-gate and build-plan authority.
 
 It must not introduce behavior beyond the deployment spec.
 
@@ -157,12 +157,12 @@ Deployment is an adapter/support concern. Treating it as a bounded context
 would imply ownership over behavior that belongs to auth, organization,
 reference-core, or frontend.
 
-### Decision: Mark deployment-01 as draft
+### Decision: Approve deployment-01 as support-gate authority
 
-The first deployment slice needs to describe a clean-machine path, not only a
-runtime boundary. Draft status prevents future work from treating the current
-plan as executable deployment approval before preflight commands, build
-strategy, installation policy, and runtime execution are reviewed.
+The first deployment slice approves the safety gate and build-plan framework,
+not executable deployment work. Future work must still review and authorize
+preflight commands, build-strategy details, installation policy, runtime
+assets, and runtime execution before introducing or running them.
 
 ### Decision: Start from local environment preflight
 
@@ -214,8 +214,8 @@ implementation slice.
 - Skipping local environment preflight could overwrite working tools, hide
   incompatible versions, collide with existing ports, or run unsafe commands
   before the developer understands the machine state.
-- Treating draft planning as executable approval could create manifests,
-  scripts, or secrets before the local strategy is reviewed.
+- Treating support-gate approval as executable approval could create
+  manifests, scripts, or secrets before the local strategy is reviewed.
 - Hard-coded credentials would turn runtime setup into source-controlled
   secrets.
 - Committed local manifests with real values would make the repository unsafe
