@@ -21,7 +21,7 @@ domain invariants, aggregates, repositories, or application commands.
 The slice describes planning boundaries around existing behavior:
 
 - clean-machine local runtime build plan
-- local environment preflight inventory
+- local environment preflight gate
 - installation and upgrade decision gates
 - runtime component boundary
 - external runtime configuration
@@ -50,6 +50,11 @@ The useful modeling terms are support-scope terms:
 These terms help prevent misplaced business rules. They are not new domain
 entities and should not be implemented as domain model objects.
 
+Local Environment Preflight is modeled as an operational gate, not as an Orca
+application use case. It may later be expressed as documented commands,
+checklists, or tooling, but it should not become domain code or application
+business behavior.
+
 ## Rule Placement
 
 ### Deployment Support Rules
@@ -58,6 +63,8 @@ Deployment support owns rules about:
 
 - which machine state must be inspected before installation, upgrade, runtime
   asset creation, or runtime execution
+- why preflight is a gate for deployment support work rather than an app
+  behavior slice
 - which build-strategy decisions must be made after preflight
 - which installation and upgrade decisions require explicit approval
 - which runtime components are part of the first local boundary
@@ -164,6 +171,10 @@ current state. A future deployment slice must inspect existing tools, versions,
 ports, volumes, profiles, and local secret storage before changing anything.
 This prevents accidental upgrades, conflicting installations, port collisions,
 or unsafe secret handling.
+
+The preflight step is not split out as a normal behavior slice because it does
+not describe a user-visible Orca workflow. It is the entry condition for any
+deployment support work that can change or rely on local machine state.
 
 ### Decision: Separate build strategy from execution
 

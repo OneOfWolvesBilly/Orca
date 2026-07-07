@@ -107,6 +107,8 @@ Deployment slices are delivery/runtime support slices identified explicitly by
 the `deployment` prefix. They are not a bounded context and must not create
 Kubernetes manifests, Secrets, Docker runtime changes, or production deployment
 assumptions until an authoritative deployment spec and derived DDD note exist.
+Local environment preflight is an operational gate inside deployment support
+work, not a standalone Orca application behavior slice.
 
 The planning draft `docs/drafts/deployment-local-runtime-slice-candidates.md`
 is non-authoritative and may only be used as intake background.

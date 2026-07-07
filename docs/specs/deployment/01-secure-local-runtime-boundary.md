@@ -17,6 +17,11 @@ runtime safety boundaries before any concrete deployment assets are created.
 
 `deployment` is a delivery/runtime support scope, not a bounded context.
 
+The local environment preflight is a deployment support workflow gate. It is
+not an Orca application behavior, not a domain behavior slice, and not a user
+feature. It exists to protect the developer's machine before installation,
+upgrade, runtime asset creation, or runtime execution.
+
 ## Workflow Traceability
 
 - Workflows:
@@ -94,6 +99,11 @@ Browser
 The plan assumes the developer may have none of the required tools installed.
 The first implementation work must therefore proceed in phases.
 
+This clean-machine assumption is a documentation baseline, not a claim about
+the actual developer machine. Future work must use preflight results as the
+source of truth for the current machine and must reuse compatible existing
+tools when the selected build strategy allows it.
+
 ### Phase 0: Confirm Authority And Scope
 
 Before executing any local runtime command, the future implementation slice
@@ -110,6 +120,10 @@ must confirm:
 
 The first executable step of any future installation, upgrade, runtime asset
 creation, or runtime execution is a local environment preflight inventory.
+
+Preflight itself is not a standalone product slice. It is the required entry
+gate for deployment support work that could change the machine or depend on
+local runtime state.
 
 The preflight inventory must happen before:
 
@@ -362,6 +376,8 @@ Any future routing choice must preserve:
 
 - Deployment MUST be treated as a delivery/runtime support scope, not a bounded
   context.
+- Local environment preflight MUST be treated as a deployment support workflow
+  gate, not as Orca application behavior or a domain behavior slice.
 - This slice MUST be treated as Draft until the preflight command set, build
   strategy, installation policy, and runtime execution plan are reviewed.
 - This slice MUST define a from-zero local runtime build plan for an
@@ -403,6 +419,8 @@ Any future routing choice must preserve:
 - Deployment support does not introduce a domain aggregate.
 - Deployment support does not define auth, organization, reference-core, or
   frontend business rules.
+- Local environment preflight is an operational gate for deployment work, not
+  product behavior exposed by Orca.
 - Runtime wiring is an adapter concern around already-specified behavior.
 - Sensitive runtime values are not source-controlled behavior.
 - Database schema ownership remains separate from runtime wiring.
