@@ -149,4 +149,5 @@ Decision: enter SDD / stop
 ```
 
 Only candidates with `Decision: enter SDD` should become
-`docs/specs/<bounded-context>/<NN>-<name>.md`.
+`docs/specs/<bounded-context>/<NN>-<name>.md` or an approved
+`docs/specs/<support-scope>/<NN>-<name>.md`.

@@ -4,7 +4,8 @@ This document is a derived index.
 It helps contributors find behavior slices by bounded context.
 It does not introduce behavior.
 
-Authoritative behavior remains in `docs/specs/<bounded-context>/*`.
+Authoritative behavior remains in `docs/specs/<bounded-context>/*` and approved
+`docs/specs/<support-scope>/*` support scopes.
 
 ---
 
@@ -23,6 +24,13 @@ docs/specs/<bounded-context>/<NN>-<behavior-or-integration>.md
 docs/ddd/<bounded-context>/<NN>-<behavior-or-integration>.md
 ```
 
+Approved support scopes use the same file shape:
+
+```text
+docs/specs/<support-scope>/<NN>-<behavior-or-integration>.md
+docs/ddd/<support-scope>/<NN>-<behavior-or-integration>.md
+```
+
 The Spec column links to authoritative behavior definitions. The DDD column
 links to derived notes that explain model decisions and must not introduce
 behavior.
@@ -38,6 +46,12 @@ organization slice, not as a separate frontend bounded context.
 Cross-cutting support behavior that protects multiple bounded contexts may use
 the `reference-core` support scope after passing slice intake. Reference-core
 slices do not own or redefine bounded-context business rules.
+
+Deployment is a delivery/runtime support scope, not a bounded context. It may
+describe runtime wiring, configuration boundaries, and operational enablement
+for already-specified behavior after passing slice intake. Deployment slices
+must not own, redefine, or rewrite auth, organization, reference-core, or
+frontend business rules.
 
 ---
 
@@ -87,10 +101,24 @@ domain or application behavior.
 | `frontend-01` | [Frontend Login Result Shell](specs/frontend/01-login-result-shell.md) | [DDD](ddd/frontend/01-login-result-shell.md) | React Done / Vue and Angular Planned |
 | `frontend-02` | [Client Failure Observability](specs/frontend/02-client-failure-observability.md) | [DDD](ddd/frontend/02-client-failure-observability.md) | React Done / Vue and Angular Planned |
 
+## Deployment
+
+Deployment slices are delivery/runtime support slices identified explicitly by
+the `deployment` prefix. They are not a bounded context and must not create
+Kubernetes manifests, Secrets, Docker runtime changes, or production deployment
+assumptions until an authoritative deployment spec and derived DDD note exist.
+
+The planning draft `docs/drafts/deployment-local-runtime-slice-candidates.md`
+is non-authoritative and may only be used as intake background.
+
+| Slice | Spec | DDD | Status |
+| --- | --- | --- | --- |
+| `deployment-01` | [Secure Local Runtime Boundary](specs/deployment/01-secure-local-runtime-boundary.md) | [DDD](ddd/deployment/01-secure-local-runtime-boundary.md) | Spec / DDD Done |
+
 ## Planned Contexts
 
 No additional domain bounded contexts beyond `organization` and `auth` are
-authoritative yet. `reference-core` is a cross-cutting support scope, not a
-domain bounded context.
+authoritative yet. `reference-core`, `frontend`, and `deployment` are support
+scopes, not domain bounded contexts.
 Introduce `issue` or other bounded contexts only by adding their first
 authoritative spec under `docs/specs/<bounded-context>/`.

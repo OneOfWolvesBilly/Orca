@@ -44,9 +44,10 @@ Each user-visible behavior is captured as a specification using:
 * error cases
 * explicit non-goals
 
-Specifications live under `docs/specs/<bounded-context>/` or the approved
-`docs/specs/reference-core/` support scope and are the **authoritative source
-of truth**.
+Specifications live under `docs/specs/<bounded-context>/` or an explicitly
+approved support scope such as `docs/specs/reference-core/`,
+`docs/specs/frontend/`, or `docs/specs/deployment/`. They are the
+**authoritative source of truth**.
 
 A specification answers one question only:
 
@@ -135,6 +136,17 @@ contexts may use the `reference-core` support scope after passing slice intake.
 `reference-core` is not a domain bounded context and must not own or redefine
 bounded-context business rules.
 
+Delivery and runtime support behavior may use approved support scopes after
+passing slice intake. `frontend` is a delivery support scope for client-facing
+behavior that consumes backend APIs. `deployment` is a delivery/runtime support
+scope for local or production runtime wiring, configuration boundaries, and
+operational enablement. Neither scope is a domain bounded context.
+
+Deployment support slices must not own, redefine, or rewrite auth,
+organization, reference-core, or frontend business behavior. They may describe
+how already-specified behavior is run, configured, exposed, or protected at
+runtime, but the owning spec remains the source of business truth.
+
 Slice identifiers are scoped by bounded context or an approved support scope:
 
 ```text
@@ -148,6 +160,8 @@ organization-01
 organization-08
 auth-01
 reference-core-01
+frontend-01
+deployment-01
 ```
 
 The file layout mirrors that scope:
@@ -162,6 +176,13 @@ Cross-cutting support slices mirror the same layout:
 ```text
 docs/specs/reference-core/01-stable-api-error-contract.md
 docs/ddd/reference-core/01-stable-api-error-contract.md
+```
+
+Delivery/runtime support slices also mirror the same layout:
+
+```text
+docs/specs/deployment/01-secure-local-runtime-boundary.md
+docs/ddd/deployment/01-secure-local-runtime-boundary.md
 ```
 
 Frontend work is not a bounded context by default.
@@ -179,10 +200,10 @@ orca/
 ├─ docs/
 │  ├─ specs/                 # Authoritative behavior specifications
 │  │  ├─ <bounded-context>/   # Context-scoped behavior slices
-│  │  └─ reference-core/      # Cross-cutting support behavior slices
+│  │  └─ <support-scope>/     # Approved support scopes, e.g. reference-core, frontend, deployment
 │  ├─ ddd/                   # Derived design notes
 │  │  ├─ <bounded-context>/
-│  │  └─ reference-core/
+│  │  └─ <support-scope>/
 │  ├─ product/               # Product / SA baseline and workflow maps
 │  ├─ slice-map.md           # Derived slice index
 │  ├─ constraints.md         # Non-negotiable engineering rules
@@ -209,9 +230,10 @@ orca/
 Bounded contexts are introduced by behavior slices.
 This README intentionally does not enumerate them.
 The authoritative behavior definitions live in `docs/specs/<bounded-context>/*`
-and approved `docs/specs/reference-core/*` support slices. Derived DDD notes
-live in `docs/ddd/<bounded-context>/*` and `docs/ddd/reference-core/*`; they
-explain modeling decisions derived from specs and must not introduce behavior.
+and approved `docs/specs/<support-scope>/*` support slices such as
+`reference-core`, `frontend`, and `deployment`. Derived DDD notes live in
+`docs/ddd/<bounded-context>/*` and `docs/ddd/<support-scope>/*`; they explain
+modeling decisions derived from specs and must not introduce behavior.
 Product / SA baseline documents live in `docs/product/*`; they explain product
 positioning, workflow gaps, capability maps, and future slice intake rules.
 The derived slice index lives in `docs/slice-map.md`.
@@ -228,8 +250,8 @@ New contributors should read documents in the following order:
 4. `docs/product/workflow-map.md` — workflow support, gaps, and unknowns
 5. `docs/product/capability-map.md` — workflow-derived capability map
 6. `docs/product/slice-intake-gate.md` — gate for future slices
-7. `docs/specs/<bounded-context>/` — authoritative behavior definitions
-8. `docs/ddd/<bounded-context>/` — derived DDD notes for those specs
+7. `docs/specs/<bounded-context>/` and approved `docs/specs/<support-scope>/` — authoritative behavior definitions
+8. `docs/ddd/<bounded-context>/` and approved `docs/ddd/<support-scope>/` — derived DDD notes for those specs
 9. `docs/slice-map.md` — derived slice index
 10. Other derived documents (architecture, design notes), if present
 

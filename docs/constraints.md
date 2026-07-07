@@ -11,7 +11,8 @@ and infrastructure is an adapter rather than the source of truth.
 
 ## 1. Authority & Workflow
 
-- `docs/specs/<bounded-context>/*` defines behavior and is the source of truth.
+- `docs/specs/<bounded-context>/*` and approved
+  `docs/specs/<support-scope>/*` define behavior and are the source of truth.
 - Derived documents must not introduce new behavior.
 - Implementation must follow the workflow:
 
