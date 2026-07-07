@@ -113,7 +113,7 @@ is non-authoritative and may only be used as intake background.
 
 | Slice | Spec | DDD | Status |
 | --- | --- | --- | --- |
-| `deployment-01` | [Secure Local Runtime Boundary](specs/deployment/01-secure-local-runtime-boundary.md) | [DDD](ddd/deployment/01-secure-local-runtime-boundary.md) | Spec / DDD Done |
+| `deployment-01` | [Secure Local Runtime Boundary](specs/deployment/01-secure-local-runtime-boundary.md) | [DDD](ddd/deployment/01-secure-local-runtime-boundary.md) | Done |
 
 ## Planned Contexts
 
