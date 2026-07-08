@@ -109,6 +109,10 @@ Kubernetes manifests, Secrets, Docker runtime changes, or production deployment
 assumptions until an authoritative deployment spec and derived DDD note exist.
 Local environment preflight is an operational gate inside deployment support
 work, not a standalone Orca application behavior slice.
+Manual login runtime readiness requires backend runtime configuration, MariaDB
+availability, Flyway-migrated schema, local-only login test data, and
+frontend/backend routing. Frontend completion alone does not imply local manual
+login readiness.
 
 The planning draft `docs/drafts/deployment-local-runtime-slice-candidates.md`
 is non-authoritative and may only be used as intake background.

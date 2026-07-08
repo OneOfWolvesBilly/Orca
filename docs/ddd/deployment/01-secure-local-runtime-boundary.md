@@ -22,6 +22,7 @@ The slice describes planning boundaries around existing behavior:
 
 - clean-machine local runtime build plan
 - local environment preflight gate
+- manual login runtime readiness boundary
 - installation and upgrade decision gates
 - runtime component boundary
 - external runtime configuration
@@ -40,10 +41,12 @@ The useful modeling terms are support-scope terms:
 - Installation Gate
 - Runtime Asset Gate
 - Runtime Execution Gate
+- Manual Login Runtime Readiness
 - Runtime Component
 - Runtime Configuration
 - Sensitive Runtime Value
 - Local Secret Mechanism
+- Local Test Credential Mechanism
 - Internal Database Endpoint
 - Stop Condition
 
@@ -72,6 +75,10 @@ Deployment support owns rules about:
 - which runtime values must stay out of Git
 - which future work must choose an explicit secret mechanism
 - which future work must keep MariaDB backend-internal
+- which future work must verify Flyway-created schema before claiming manual
+  login readiness
+- which future work must define a local-only test credential mechanism before
+  manual login success and failure can be exercised
 - which future work must preserve browser cookie behavior
 
 These rules belong in deployment documentation first. A later implementation
@@ -87,6 +94,8 @@ Auth remains authoritative for:
 - server-side session state
 - protected HTTP session context
 - `loginFailureReferenceId`
+- credential verification rules
+- login failure response shape
 
 Deployment must not parse, encode, generate, reinterpret, or expose these
 concepts beyond providing runtime configuration that lets existing auth
@@ -182,6 +191,22 @@ A clean open-source user may have no local runtime tooling installed. The
 build strategy must therefore be chosen after preflight and before concrete
 runtime assets or execution commands exist.
 
+### Decision: Separate frontend completion from manual login readiness
+
+Frontend slices verify client behavior. Manual end-to-end login readiness also
+requires backend runtime configuration, MariaDB availability, Flyway-migrated
+schema, local-only test credential data, and routing that preserves
+`ORCA_SESSION` cookie behavior. Deployment owns the runtime readiness boundary,
+but auth remains authoritative for login success, login rejection, session, and
+login failure audit semantics.
+
+### Decision: Treat local login test data as runtime support
+
+Local login test credentials are needed for manual runtime practice, but they
+are not product seed data and must not be committed as real secrets or password
+hashes. A future deployment implementation must choose an explicit local-only
+mechanism before claiming manual login success and failure can be tested.
+
 ### Decision: Gate installation and upgrade work
 
 Installing or upgrading Java, Node.js, Docker, Kubernetes, MariaDB, or any
@@ -216,6 +241,11 @@ implementation slice.
   before the developer understands the machine state.
 - Treating support-gate approval as executable approval could create
   manifests, scripts, or secrets before the local strategy is reviewed.
+- Claiming frontend login readiness without MariaDB, Flyway schema, local test
+  credential data, and routing would make manual testing fail after frontend
+  behavior is already implemented.
+- Committed login test credentials or password hashes would make local runtime
+  support unsafe for an open-source repository.
 - Hard-coded credentials would turn runtime setup into source-controlled
   secrets.
 - Committed local manifests with real values would make the repository unsafe
@@ -237,6 +267,6 @@ implementation slice.
 - No runtime execution.
 - No tool installation or upgrade.
 - No production deployment baseline.
-- No local seed data workflow.
+- No local seed data or login credential creation.
 - No health/readiness/liveness behavior.
 - No changes to auth, organization, reference-core, or frontend behavior.

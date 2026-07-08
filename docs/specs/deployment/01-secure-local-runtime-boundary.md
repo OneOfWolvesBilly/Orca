@@ -229,12 +229,58 @@ Execution must prove:
 - backend runtime configuration is external to application source code
 - MariaDB is reachable by the backend runtime only
 - Flyway remains the schema ownership boundary
+- Flyway migrations have created the tables required by the already-specified
+  auth, organization, and reference-core behavior
+- local auth login test data exists through an explicit local-only mechanism
 - login behavior remains owned by auth specs
 - frontend behavior remains owned by frontend specs
 - error and diagnostic behavior remains owned by reference-core specs
 
 This approved build plan does not execute Docker, Kubernetes, database,
 backend, or frontend runtime commands.
+
+## Manual Login Runtime Readiness
+
+Frontend slices make the client login shell and client failure behavior
+testable. They do not, by themselves, make a clean local machine ready for a
+manual end-to-end login test.
+
+A future deployment runtime implementation must make the following prerequisites
+explicit before claiming that manual login success and login failure can be
+tested locally:
+
+- MariaDB runtime is available through the selected local runtime strategy.
+- The backend can connect to MariaDB through external runtime configuration,
+  such as the local profile datasource values or an approved runtime override.
+- Flyway runs against that MariaDB database before manual testing.
+- The migrated schema includes the auth login tables:
+  - `auth_registered_users`
+  - `auth_login_credentials`
+  - `auth_authenticated_sessions`
+  - `auth_login_failure_audits`
+- The migrated schema includes any currently required reference-core and
+  organization tables so the backend can start without schema drift.
+- A local-only login test identity and credential can be created without
+  committing real passwords, generated password hashes, or environment-specific
+  secrets.
+- The successful login test can call `POST /api/auth/login` with the local test
+  credential and observe the auth-owned `ORCA_SESSION` cookie.
+- The failed login test can call `POST /api/auth/login` with an invalid
+  credential and observe the stable `LOGIN_REJECTED` response with an opaque
+  `loginFailureReferenceId`.
+- The frontend can reach the backend through a local routing arrangement that
+  preserves cookie behavior.
+
+Deployment must not define the credential verification business rule, the login
+failure response shape, or the session cookie semantics. Those remain owned by
+auth specs. Deployment may only make the local runtime state available so those
+already-specified behaviors can be exercised.
+
+The local test credential mechanism is a future runtime support decision. It
+may be an ignored local SQL file, a documented manual insert, a local-only
+bootstrap command, or another reviewed mechanism. The mechanism must stay
+local-only, must not create production seed data, and must not place secret
+values in Git.
 
 ## Configuration Boundary
 
@@ -408,6 +454,12 @@ Any future routing choice must preserve:
 - Runtime configuration MUST be external to application source code.
 - MariaDB MUST remain backend-internal in the local runtime boundary.
 - MariaDB schema ownership MUST remain with Flyway migrations.
+- Future manual login runtime work MUST verify that Flyway creates the tables
+  needed for auth login success, auth login failure audit, reference-core
+  diagnostics, and currently required organization startup.
+- Future manual login runtime work MUST define a local-only test credential
+  mechanism before claiming that frontend-to-backend login can be tested
+  manually.
 - Frontend-to-backend local routing MUST preserve browser cookie behavior for
   `ORCA_SESSION`.
 - Frontend-to-backend local routing MUST NOT require backend business behavior
@@ -428,6 +480,9 @@ Any future routing choice must preserve:
 - Sensitive runtime values are not source-controlled behavior.
 - Database schema ownership remains separate from runtime wiring.
 - Machine-changing work is not allowed before local environment preflight.
+- Frontend completion does not imply manual end-to-end login readiness unless
+  backend runtime, MariaDB runtime, Flyway schema, local test credential data,
+  and routing prerequisites are satisfied.
 
 ## Error Cases
 
@@ -443,6 +498,11 @@ Any future routing choice must preserve:
   `ORCA_SESSION` -> reject as a frontend/auth boundary violation.
 - A proposed deployment change changes login, session, login audit, diagnostic,
   or organization command behavior -> reject as a scope violation.
+- A proposed deployment change claims manual login readiness without MariaDB
+  runtime, Flyway schema, local login test data, backend configuration, and
+  frontend/backend routing -> reject as incomplete runtime support.
+- A proposed deployment change commits local login credential values or password
+  hashes -> reject as unsafe local test data handling.
 - A proposed deployment change treats local runtime setup as production-ready
   -> reject as a production deployment boundary violation.
 - A preflight command would print secret values -> replace it with a safer
@@ -458,6 +518,7 @@ Any future routing choice must preserve:
 - concrete local Kubernetes target, if Kubernetes is selected
 - future runtime asset path
 - exact local secret creation mechanism
+- exact local test credential creation mechanism
 - exact frontend-to-backend routing pattern
 - whether local routing uses port-forwarding, local ingress, or reverse proxy
 - local developer reset workflow
@@ -483,7 +544,7 @@ Any future routing choice must preserve:
 - CI/CD pipeline setup.
 - TLS, ingress hardening, production DNS, WAF, or edge security.
 - Production-grade secret management.
-- Local seed data workflow.
+- Creating local seed data or login credential data.
 - Health, readiness, liveness, metrics, tracing, or alerting.
 - Database replication.
 - Database backup or restore workflow.
