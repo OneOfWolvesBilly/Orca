@@ -10,6 +10,7 @@
 
 # frontend future-proof
 orca_frontend/node_modules/
+orca_frontend/.vite/
 orca_frontend/dist/
 orca_frontend/build/
 
