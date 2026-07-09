@@ -1,0 +1,4 @@
+include:
+  - path: ./orca-db/compose.yml
+  - path: ./orca-backend/compose.yml
+  - path: ./orca-frontend/compose.yml

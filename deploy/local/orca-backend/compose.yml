@@ -1,0 +1,15 @@
+services:
+  orca-backend:
+    build:
+      context: ../../..
+      dockerfile: deploy/local/orca-backend/Dockerfile
+    container_name: orca-backend
+    ports:
+      - "${ORCA_LOCAL_BACKEND_PORT:-8080}:8080"
+    environment:
+      ORCA_LOCAL_DB_HOST: "${ORCA_LOCAL_BACKEND_DB_HOST:-orca-db}"
+      ORCA_LOCAL_DB_PORT: "${ORCA_LOCAL_BACKEND_DB_PORT:-3306}"
+      ORCA_LOCAL_DB_NAME: "${ORCA_LOCAL_DB_NAME:-orca}"
+      ORCA_LOCAL_DB_USERNAME: "${ORCA_LOCAL_DB_USERNAME:?ORCA_LOCAL_DB_USERNAME is required}"
+      ORCA_LOCAL_DB_PASSWORD: "${ORCA_LOCAL_DB_PASSWORD:?ORCA_LOCAL_DB_PASSWORD is required}"
+      ORCA_LOCAL_BACKEND_PORT: "8080"

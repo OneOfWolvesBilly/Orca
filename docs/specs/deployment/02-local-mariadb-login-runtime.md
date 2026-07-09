@@ -64,17 +64,38 @@ to free the conflicting port before changing the machine.
 
 ## Selected Local Runtime Strategy
 
-The first local runtime strategy is Docker Compose with one MariaDB service and
-the backend running on the host through the `local` Spring profile.
+The first local runtime strategy is Docker Compose with enterprise-style
+component ownership.
+
+The local runtime component names are:
+
+- `orca-frontend` for the frontend runtime component
+- `orca-backend` for the backend runtime component
+- `orca-db` for the MariaDB runtime component
+
+The local compose structure has four compose entry points:
+
+- one local aggregator compose for the full local runtime
+- one component-owned compose for `orca-frontend`
+- one component-owned compose for `orca-backend`
+- one component-owned compose for `orca-db`
+
+The aggregator compose exists for local developer convenience. The
+component-owned compose files exist to practice enterprise-style service
+ownership, where each runtime component can be reasoned about, started, and
+evolved independently.
 
 The selected strategy is intentionally smaller than Kubernetes because manual
 login readiness only needs:
 
-- one local MariaDB runtime
-- backend external datasource configuration
+- one local frontend runtime component
+- one local backend runtime component
+- one local MariaDB runtime component
+- backend external datasource configuration that can reach `orca-db` or a
+  developer-selected existing MariaDB
 - Flyway migration against MariaDB
 - local-only login test data
-- direct API calls or a frontend route that preserves `ORCA_SESSION`
+- frontend-to-backend routing that preserves `ORCA_SESSION`
 
 Kubernetes, ingress, production deployment topology, backup, restore,
 monitoring, and TLS are outside this slice.
@@ -114,12 +135,27 @@ variables.
 Future implementation may create local deployment assets only for this runtime
 path:
 
-- Docker Compose asset for a single local MariaDB service.
+- Aggregator Docker Compose asset for the full local runtime.
+- Component-owned Docker Compose asset for `orca-frontend`.
+- Component-owned Docker Compose asset for `orca-backend`.
+- Component-owned Docker Compose asset for `orca-db`.
+- Runtime build asset for `orca-frontend`, only to run the already-specified
+  frontend behavior.
+- Runtime build asset for `orca-backend`, only to run the already-specified
+  backend behavior.
 - Template or documented placeholder file for local-only environment values.
 - Git-ignored local override file for actual runtime values.
 - Local-only bootstrap mechanism for login test data.
 - Documentation or script that verifies runtime readiness without printing
   secret values.
+
+The committed local environment template is `.env.example`. It may contain
+only placeholder secret values and documented non-secret defaults.
+
+The ignored local runtime override is `.env.local`. It is created on the
+developer machine and may contain real local passwords, selected ports,
+runtime mode, component names, and local-only login test credential values.
+It must not be committed.
 
 Future implementation must not commit:
 
@@ -133,6 +169,40 @@ Future implementation must not commit:
 - real local test credentials
 
 Committed examples must use placeholders only.
+
+## Local Environment Value Boundary
+
+Local runtime values are grouped by purpose:
+
+- database connection values:
+  - database host
+  - database host port
+  - database name
+  - database user
+  - database password
+  - database root or administrator password
+- database mode values:
+  - Orca-owned compose database
+  - existing Docker container database
+  - existing external host/port database
+  - existing database container name, when selected
+- runtime component values:
+  - frontend component name
+  - backend component name
+  - database component name
+  - backend HTTP port
+  - frontend HTTP port
+  - backend-to-database host and port from inside the runtime network
+  - frontend-to-backend API proxy target
+- local-only login test values:
+  - local test user id
+  - unique local test login identifier
+  - local test password
+
+Committed documentation must explain which values are defaults, which values
+are selected per developer machine, and which values are sensitive. Real
+sensitive values belong only in ignored local runtime files or runtime
+environment variables.
 
 ## Backend Runtime Configuration Boundary
 
@@ -178,6 +248,8 @@ credential.
 The local test credential mechanism must:
 
 - be explicit and local-only
+- use a unique login identifier because `auth_login_credentials.login_identifier`
+  is the credential lookup key
 - require the developer to provide the plaintext test password at runtime or
   through an ignored local file
 - avoid printing the password
@@ -185,6 +257,8 @@ The local test credential mechanism must:
 - avoid committing the generated password hash
 - avoid creating production seed data
 - insert only the minimum auth-owned state required for login success
+- update the same local credential when the same login identifier is bootstrapped
+  again
 - preserve auth-owned credential verification rules
 
 Deployment may provide the mechanism that places local test state into the
@@ -228,8 +302,42 @@ passwords, session cookie values, or secret environment values.
   occupied.
 - The implementation documents default ports and the files or environment
   values that must change when the developer selects different ports.
+- The implementation separates the aggregator compose from component-owned
+  compose files for `orca-frontend`, `orca-backend`, and `orca-db`.
 - The implementation does not install or upgrade local tools.
 - The implementation does not create Kubernetes assets.
+
+### Scenario: Aggregator starts the full local runtime
+
+**Given**
+- The developer wants to run the full local runtime.
+- Local runtime values are provided through ignored local configuration.
+
+**When**
+- The developer starts the local aggregator compose.
+
+**Then**
+- `orca-frontend`, `orca-backend`, and `orca-db` run as separate local runtime
+  containers.
+- The frontend reaches the backend through local runtime routing.
+- The backend reaches MariaDB through runtime datasource configuration.
+- The database remains owned by Flyway migrations.
+
+### Scenario: Component compose preserves enterprise ownership practice
+
+**Given**
+- The developer wants to inspect or start one runtime component independently.
+
+**When**
+- The developer uses a component-owned compose file.
+
+**Then**
+- `orca-frontend`, `orca-backend`, and `orca-db` each have their own local
+  compose definition.
+- Component compose files do not redefine auth, frontend, reference-core, or
+  organization business behavior.
+- The aggregator compose coordinates the local runtime without becoming the
+  owner of component behavior.
 
 ### Scenario: Backend starts against Flyway-managed MariaDB
 

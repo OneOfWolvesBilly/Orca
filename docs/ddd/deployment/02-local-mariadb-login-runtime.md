@@ -27,13 +27,19 @@ No domain model is introduced.
 The useful support-scope terms are:
 
 - Local MariaDB Runtime
+- Local Runtime Component Name
+- Local Aggregator Compose
+- Component-owned Compose
 - Docker Compose Runtime Asset
 - Backend Local Profile Runtime
 - Runtime Credential Placeholder
 - Ignored Local Runtime Value
+- Committed Local Environment Template
+- Ignored Local Environment Override
 - Selected Local Port
 - Default Candidate Port
 - Local-only Login Test Data
+- Unique Local Login Identifier
 - Flyway Schema Readiness
 - Manual Login Verification
 - Stop Condition
@@ -49,11 +55,17 @@ domain concepts.
 Deployment owns rules about:
 
 - selecting Docker Compose as the first local MariaDB runtime strategy
+- using `orca-frontend`, `orca-backend`, and `orca-db` as local runtime
+  component names
+- separating the local aggregator compose from component-owned compose files
+  for `orca-frontend`, `orca-backend`, and `orca-db`
 - documenting default candidate ports while allowing developer-selected
   overrides
 - stopping when Docker is unavailable or selected ports are occupied
 - keeping Kubernetes outside this slice
 - separating committed placeholders from ignored local runtime values
+- using `.env.example` as the committed local environment template
+- using `.env.local` as the ignored per-developer runtime override
 - preventing real passwords, password hashes, Secrets, and environment-specific
   values from entering Git
 - verifying that Flyway created the required schema
@@ -117,8 +129,8 @@ Future implementation should use:
 - static checks for committed placeholder files and ignored local value files
 - Git checks that real secrets, generated password hashes, and environment
   values are not staged
-- runtime verification commands for Docker, backend local profile, Flyway
-  tables, and login success/failure behavior
+- runtime verification commands for Docker, component compose files, the local
+  aggregator compose, Flyway tables, and login success/failure behavior
 
 No domain test is required because no domain invariant is introduced.
 
@@ -128,7 +140,7 @@ verify wiring, not redefine auth or reference-core behavior.
 
 ## Design Decisions
 
-### Decision: Use Docker Compose before Kubernetes
+### Decision: Use enterprise-style component compose before Kubernetes
 
 Manual login readiness needs one MariaDB runtime and backend external
 configuration. Docker Compose is the smallest local runtime shape for that
@@ -136,12 +148,24 @@ need. Kubernetes is deferred because ingress, service exposure, Secrets, and
 cluster lifecycle would add operational choices that are not required for the
 first local login test.
 
+### Decision: Separate aggregator compose from component-owned compose
+
+Local runtime assets use one aggregator compose for the full developer runtime
+and one component-owned compose file per runtime component. This mirrors
+enterprise service ownership while keeping one convenient local entry point for
+manual login testing.
+
+### Decision: Name runtime components explicitly
+
+Local runtime assets use `orca-frontend`, `orca-backend`, and `orca-db` as the
+component names. Each name maps to a separate local runtime container when the
+aggregator compose is used.
+
 ### Decision: Run backend on the host with the local profile
 
-Keeping the backend outside the first Compose runtime reduces the number of
-runtime components that must be containerized before login can be practiced.
-The backend still uses external datasource values and Flyway remains the schema
-owner.
+The backend local profile remains the runtime profile used inside or outside a
+container. Runtime configuration still comes from external values, and Flyway
+remains the schema owner.
 
 ### Decision: Treat ports as selectable runtime values
 
@@ -150,11 +174,30 @@ may already have services on common ports, so the runtime assets must document
 which values move together and allow selected ports to live in ignored local
 overrides or runtime environment variables.
 
+### Decision: Document local environment values in a committed template
+
+The committed template is `.env.example`. It documents required keys and
+non-secret defaults using placeholder secret values only. The per-developer
+override is `.env.local`, which is ignored by Git and may contain real local
+passwords, selected ports, runtime mode, component names, and local-only login
+test values.
+
+Runtime documentation must explain which values are defaults, which values are
+developer-selected, and which values are sensitive. Deployment scripts may read
+the ignored override at runtime, but committed source must not include real
+passwords, generated password hashes, session cookie values, or
+environment-specific selected values.
+
 ### Decision: Treat local test data as runtime support
 
 The local test identity exists only to exercise already-specified login
 behavior. It is not product seed data and must not be committed as real
 credentials or generated password hashes.
+
+The login identifier is the auth credential lookup key and maps to the primary
+key of `auth_login_credentials`. Local bootstrap may update the same credential
+when the same identifier is reused, but it must not model duplicate login
+identifiers as valid runtime state.
 
 ### Decision: Verify behavior through HTTP without duplicating rules
 

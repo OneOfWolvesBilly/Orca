@@ -1,6 +1,9 @@
 spring:
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://localhost:3306/orca
-    username: orca
-    password: orca
+    url: jdbc:mariadb://${ORCA_LOCAL_DB_HOST:localhost}:${ORCA_LOCAL_DB_PORT:3306}/${ORCA_LOCAL_DB_NAME:orca}
+    username: ${ORCA_LOCAL_DB_USERNAME}
+    password: ${ORCA_LOCAL_DB_PASSWORD}
+
+server:
+  port: ${ORCA_LOCAL_BACKEND_PORT:8080}

@@ -1,0 +1,10 @@
+services:
+  orca-frontend:
+    build:
+      context: ../../..
+      dockerfile: deploy/local/orca-frontend/Dockerfile
+    container_name: orca-frontend
+    ports:
+      - "${ORCA_LOCAL_FRONTEND_PORT:-5173}:5173"
+    environment:
+      ORCA_FRONTEND_API_PROXY_TARGET: "${ORCA_FRONTEND_API_PROXY_TARGET:-http://orca-backend:8080}"
