@@ -89,6 +89,7 @@ frontend business rules.
 | --- | --- | --- | --- |
 | `reference-core-01` | [Stable API Error Contract](specs/reference-core/01-stable-api-error-contract.md) | [DDD](ddd/reference-core/01-stable-api-error-contract.md) | Done |
 | `reference-core-02` | [Client Diagnostics Foundation](specs/reference-core/02-client-diagnostics-foundation.md) | [DDD](ddd/reference-core/02-client-diagnostics-foundation.md) | Done |
+| `reference-core-03` | [Reusable Audit Recording Boundary](specs/reference-core/03-reusable-audit-recording-boundary.md) | [DDD](ddd/reference-core/03-reusable-audit-recording-boundary.md) | Proposed |
 
 ## Frontend
 

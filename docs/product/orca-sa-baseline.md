@@ -14,10 +14,13 @@ operational workflow gap instead of deriving slices from technical ideas alone.
 
 ## Product Positioning
 
-Orca is an enterprise application core reference project.
+Orca is a portfolio-grade full-stack architecture showcase built around a
+reusable authentication, session, audit, and logging core.
 
-It demonstrates how common enterprise backend capabilities can be developed
-through disciplined SDD, DDD, and TDD:
+It demonstrates how a product foundation can be developed through disciplined
+SDD, DDD, and TDD across backend behavior, frontend clients, database
+migrations, local runtime support, and future cloud-oriented deployment
+boundaries:
 
 - auth-owned registered user identity
 - password login and server-side sessions
@@ -25,15 +28,24 @@ through disciplined SDD, DDD, and TDD:
 - admin-managed user provisioning
 - organization membership and invitation workflows
 - persistence and HTTP delivery integration
+- React frontend login result and client failure observability foundation
+- local MariaDB runtime direction for login-facing workflows
+- safe diagnostic and audit/log support boundaries
 
 Orca is not currently a CRM product, a project-management product, or a generic
 SaaS platform. It may supply reusable development patterns for those products,
 but product-domain workflows for CRM, project management, or other domains must
 be defined in their own project baselines.
 
-Frontend work has not yet become part of the implemented baseline. A small
-frontend shell may be added later as part of the reference-core direction, but
-it must still be traced to a workflow gap.
+Frontend work is part of the showcase only where an authoritative frontend
+delivery slice exists. The current implemented frontend baseline is the React
+login result shell and client failure observability foundation. Vue and Angular
+ports remain planned unless their implementation slices are completed.
+
+Reusable audit and logging support are product-neutral boundaries. Orca may
+provide shared interfaces, record envelopes, diagnostics, and safety rules, but
+consuming products own their product-specific events, metadata, storage choices,
+and audit decisions.
 
 ---
 
@@ -239,9 +251,11 @@ Already supported:
 
 Planned / gap:
 
+- proposed reusable audit recording boundary that does not require centralized
+  Orca audit storage
 - structured application logging
 - correlation / request id propagation
-- security and user-operation audit trail
+- audit storage adapters and workflow-specific audit emission
 - health, readiness, liveness, and metrics
 - OpenAPI / API contract publication
 
@@ -373,7 +387,7 @@ Required safety boundaries:
 
 ### Audit and Operational Support
 
-Status: planned / gap.
+Status: reusable audit boundary proposed / broader audit workflow remains a gap.
 
 Purpose:
 
@@ -392,6 +406,10 @@ Current support:
 Completed first auth-related slice:
 
 - `auth-10` login failure audit / troubleshooting reference
+
+Proposed reference-core slice:
+
+- `reference-core-03` reusable audit recording boundary
 
 Unknown / to be discovered:
 

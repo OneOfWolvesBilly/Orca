@@ -16,9 +16,13 @@ capability dependency list.
 
 Current posture:
 
-1. Organization membership is the completed baseline.
-2. Auth is the active development track.
-3. Cross-cutting reference-core capabilities come after those baselines and
+1. Orca is a full-stack architecture showcase built around a reusable
+   authentication, session, audit, and logging core.
+2. Organization membership is a completed backend workflow baseline.
+3. Auth is the active backend development track.
+4. Frontend, deployment, and cross-cutting reference-core capabilities
+   demonstrate full-stack product engineering around those workflows.
+5. Cross-cutting reference-core capabilities come after those baselines and
    protect or expose existing workflows.
 
 This ordering keeps future work clear:
@@ -26,8 +30,9 @@ This ordering keeps future work clear:
 - organization slices are completed and should not be reopened unless a new
   workflow gap explicitly changes organization behavior
 - auth may continue with `auth-10+` slices
-- logging, exception handling, cache, API documentation, and frontend shell are
-  reference-core support capabilities, not organization or auth domain behavior
+- logging, audit, exception handling, cache, API documentation, frontend shell,
+  and deployment support are support capabilities, not organization or auth
+  domain behavior
 
 ---
 
@@ -285,6 +290,7 @@ Existing slices:
 
 - `auth-10` for login failure audit/reference.
 - `reference-core-02` client diagnostics foundation is implemented.
+- `reference-core-03` reusable audit recording boundary is proposed.
 - No dedicated general application logging or observability slice.
 
 Existing capabilities:
@@ -302,6 +308,13 @@ Implemented foundation:
 - separation between auth-owned login failure references and reference-core
   client failure references
 
+Proposed foundation:
+
+- product-neutral audit recording port and envelope
+- sensitive-field restrictions for audit metadata
+- consuming-product ownership of product-specific event definitions
+- no centralized Orca audit database requirement
+
 Missing capabilities / possible future slices:
 
 - frontend client failure reporting
@@ -309,7 +322,10 @@ Missing capabilities / possible future slices:
 - correlation / request id propagation
 - diagnostic retention and cleanup
 - safe logging policy for auth inputs, cookies, and credentials
-- security audit trail for provisioning and organization membership commands
+- implementation of the reusable audit recording boundary
+- workflow-specific audit emission for provisioning and organization membership
+  commands
+- audit storage adapters and event-specific failure policies
 - health, readiness, liveness, and metrics
 
 Sequencing notes:
@@ -317,11 +333,15 @@ Sequencing notes:
 - Login failure audit is covered by the active auth track.
 - `reference-core-02` is available before frontend behavior displays a
   queryable client failure reference.
+- `reference-core-03` should establish the reusable audit boundary before auth
+  or organization workflows are migrated to it.
 - General logging and observability are cross-cutting support capabilities.
 - Logs and audit must not store passwords, raw session cookie values, or
   credential secrets.
 - A logging slice should not reopen organization behavior just because
   organization commands are audit/log sources.
+- Orca must not define consuming-product event catalogs such as alarm,
+  entitlement, or evidence events.
 
 ### Capability Group: Performance and Cache
 
@@ -441,6 +461,8 @@ Sequencing notes:
   they protect.
 - A cross-cutting slice must not silently add domain behavior to organization
   or auth.
+- Consuming products remain responsible for product-specific audit event
+  meaning, metadata, and storage decisions.
 
 ---
 

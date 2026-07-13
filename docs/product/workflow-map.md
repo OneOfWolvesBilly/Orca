@@ -135,10 +135,10 @@ Currently supported slices:
 - `auth-05` registered user identity integration
 - `auth-08` password login with server-side session
 - `auth-09` protected HTTP session context
+- `auth-10` login failure audit
 
 Known gaps:
 
-- login failure audit / troubleshooting reference
 - logout and session revocation
 - credential setup and password reset / recovery
 - account disable checks during login and session use
@@ -391,6 +391,8 @@ Main success flow:
    timestamp.
 3. The record is persisted before the reference is returned.
 4. An authenticated `IT_ADMIN` looks up the safe record by exact reference.
+5. A caller may submit a product-neutral audit record through a reusable audit
+   boundary once `reference-core-03` is approved and implemented.
 
 Currently supported slices:
 
@@ -400,6 +402,10 @@ Currently supported reference-core foundation:
 
 - `reference-core-02` client diagnostics foundation.
 
+Proposed reference-core slice:
+
+- `reference-core-03` reusable audit recording boundary.
+
 Known gaps:
 
 - structured logs
@@ -407,6 +413,7 @@ Known gaps:
 - client-side failure reporting behavior
 - diagnostic retention and cleanup
 - safe logging rules for auth/session data
+- audit storage adapters and workflow-specific audit emission
 - health, readiness, and liveness endpoints
 - metrics
 - operational documentation
@@ -414,9 +421,77 @@ Known gaps:
 Explicit unknowns:
 
 - general application logging backend
+- audit retention and access policy
+- audit reader actor
+- audit storage adapter choice
 - metrics backend
 - retention policy
 - deployment environment
+
+---
+
+## Workflow: Reusable Audit Recording Boundary
+
+Status: proposed / no implementation yet.
+
+Primary actor:
+
+- Application developer integrating an Orca or consuming-product workflow with
+  audit recording
+
+Supporting actors:
+
+- Reference-core audit boundary
+- Consuming product audit mapper
+- Audit recorder implementation, if supplied by an application
+
+Goal:
+
+Allow Orca workflows and consuming products to record product-neutral audit
+records through a stable boundary without Orca owning consuming-product event
+semantics or requiring centralized Orca audit storage.
+
+Preconditions:
+
+- Existing auth, organization, or consuming-product workflow decides that an
+  action should be auditable.
+- The workflow can map its own typed event or command result to the
+  product-neutral audit envelope.
+
+Main success flow:
+
+1. The workflow produces or maps a typed event outside reference-core.
+2. The mapper creates a product-neutral audit record envelope.
+3. Reference-core validates required audit fields and sensitive-data
+   restrictions.
+4. The configured recorder receives the validated audit record.
+5. The recorder implementation decides storage or transport outside the core
+   API.
+
+Alternative / failure flows:
+
+- Missing required audit fields are rejected before recording.
+- Forbidden sensitive values are rejected before recording.
+- Recorder implementation failure is handled by a future workflow-specific
+  failure policy, not by one global rule in the core API.
+
+Proposed slice:
+
+- `reference-core-03` reusable audit recording boundary.
+
+Known gaps:
+
+- implementation tests and production code
+- storage adapters
+- workflow-specific audit emission from auth or organization commands
+- audit lookup, retention, and access policy
+
+Explicit unknowns:
+
+- audit reader actor
+- retention period
+- fail-open versus fail-closed policy per event
+- production storage or transport choice
 
 ---
 

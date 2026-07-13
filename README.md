@@ -61,7 +61,7 @@ Planned or gap areas:
 * credential setup, password reset, and recovery flows
 * MFA, including future TOTP or QR-based authentication slices if specified
 * future Passkey / WebAuthn support if specified
-* reusable audit recording boundary
+* proposed reusable audit recording boundary, with implementation still pending
 * structured application logging and correlation support
 * broader frontend protected workflows
 * production-oriented cloud deployment work
