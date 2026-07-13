@@ -228,22 +228,22 @@ The allowed internal state list is not a client response contract.
 - Successful login behavior changes.
 - Login failure reference id or login audit changes.
 - Session creation.
-- Session renewal or sliding expiration.
-- Idle timeout renewal policy.
+- Session renewal or sliding expiration implementation.
+- Idle timeout renewal implementation.
 - Refresh token or access token behavior.
 - Remember-me behavior.
 - OAuth, SSO, OIDC, or external identity provider flows.
 - MFA.
 - Password reset or credential recovery.
 - Account disable, suspend, reactivate, or delete behavior.
-- Account lifecycle triggered session revocation.
-- Administrator-forced session revocation.
+- Account lifecycle triggered session revocation implementation.
+- Administrator-forced session revocation implementation.
 - Revoking all sessions for a user.
-- Multi-device session management.
-- Session cache or revocation propagation.
-- Storage cleanup schedule for expired or revoked sessions.
-- Session retention policy.
-- Audit storage or reusable audit recording integration.
+- Multi-device session management implementation.
+- Session cache or revocation propagation implementation.
+- Storage cleanup implementation for expired or revoked sessions.
+- Session retention implementation.
+- Audit storage or reusable audit recording implementation.
 - Full log management framework.
 - General application logging or correlation id propagation.
 - Authorization permission model changes.
@@ -260,15 +260,17 @@ The allowed internal state list is not a client response contract.
 
 ## Unknown / To Be Discovered
 
-- Session revocation retention policy.
-- Cleanup schedule for expired or revoked session records.
-- Revocation propagation policy if session caching is introduced later.
-- Whether logout or revocation should emit audit records or application logs.
-- Whether account disable / suspend should revoke existing sessions.
-- Whether administrators can force-revoke sessions.
-- Whether users can list or revoke all sessions.
-- Frontend session UX.
-- Session renewal and sliding expiration policy.
+- What retention policy should apply to revoked session records?
+- What cleanup schedule should apply to expired or revoked session records?
+- If a future session cache exists, what revocation propagation policy should
+  prevent stale authenticated sessions?
+- Should logout or revocation emit audit records or application logs?
+- Should account disable or suspend revoke existing sessions?
+- Which actor, if any, may force-revoke another user's session?
+- Should users be able to list sessions or revoke all sessions?
+- What frontend session UX is needed for logout, expiration, or renewal?
+- What session renewal or sliding expiration policy should be specified by a
+  future slice?
 
 ---
 
