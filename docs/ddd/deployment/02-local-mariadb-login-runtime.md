@@ -3,6 +3,9 @@
 Status: Derived from
 `docs/specs/deployment/02-local-mariadb-login-runtime.md`.
 
+Implementation status: local runtime assets implemented and local manual
+verification is available.
+
 ## Purpose
 
 This note derives the model boundary and rule placement for `deployment-02`.
@@ -120,10 +123,10 @@ must not reimplement backend rules in the frontend.
 
 ## Test Layer Placement
 
-This slice primarily authorizes deployment assets and manual runtime
-verification, not domain or application code.
+This slice provides deployment assets and manual runtime verification, not
+domain or application code.
 
-Future implementation should use:
+The implementation uses:
 
 - documentation review for the spec and DDD files
 - static checks for committed placeholder files and ignored local value files

@@ -15,6 +15,11 @@ This slice is a planning and safety slice. It defines the required equipment
 inspection, build plan, installation decision points, execution gates, and
 runtime safety boundaries before any concrete deployment assets are created.
 
+`deployment-02` is the follow-up implementation slice that authorizes the first
+local MariaDB login runtime assets. This slice remains the support gate and
+build-plan authority; it does not become the runtime asset implementation
+slice.
+
 `deployment` is a delivery/runtime support scope, not a bounded context.
 
 The local environment preflight is a deployment support workflow gate. It is
@@ -27,7 +32,7 @@ upgrade, runtime asset creation, or runtime execution.
 - Workflows:
   - Authentication and Session
   - Frontend Reference Shell
-  - Logging, Observability, and Operations
+  - Operational Reliability
 - Workflow gap:
   - Orca has login and frontend behavior that can be implemented and tested,
     but a clean open-source user has no authoritative path for preparing the

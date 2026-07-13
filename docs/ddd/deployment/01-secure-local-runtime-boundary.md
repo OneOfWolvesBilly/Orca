@@ -173,6 +173,11 @@ not executable deployment work. Future work must still review and authorize
 preflight commands, build-strategy details, installation policy, runtime
 assets, and runtime execution before introducing or running them.
 
+`deployment-02` is the successor implementation slice for the first local
+MariaDB login runtime assets. This does not change `deployment-01` into a
+runtime asset slice; it preserves `deployment-01` as the planning and safety
+gate that later deployment implementation work must satisfy.
+
 ### Decision: Start from local environment preflight
 
 Installation, upgrade, and runtime execution depend on the developer machine's

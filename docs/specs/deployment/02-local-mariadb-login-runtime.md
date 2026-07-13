@@ -1,17 +1,21 @@
 # Deployment 02 - Local MariaDB Login Runtime
 
-Status: Proposed / runtime asset authorization required before execution.
+Status: Implemented / local manual verification ready.
 
 ## Goal
 
 Define the local MariaDB runtime path that lets a developer manually exercise
 the already-specified password login success and failure behavior.
 
-This slice authorizes the next implementation work to create local runtime
-assets only after the current machine preflight is recorded and reviewed. It
-does not authorize installing tools, upgrading tools, creating production
-deployment assets, or changing auth, reference-core, organization, or frontend
-business behavior.
+This slice authorized local runtime assets after the current machine preflight
+was recorded and reviewed. It does not authorize installing tools, upgrading
+tools, creating production deployment assets, or changing auth, reference-core,
+organization, or frontend business behavior.
+
+The implemented local runtime path provides component-owned Docker Compose
+assets, backend local-profile MariaDB configuration, Flyway-backed schema
+readiness, local-only login test data bootstrap, and manual login
+success/failure verification without printing secret values.
 
 `deployment` remains a delivery/runtime support scope, not a bounded context.
 
@@ -19,7 +23,7 @@ business behavior.
 
 - Workflows:
   - Authentication and Session
-  - Logging, Observability, and Operations
+  - Operational Reliability
   - Frontend Reference Shell
 - Workflow gap:
   - Login success and failure behavior is specified, but a developer needs a
@@ -132,8 +136,7 @@ variables.
 
 ## Runtime Asset Boundary
 
-Future implementation may create local deployment assets only for this runtime
-path:
+The implemented local deployment assets are limited to this runtime path:
 
 - Aggregator Docker Compose asset for the full local runtime.
 - Component-owned Docker Compose asset for `orca-frontend`.
@@ -157,7 +160,7 @@ developer machine and may contain real local passwords, selected ports,
 runtime mode, component names, and local-only login test credential values.
 It must not be committed.
 
-Future implementation must not commit:
+The implementation must not commit:
 
 - real database passwords
 - root or administrator database passwords
@@ -261,9 +264,10 @@ The local test credential mechanism must:
   again
 - preserve auth-owned credential verification rules
 
-Deployment may provide the mechanism that places local test state into the
-local MariaDB database. Deployment must not define password verification rules,
-session semantics, login failure response shape, or auth business behavior.
+Deployment provides the local-only mechanism that places local test state into
+the local MariaDB database. Deployment must not define password verification
+rules, session semantics, login failure response shape, or auth business
+behavior.
 
 ## Manual Verification Requirements
 
@@ -294,7 +298,7 @@ passwords, session cookie values, or secret environment values.
 - The current machine preflight has been recorded.
 
 **When**
-- Deployment implementation prepares runtime assets.
+- Deployment implementation prepares or updates runtime assets.
 
 **Then**
 - The implementation uses the selected Docker Compose MariaDB strategy.
