@@ -49,6 +49,7 @@ Already supported by authoritative slices:
 * password login with server-side sessions
 * protected command actor context from the `ORCA_SESSION` cookie
 * auth-owned login failure audit with an opaque troubleshooting reference
+* logout and session revocation
 * organization group creation and invitation lifecycle commands
 * stable API error contract for backend HTTP APIs
 * safe client diagnostic ingestion and protected lookup
@@ -56,7 +57,6 @@ Already supported by authoritative slices:
 
 Planned or gap areas:
 
-* logout and session revocation
 * account lifecycle checks
 * credential setup, password reset, and recovery flows
 * MFA, including future TOTP or QR-based authentication slices if specified

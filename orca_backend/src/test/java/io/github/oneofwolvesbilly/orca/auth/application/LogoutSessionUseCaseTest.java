@@ -10,6 +10,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class LogoutSessionUseCaseTest {
@@ -63,5 +64,7 @@ class LogoutSessionUseCaseTest {
         var useCase = new LogoutSessionUseCase(sessions, CLOCK);
 
         useCase.handle(new LogoutSessionCommand(SESSION_ID.value()));
+
+        assertNull(sessions.findBySessionId(SESSION_ID).orElseThrow().revokedAt());
     }
 }

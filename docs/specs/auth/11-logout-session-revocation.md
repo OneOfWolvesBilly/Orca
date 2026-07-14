@@ -82,11 +82,19 @@ The request body is empty:
 {}
 ```
 
+The logout request body MUST be an empty JSON object. A non-empty request body
+is rejected as a validation error under `reference-core-01` and MUST NOT select,
+revoke, renew, or create a session.
+
 Logout is a command and MUST use `POST`. It MUST NOT use `GET` because it
 depends on user/session context.
 
 Successful logout returns no user, personnel, role, organization, profile,
 session state, session id, revocation reason, or expiration details.
+
+Logout returns `204 No Content` for both an active presented session and every
+no-active-session condition defined by this slice. The response body is empty
+and the response MUST NOT issue a new authenticated session cookie.
 
 The HTTP response may clear the `ORCA_SESSION` cookie using an expired or
 zero-lifetime cookie value. Cookie clearing is an HTTP delivery behavior only;
@@ -184,6 +192,10 @@ active session is presented.
 - Logout MUST be exposed as `POST /api/auth/logout`.
 - Logout MUST NOT use `GET`.
 - The logout request body MUST be empty.
+- A non-empty logout JSON body MUST be rejected as a validation error under
+  `reference-core-01` before it can select or mutate a session.
+- An active logout and every no-active-session condition MUST return the same
+  `204 No Content` response with an empty body.
 - Logout MUST identify the session to revoke only from the `ORCA_SESSION`
   cookie when a session is presented.
 - The `ORCA_SESSION` cookie value MUST be treated as an opaque session id.
@@ -241,6 +253,8 @@ active session is presented.
   disclosure.
 - Already revoked session id on logout -> safe logout response without
   session-state disclosure.
+- Non-empty logout request body -> stable validation error under
+  `reference-core-01` without session mutation or session-state disclosure.
 - Revoked session presented to protected command -> rejected as unauthenticated
   under `auth-09`.
 - Expired session presented to protected command -> rejected as unauthenticated

@@ -98,11 +98,15 @@ cookies, Spring, JPA, or database schema details.
 
 - Expose `POST /api/auth/logout`.
 - Read only the `ORCA_SESSION` cookie as the presented session reference.
+- Accept only an empty JSON object request body and reject a non-empty body
+  before invoking the application boundary.
 - Treat the cookie value as opaque.
 - Do not decode identity, role, organization, profile, permission, expiration,
   or revocation data from the cookie value.
 - Pass the presented session id to the auth application boundary when present
   and acceptable as transport input.
+- Return `204 No Content` with an empty body for an active session and every
+  no-active-session condition.
 - Return no user, profile, role, organization, session id, revocation reason,
   expiration state, or internal session state.
 - May clear the `ORCA_SESSION` cookie as HTTP delivery behavior.

@@ -8,6 +8,7 @@ import io.github.oneofwolvesbilly.orca.auth.application.ConfirmProvisioningIdent
 import io.github.oneofwolvesbilly.orca.auth.application.LoginFailureAuditRecordRepository;
 import io.github.oneofwolvesbilly.orca.auth.application.LoginFailureReferenceIdGenerator;
 import io.github.oneofwolvesbilly.orca.auth.application.LoginCredentialVerifier;
+import io.github.oneofwolvesbilly.orca.auth.application.LogoutSessionUseCase;
 import io.github.oneofwolvesbilly.orca.auth.application.PasswordLoginUseCase;
 import io.github.oneofwolvesbilly.orca.auth.application.ProvisionRegisteredUserIdentityUseCase;
 import io.github.oneofwolvesbilly.orca.auth.application.ProvisioningVerificationRequestRepository;
@@ -140,6 +141,14 @@ class AuthConfiguration {
                 authClock,
                 authSessionLifetime
         );
+    }
+
+    @Bean
+    LogoutSessionUseCase logoutSessionUseCase(
+            AuthenticatedSessionRepository authenticatedSessionRepository,
+            Clock authClock
+    ) {
+        return new LogoutSessionUseCase(authenticatedSessionRepository, authClock);
     }
 
     @Bean
