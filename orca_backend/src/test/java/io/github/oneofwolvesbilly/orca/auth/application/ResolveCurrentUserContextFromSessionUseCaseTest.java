@@ -27,7 +27,7 @@ class ResolveCurrentUserContextFromSessionUseCaseTest {
     @Test
     void valid_session_establishes_current_user_context() {
         var sessions = new FakeAuthenticatedSessionRepository();
-        sessions.save(AuthenticatedSession.create(
+        sessions.create(AuthenticatedSession.create(
                 SESSION_ID,
                 AuthenticatedUserId.of("user-1"),
                 NOW.minusSeconds(60),
@@ -70,7 +70,7 @@ class ResolveCurrentUserContextFromSessionUseCaseTest {
     @Test
     void expired_session_is_rejected_as_unauthenticated() {
         var sessions = new FakeAuthenticatedSessionRepository();
-        sessions.save(AuthenticatedSession.create(
+        sessions.create(AuthenticatedSession.create(
                 SESSION_ID,
                 AuthenticatedUserId.of("user-1"),
                 NOW.minusSeconds(120),
@@ -86,7 +86,7 @@ class ResolveCurrentUserContextFromSessionUseCaseTest {
     @Test
     void session_for_unregistered_user_is_rejected_as_unauthenticated() {
         var sessions = new FakeAuthenticatedSessionRepository();
-        sessions.save(AuthenticatedSession.create(
+        sessions.create(AuthenticatedSession.create(
                 SESSION_ID,
                 AuthenticatedUserId.of("missing-user"),
                 NOW.minusSeconds(60),

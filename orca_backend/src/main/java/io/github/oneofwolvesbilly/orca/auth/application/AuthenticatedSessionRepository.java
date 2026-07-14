@@ -9,7 +9,11 @@ import java.util.Optional;
 
 public interface AuthenticatedSessionRepository {
 
-    void save(AuthenticatedSession session);
+    void create(AuthenticatedSession session);
+
+    void saveRevocation(AuthenticatedSession session);
+
+    Optional<AuthenticatedSession> findBySessionId(AuthenticatedSessionId sessionId);
 
     Optional<AuthenticatedUserId> findAuthenticatedUserIdBySessionId(AuthenticatedSessionId sessionId, Instant now);
 }

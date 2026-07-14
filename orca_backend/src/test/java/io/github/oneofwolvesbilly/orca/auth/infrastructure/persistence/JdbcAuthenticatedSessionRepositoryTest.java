@@ -15,6 +15,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JdbcAuthenticatedSessionRepositoryTest {
@@ -36,8 +37,8 @@ class JdbcAuthenticatedSessionRepositoryTest {
     }
 
     @Test
-    void save_persists_server_side_session_state() {
-        repository.save(AuthenticatedSession.create(
+    void create_persists_server_side_session_state() {
+        repository.create(AuthenticatedSession.create(
                 AuthenticatedSessionId.of(SESSION_ID),
                 AuthenticatedUserId.of("user-1"),
                 CREATED_AT,
@@ -67,7 +68,7 @@ class JdbcAuthenticatedSessionRepositoryTest {
 
     @Test
     void finds_authenticated_user_id_for_existing_unexpired_session() {
-        repository.save(AuthenticatedSession.create(
+        repository.create(AuthenticatedSession.create(
                 AuthenticatedSessionId.of(SESSION_ID),
                 AuthenticatedUserId.of("user-1"),
                 CREATED_AT,
@@ -95,7 +96,7 @@ class JdbcAuthenticatedSessionRepositoryTest {
 
     @Test
     void returns_empty_for_expired_session() {
-        repository.save(AuthenticatedSession.create(
+        repository.create(AuthenticatedSession.create(
                 AuthenticatedSessionId.of(SESSION_ID),
                 AuthenticatedUserId.of("user-1"),
                 CREATED_AT,
@@ -108,6 +109,52 @@ class JdbcAuthenticatedSessionRepositoryTest {
         );
 
         assertTrue(result.isEmpty());
+        assertNull(repository.findBySessionId(AuthenticatedSessionId.of(SESSION_ID))
+                .orElseThrow()
+                .revokedAt());
+    }
+
+    @Test
+    void persists_revocation_for_existing_session_and_rejects_it_for_session_use() {
+        repository.create(AuthenticatedSession.create(
+                AuthenticatedSessionId.of(SESSION_ID),
+                AuthenticatedUserId.of("user-1"),
+                CREATED_AT,
+                EXPIRES_AT
+        ));
+
+        Instant revokedAt = CREATED_AT.plusSeconds(60);
+        AuthenticatedSession revoked = repository.findBySessionId(AuthenticatedSessionId.of(SESSION_ID))
+                .orElseThrow()
+                .revoke(revokedAt);
+
+        repository.saveRevocation(revoked);
+
+        AuthenticatedSession reloaded = repository.findBySessionId(AuthenticatedSessionId.of(SESSION_ID))
+                .orElseThrow();
+        assertEquals(revokedAt, reloaded.revokedAt());
+        assertTrue(repository.findAuthenticatedUserIdBySessionId(
+                AuthenticatedSessionId.of(SESSION_ID),
+                revokedAt.plusSeconds(1)
+        ).isEmpty());
+    }
+
+    @Test
+    void persists_null_revoked_at_for_new_session() {
+        repository.create(AuthenticatedSession.create(
+                AuthenticatedSessionId.of(SESSION_ID),
+                AuthenticatedUserId.of("user-1"),
+                CREATED_AT,
+                EXPIRES_AT
+        ));
+
+        Timestamp revokedAt = jdbcTemplate.queryForObject(
+                "SELECT revoked_at FROM auth_authenticated_sessions WHERE session_id = ?",
+                Timestamp.class,
+                SESSION_ID
+        );
+
+        assertNull(revokedAt);
     }
 
     private static DataSource newDataSource() {

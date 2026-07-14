@@ -63,7 +63,7 @@ public final class PasswordLoginUseCase {
         Instant expiresAt = createdAt.plus(sessionLifetime);
         AuthenticatedSessionId sessionId = sessionIdGenerator.generate();
         AuthenticatedSession session = AuthenticatedSession.create(sessionId, authenticatedUserId, createdAt, expiresAt);
-        sessionRepository.save(session);
+        sessionRepository.create(session);
         return new PasswordLoginResult(sessionId, expiresAt);
     }
 

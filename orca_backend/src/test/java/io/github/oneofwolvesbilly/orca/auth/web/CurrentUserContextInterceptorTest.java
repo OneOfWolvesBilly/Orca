@@ -33,7 +33,7 @@ class CurrentUserContextInterceptorTest {
     private static final FakeAuthenticatedSessionRepository sessions = new FakeAuthenticatedSessionRepository();
 
     static {
-        sessions.save(AuthenticatedSession.create(
+        sessions.create(AuthenticatedSession.create(
                 SESSION_ID,
                 AuthenticatedUserId.of("user-1"),
                 NOW.minusSeconds(60),

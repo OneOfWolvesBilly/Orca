@@ -26,7 +26,7 @@ class CurrentUserContextResolverTest {
     private static final FakeAuthenticatedSessionRepository sessions = new FakeAuthenticatedSessionRepository();
 
     static {
-        sessions.save(AuthenticatedSession.create(
+        sessions.create(AuthenticatedSession.create(
                 SESSION_ID,
                 AuthenticatedUserId.of("user-1"),
                 NOW.minusSeconds(60),
@@ -72,7 +72,7 @@ class CurrentUserContextResolverTest {
     @Test
     void resolve_rejects_when_session_user_is_not_registered() {
         var unregisteredSessions = new FakeAuthenticatedSessionRepository();
-        unregisteredSessions.save(AuthenticatedSession.create(
+        unregisteredSessions.create(AuthenticatedSession.create(
                 AuthenticatedSessionId.of("9f1eb30a-86d0-4a3e-89c8-a6ff395ec144"),
                 AuthenticatedUserId.of("missing-user"),
                 NOW.minusSeconds(60),
