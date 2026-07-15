@@ -76,7 +76,7 @@ SDD -> DDD -> TDD workflow before implementation.
 The concrete product direction is a reusable authentication and session core for
 Billy's current and future products.
 
-Future Orca slices may provide:
+Orca's authentication and session direction includes:
 
 * registered user identity
 * password authentication

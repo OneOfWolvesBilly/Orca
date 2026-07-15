@@ -201,7 +201,8 @@ Sequencing notes:
 
 - `auth-10` covers login failure audit/reference without defining support
   lookup, retention, or audit-reader access policy.
-- Logout and revocation should be specified before session cache is considered.
+- `auth-11` defines logout and session revocation semantics that any future
+  session cache must preserve.
 - External login should come after internal auth/session semantics are stable.
 
 ### Capability Group: Auth System Role Boundary
@@ -372,8 +373,8 @@ Sequencing notes:
 
 - Do not cache passwords, credentials, profile details, role details, or raw
   session values.
-- Session lookup cache should be delayed until logout/revocation semantics are
-  specified.
+- Any future session lookup cache must preserve the logout and revocation
+  semantics defined by `auth-11`.
 - Positive registered-user existence cache is a safer first cache slice than
   session cache.
 - Cache work is an infrastructure optimization and must preserve existing

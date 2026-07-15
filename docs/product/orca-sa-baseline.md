@@ -429,11 +429,11 @@ Already supported:
 - `ORCA_SESSION` cookie
 - protected command context from server-side session state
 - login failure audit / troubleshooting reference
+- logout
+- session revocation
 
 Planned / gap:
 
-- logout
-- session revocation
 - credential setup
 - password reset / credential recovery
 - account disabled / suspended login checks
@@ -519,7 +519,8 @@ Required safety boundaries:
 - do not cache profile details
 - do not cache role-detail payloads
 - do not cache raw session cookie values
-- delay session lookup cache until logout / revocation behavior is specified
+- require any future session lookup cache to preserve the logout and revocation
+  behavior defined by `auth-11`
 - avoid negative registered-user cache unless a stale-data rule is explicitly
   specified
 
