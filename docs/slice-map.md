@@ -82,6 +82,7 @@ frontend business rules.
 | `auth-08` | [Password Login with Server-side Session](specs/auth/08-password-login-with-server-side-session.md) | [DDD](ddd/auth/08-password-login-with-server-side-session.md) | Done |
 | `auth-09` | [Protected HTTP Session Context](specs/auth/09-protected-http-session-context.md) | [DDD](ddd/auth/09-protected-http-session-context.md) | Done |
 | `auth-10` | [Login Failure Audit](specs/auth/10-login-failure-audit.md) | [DDD](ddd/auth/10-login-failure-audit.md) | Done |
+| `auth-11` | [Logout and Session Revocation](specs/auth/11-logout-session-revocation.md) | [DDD](ddd/auth/11-logout-session-revocation.md) | Done |
 
 ## Reference Core
 

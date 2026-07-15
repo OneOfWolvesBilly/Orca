@@ -194,10 +194,10 @@ Already supported:
 - password login with server-side session
 - opaque session cookie
 - session-backed protected HTTP command actor context
+- logout and session revocation
 
 Planned / gap:
 
-- logout and session revocation
 - credential setup and password reset / recovery
 - account disabled checks during login and session use
 - current-user endpoint, if needed by frontend workflow

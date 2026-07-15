@@ -17,8 +17,9 @@ retention policy for expired or revoked session records.
 ## Workflow Traceability
 
 - Workflow: Authentication and Session.
-- Workflow gap: product workflow and capability maps list logout and session
-  revocation as a planned authentication/session gap.
+- Workflow gap closed by this slice: logout and session revocation was a
+  planned authentication/session gap in the product workflow and capability
+  maps before `auth-11` was completed.
 - Predecessor slices:
   - `auth-08` password login with server-side session.
   - `auth-09` protected HTTP session context.

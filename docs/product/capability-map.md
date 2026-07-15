@@ -176,6 +176,7 @@ Existing slices:
 - `auth-08`
 - `auth-09`
 - `auth-10`
+- `auth-11`
 
 Existing capabilities:
 
@@ -185,10 +186,10 @@ Existing capabilities:
 - opaque server-side session
 - session-backed actor context for protected commands
 - login failure audit and opaque troubleshooting reference
+- logout and session revocation
 
 Missing capabilities / possible future slices:
 
-- logout and session revocation
 - credential setup
 - password reset / credential recovery
 - current-user endpoint, if needed by frontend workflow

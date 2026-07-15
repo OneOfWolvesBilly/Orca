@@ -136,10 +136,10 @@ Currently supported slices:
 - `auth-08` password login with server-side session
 - `auth-09` protected HTTP session context
 - `auth-10` login failure audit
+- `auth-11` logout and session revocation
 
 Known gaps:
 
-- logout and session revocation
 - credential setup and password reset / recovery
 - account disable checks during login and session use
 - current-user endpoint if required by frontend workflow
