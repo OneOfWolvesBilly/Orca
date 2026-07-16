@@ -29,7 +29,8 @@ as one validated envelope because:
 
 - one record describes one auditable occurrence
 - the minimum envelope must be validated before recording
-- sensitive metadata must be rejected before any adapter receives the record
+- common structural validation happens before any adapter receives the record
+- semantic field safety remains with the workflow-owned mapper
 - storage and transport are replaceable adapters
 
 The model must not grow into a shared business event hierarchy or a generic
@@ -40,43 +41,65 @@ domain event platform.
 ### Support model
 
 - `AuditRecord`
-  - event type
-  - actor id
-  - occurrence timestamp
-  - outcome
-  - optional tenant id
-  - optional resource type
-  - optional resource id
-  - optional bounded metadata
+  - non-blank workflow-owned event type
+  - non-blank workflow-owned actor id
+  - caller-supplied instant-based occurrence time
+  - non-blank workflow-owned outcome
+  - optional non-blank tenant id
+  - optional non-blank resource type
+  - optional non-blank resource id
+  - optional immutable audit metadata
+
+- `AuditEventType`
+  - non-blank stable identifier supplied by the consuming workflow
+  - reference-core does not define the event catalog
+
+- `AuditActorId`
+  - non-blank audit identifier supplied by the consuming workflow
+  - actor meaning is not inferred by reference-core
 
 - `AuditOutcome`
-  - minimum bounded outcome values derived during implementation
-  - should remain product-neutral
+  - non-blank stable identifier supplied by the consuming workflow
+  - reference-core does not define the outcome catalog
 
 - `AuditMetadata`
-  - bounded serializable details
-  - rejects forbidden sensitive values
-  - must not be the only type-safety mechanism for consuming-product events
+  - immutable collection of `AuditMetadataEntry` values
+  - contains at most one entry for each key
+  - exposes no arbitrary-object metadata API
+
+- `AuditMetadataEntry`
+  - non-blank string key
+  - non-blank string value
+  - key allowlist and value meaning belong to the consuming workflow
+
+- optional audit reference values
+  - tenant id, resource type, and resource id are non-blank when present
+  - their meanings belong to the consuming workflow
 
 ### Application ports
 
 - `AuditRecorder`
   - records one validated audit record
+  - returns no storage- or transport-specific identifier
   - has no dependency on Spring, database, logging framework, Kafka, OpenSearch,
     or cloud services
 
 - test recorder / assertion utility
   - supports verifying that a workflow emitted an expected audit record
-  - must not expose forbidden sensitive values
+  - stores only the already-validated common audit record for assertions
+  - exists in test sources only and is not a production recorder adapter
 
 ## Rule Placement
 
 ### Reference-core support rules
 
 - Validate required audit envelope fields.
-- Reject blank event type and actor id.
-- Reject forbidden sensitive values before recording.
-- Keep metadata bounded and serializable.
+- Reject blank event type, actor id, and outcome.
+- Reject blank optional identifiers when present.
+- Accept metadata only through the immutable string-entry structure defined by
+  the spec.
+- Reject blank metadata keys and values before recording.
+- Reject duplicate metadata keys before recording.
 - Keep audit recording separate from application logging.
 
 ### Consuming-product rules
@@ -84,7 +107,11 @@ domain event platform.
 - Define typed product events.
 - Decide which product actions require audit.
 - Map typed product events to the Orca audit envelope.
-- Choose storage adapter and failure policy where appropriate.
+- Define event and outcome identifiers, actor representation, resource meaning,
+  and the exact metadata key allowlist.
+- Exclude forbidden sensitive values through the typed mapper.
+- Test the exact mapped record against the workflow specification.
+- Choose the recorder failure policy for each auditable workflow.
 
 ### Auth rules
 
@@ -129,7 +156,7 @@ bounded context.
 
 ## Failure Policy
 
-No global failure behavior is derived.
+No global recovery behavior is derived.
 
 The core port should allow future workflows to choose:
 
@@ -138,12 +165,14 @@ The core port should allow future workflows to choose:
 - fail closed
 - buffer and retry
 
-This slice only requires the API shape to avoid preventing those policies.
+Recorder failure remains observable to the calling workflow. Reference-core
+does not retry, suppress, or translate the failure into a shared outcome. This
+keeps workflow-specific policies possible without selecting one in this slice.
 
 ## Sensitive Data Design
 
-Use validation and allowlisting before recording rather than redaction after
-recording.
+Use workflow-owned typed mapping and allowlisting before common record
+construction rather than redaction after recording.
 
 Rationale:
 
@@ -151,21 +180,30 @@ Rationale:
 - Arbitrary object metadata makes leakage difficult to review.
 - Product-specific typed events provide stronger modeling than unrestricted
   metadata bags.
+- Generic content inspection cannot prove that an opaque string is not a raw
+  credential or session value.
 
 Forbidden values include passwords, raw session values, credential secrets,
 TOTP secrets, recovery codes, private keys, full authentication tokens, raw
 headers, raw bodies, and unrestricted sensitive objects.
+
+Reference-core prevents null, nested, exception, and arbitrary object metadata
+by exposing only immutable non-blank string entries. The consuming mapper owns
+semantic value safety because only the workflow knows what each string means.
+Reference-core does not determine semantic sensitivity from string content.
 
 ## Test Layer Placement
 
 Support model tests:
 
 - required fields are enforced
-- blank event type is rejected
-- blank actor id is rejected
-- outcome is required
-- metadata remains bounded and serializable
-- forbidden sensitive metadata is rejected
+- blank event type, actor id, and outcome are rejected
+- blank optional identifiers are rejected when present
+- metadata is immutable after record construction
+- blank metadata keys and values are rejected
+- duplicate metadata keys are rejected
+- null, binary, nested, exception, and arbitrary object metadata cannot enter
+  the common metadata model
 
 Application tests:
 
@@ -173,6 +211,7 @@ Application tests:
 - recorder implementation is replaceable
 - consuming-product typed events can be mapped outside Orca
 - product-specific event classes are not required in Orca production code
+- the test recorder captures the exact validated record for assertions
 
 Dependency tests:
 
@@ -187,22 +226,7 @@ Regression tests:
 
 Infrastructure tests:
 
-- none for the first slice unless a no-op or in-memory adapter is explicitly
-  specified.
-
-## Future Adapter Candidates
-
-Future slices may define adapters such as:
-
-- no-op recorder
-- in-memory test recorder
-- SLF4J adapter
-- JDBC adapter
-- Kafka adapter
-- OpenSearch adapter
-- customer-provided implementation
-
-These are candidates only. This DDD note does not specify or require them.
+- none; this slice defines no production infrastructure adapter
 
 ## Non-Goals
 

@@ -36,9 +36,8 @@ Successful outcome:
 
 Failure flows:
 
-- An audit record containing forbidden sensitive data is rejected before it is
-  recorded.
-- An incomplete or unbounded audit record is rejected before it is recorded.
+- A structurally invalid common audit record is rejected before it reaches the
+  recorder.
 - Recorder implementation failure policy is not globally fixed by this slice.
 
 Existing supported slices:
@@ -78,10 +77,10 @@ Decision: enter SDD.
 Define a reusable audit recording boundary for Orca and consuming products.
 
 This slice establishes a product-neutral audit recording port, a stable minimum
-audit record envelope, and shared safety rules for rejecting forbidden sensitive
-values. It enables a caller to provide a recorder implementation without Orca
-requiring a centralized audit database or owning consuming-product business
-event semantics.
+audit record envelope, common structural validation, and the ownership boundary
+for workflow-specific audit mapping and sensitive-data safety. It enables a
+caller to provide a recorder implementation without Orca requiring a
+centralized audit database or owning consuming-product business event semantics.
 
 This slice does not implement production storage, retention, search, or a
 specific logging or messaging adapter.
@@ -95,7 +94,8 @@ This slice owns:
 
 - the product-neutral audit recording port
 - the common audit record envelope
-- shared validation and sensitive-data restrictions
+- common structural validation
+- the boundary between common validation and workflow-owned semantic safety
 - test utility expectations for verifying emitted audit records
 
 Auth remains authoritative for auth-owned login failure audit behavior.
@@ -112,18 +112,24 @@ typed event models, metadata, and storage choices.
   A product-neutral envelope describing who acted, what action occurred, when it
   occurred, which resource was affected, and what outcome was recorded.
 
+- Audit Occurrence Time
+  One unambiguous instant supplied by the caller. It is not a local date-time or
+  a client-formatted display value.
+
 - Audit Event Type
   A stable product- or workflow-owned event name mapped into the audit envelope.
-  Orca reference-core validates its shape but does not define consuming-product
-  event catalogs.
+  Orca reference-core validates that it is non-blank but does not define
+  consuming-product event catalogs.
 
 - Audit Outcome
-  A bounded result classification such as success or rejection. The first slice
-  defines only the minimum values needed by the envelope.
+  A stable non-blank workflow-owned result identifier mapped into the common
+  envelope. Reference-core validates its presence but does not define a shared
+  outcome catalog.
 
 - Audit Metadata
-  Optional bounded key/value details that must be serializable and must not
-  contain forbidden sensitive data or unrestricted objects.
+  An optional immutable collection of non-blank string key/value entries.
+  Reference-core owns this structural representation. The consuming workflow
+  owns the allowed keys, their meanings, and the safety of their values.
 
 ## Minimum Audit Record Envelope
 
@@ -139,10 +145,50 @@ The audit record envelope may contain:
 - `tenantId`
 - `resourceType`
 - `resourceId`
-- bounded `metadata`
+- `metadata`
 
 The exact implementation type is derived in DDD and code. This specification
 defines behavior and safety requirements, not Java class names.
+
+## Validation and Ownership Boundary
+
+Reference-core performs only validation that can be decided from the common
+record structure:
+
+- `eventType`, `actorId`, and `outcome` must be non-blank
+- `occurredAt` must be present and represent one unambiguous instant
+- `tenantId`, `resourceType`, and `resourceId` must be non-blank when present
+- metadata keys and values must be non-blank strings
+- metadata keys must be unique within one audit record
+- metadata must be immutable after the audit record is created
+- metadata must not accept null values, binary values, nested structures,
+  exception objects, or arbitrary objects
+- the complete common structure is validated before the recorder receives it
+
+The consuming workflow owns every rule that requires product or bounded-context
+meaning:
+
+- its typed event or command-result model
+- its event-type and outcome identifiers
+- its actor representation, including activity for which no authenticated actor
+  can be established
+- its resource and tenant meanings
+- its exact metadata key allowlist
+- the mapping from typed workflow data into the common envelope
+- exclusion of passwords, credentials, raw session values, tokens, raw
+  requests, raw responses, and other forbidden sensitive values
+- tests proving that its mapper emits only the fields authorized by that
+  workflow's specification
+
+A consuming workflow must use a typed mapper whose inputs and output fields are
+defined by that workflow. It must not use an unrestricted request, session,
+domain object, exception, or generic object map as the audit mapping contract.
+
+Reference-core does not determine semantic sensitivity from string content,
+invent actor identifiers, or define product-specific metadata. Storage,
+transport, and recorder recovery policy remain outside this slice. Recorder
+failure must remain observable to the calling workflow; reference-core does not
+retry, suppress, or convert it into a global outcome.
 
 ## Scenarios
 
@@ -175,21 +221,6 @@ defines behavior and safety requirements, not Java class names.
   safety rules.
 - Orca does not define or depend on the consuming product's typed event class.
 
-### Scenario: Forbidden sensitive metadata is rejected
-
-**Given**
-- An audit record contains a password, raw session value, credential secret,
-  recovery code, private key, full authentication token, or unrestricted
-  sensitive object in metadata.
-
-**When**
-- The audit record is validated.
-
-**Then**
-- The record is rejected before recording.
-- The forbidden value is not exposed through an audit response, test helper, or
-  recorder implementation contract.
-
 ### Scenario: Recorder implementation is replaceable
 
 **Given**
@@ -207,18 +238,31 @@ defines behavior and safety requirements, not Java class names.
 - Reference-core MUST define a product-neutral audit recording boundary.
 - A caller MUST be able to submit one audit record through a replaceable
   recorder port.
+- Successful recording MUST complete without returning a storage- or
+  transport-specific identifier.
 - The core audit API MUST NOT depend on Spring, JPA, JDBC, Kafka, OpenSearch, a
   cloud service, or a specific logging framework.
 - The audit envelope MUST include event type, actor id, occurrence time, and
   outcome.
-- Optional tenant, resource, and metadata fields MUST remain bounded.
+- Required string fields MUST be non-blank.
+- Optional identifier fields MUST be non-blank when present.
+- Audit metadata MUST be an immutable collection of non-blank string key/value
+  entries.
+- Audit metadata keys MUST be unique within one audit record.
+- Audit metadata MUST NOT accept null, binary, nested, exception, or arbitrary
+  object values.
 - The audit boundary MUST allow consuming products to define typed product
   events outside Orca and map them to the audit envelope.
 - Orca MUST NOT define consuming-product event types such as alarms, evidence
   cases, permission discovery, or offboarding events.
-- Audit metadata MUST NOT accept passwords, raw session values, credential
-  secrets, recovery codes, private keys, full authentication tokens, or
-  unrestricted sensitive objects.
+- Each consuming workflow MUST define its event and outcome identifiers, actor
+  representation, metadata allowlist, sensitive-data exclusions, and typed
+  mapper before it emits a common audit record.
+- A consuming workflow's mapper MUST NOT include passwords, raw session values,
+  credential secrets, recovery codes, private keys, full authentication tokens,
+  raw requests, raw responses, or unrestricted sensitive objects.
+- Reference-core MUST NOT determine semantic sensitivity from metadata string
+  content.
 - Application logging and audit recording MUST remain separate concerns.
 - This slice MUST NOT require centralized Orca audit storage.
 - This slice MUST NOT change auth-10 login failure audit behavior.
@@ -239,9 +283,11 @@ Audit records and metadata MUST NOT contain:
 - unrestricted exception object or stack trace
 - unrestricted user, credential, session, role, organization, or profile object
 
-Audit metadata must be allowlisted, bounded, and serializable. Arbitrary
-`Map<String, Object>` usage must not be the only type-safety mechanism for
-product-specific events.
+The consuming workflow enforces this boundary through a workflow-owned typed
+mapper and mapper tests. Reference-core prevents unrestricted object metadata
+through its structural API, but it cannot infer the semantic meaning of an
+arbitrary string. That limitation does not permit a consuming workflow to place
+a forbidden value under a different key.
 
 ## Failure Policy Boundary
 
@@ -254,8 +300,9 @@ Future workflows may choose policies such as:
 - fail closed
 - buffer and retry
 
-This slice only requires that the core API design does not prevent those future
-policies. Event-specific policy selection remains future work.
+The recording port must keep recorder failure observable to the calling
+workflow. Reference-core does not retry, suppress, or convert recorder failure
+into one global outcome. Event-specific policy selection remains future work.
 
 ## Invariants
 
@@ -263,8 +310,9 @@ policies. Event-specific policy selection remains future work.
   business event semantics.
 - Consuming products own product-specific event definitions and mappings.
 - The audit envelope is product-neutral.
+- Reference-core owns common structural validation.
+- Consuming workflows own semantic field allowlists and sensitive-data safety.
 - Application logs are not audit records.
-- Audit records must reject forbidden sensitive values before recording.
 - Storage and transport are adapters, not core API requirements.
 
 ## Error Cases
@@ -272,12 +320,19 @@ policies. Event-specific policy selection remains future work.
 - Missing event type -> rejected before recording.
 - Blank event type -> rejected before recording.
 - Missing actor id -> rejected before recording.
+- Blank actor id -> rejected before recording.
 - Missing occurrence time -> rejected before recording.
+- Local date-time without an unambiguous instant -> not accepted by the common
+  occurrence-time contract.
 - Missing outcome -> rejected before recording.
-- Unbounded metadata -> rejected before recording.
-- Forbidden sensitive metadata -> rejected before recording.
-- Recorder implementation failure -> handled by the supplied implementation or
-  future workflow-specific failure policy.
+- Blank outcome -> rejected before recording.
+- Blank optional identifier -> rejected before recording.
+- Blank metadata key or value -> rejected before recording.
+- Duplicate metadata key -> rejected before recording.
+- Null, binary, nested, exception, or arbitrary object metadata value -> not
+  accepted by the common metadata contract.
+- Recorder implementation failure -> reported to the calling workflow without a
+  reference-core retry or fallback policy.
 
 ## Unknown / To Be Discovered
 
@@ -297,13 +352,8 @@ policies. Event-specific policy selection remains future work.
 - Audit search UI.
 - Audit lookup endpoint.
 - Audit retention management.
-- Kafka adapter.
-- OpenSearch adapter.
-- SIEM integration.
-- Cloud audit provider integration.
-- TOTP implementation.
-- QR authentication implementation.
-- Passkey / WebAuthn implementation.
+- Production storage or transport adapter.
+- External audit platform integration.
 - Product-specific event definitions.
 - Generic domain event bus.
 - Event sourcing.
