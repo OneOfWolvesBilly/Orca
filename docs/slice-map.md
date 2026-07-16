@@ -116,9 +116,6 @@ availability, Flyway-migrated schema, local-only login test data, and
 frontend/backend routing. Frontend completion alone does not imply local manual
 login readiness.
 
-The planning draft `docs/drafts/deployment-local-runtime-slice-candidates.md`
-is non-authoritative and may only be used as intake background.
-
 | Slice | Spec | DDD | Status |
 | --- | --- | --- | --- |
 | `deployment-01` | [Local Runtime Build Plan](specs/deployment/01-secure-local-runtime-boundary.md) | [DDD](ddd/deployment/01-secure-local-runtime-boundary.md) | Approved support gate / no runtime assets |

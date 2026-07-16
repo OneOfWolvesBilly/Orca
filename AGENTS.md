@@ -5,7 +5,11 @@ Use ONLY the following files as authoritative sources, in this order:
 1. README.md
 2. docs/document-map.md
 3. docs/constraints.md
-4. docs/specs/*.md
+4. docs/product/orca-sa-baseline.md
+5. docs/product/workflow-map.md
+6. docs/product/capability-map.md
+7. docs/product/slice-intake-gate.md
+8. docs/specs/*.md
 
 Derived only:
 - docs/ddd/*.md
@@ -41,6 +45,29 @@ If a hypothesis is unavoidable, print:
 【假設】
 內容：
 驗證方式：
+
+## Draft planning gate
+- `docs/drafts/slice-planning-handoff.md` is the single local,
+  non-authoritative planning handoff for unresolved slice candidates.
+- Do not create additional draft files unless the user explicitly requests a
+  separate draft.
+- Before planning a new session or selecting the next behavior slice, read the
+  planning handoff when it exists.
+- Reading the draft does not authorize implementation and does not make draft
+  content authoritative. Revalidate every candidate against README.md,
+  docs/document-map.md, docs/constraints.md, docs/product/*, and docs/specs/*.
+- Before selecting a draft candidate, first inspect whether the current
+  capability or slice is incomplete, missing a required layer, failing its done
+  definition, or has an authoritative next step that should be continued.
+- Continue the current capability when required work remains. Select a draft
+  candidate only when the current capability is complete and the candidate
+  passes the slice intake gate.
+- At the start of next-session planning, report which path applies and why:
+  `continue current capability`, `select draft candidate`, or `stop`.
+- If draft content conflicts with authoritative sources, follow the
+  authoritative sources and correct the draft before relying on it again.
+- Remove completed or promoted candidate details from the draft. The resulting
+  spec and derived DDD note replace the draft as the maintained project record.
 
 ## Orca workflow
 - One session = one behavior slice.
