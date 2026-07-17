@@ -1,6 +1,6 @@
 # Spec 03 - Reusable Audit Recording Boundary
 
-Status: Proposed.
+Status: Approved / Implemented.
 
 ## Slice Intake
 
@@ -64,6 +64,7 @@ Non-goals:
 - centralized audit database
 - audit lookup, search, dashboard, export, or retention management
 - Kafka, OpenSearch, SIEM, or cloud audit integration
+- transactional outbox, outbox table, or outbox dispatcher
 - generic domain event bus
 - event sourcing
 - product-specific event definitions
@@ -353,6 +354,7 @@ into one global outcome. Event-specific policy selection remains future work.
 - Audit lookup endpoint.
 - Audit retention management.
 - Production storage or transport adapter.
+- Transactional outbox, outbox table, or outbox dispatcher.
 - External audit platform integration.
 - Product-specific event definitions.
 - Generic domain event bus.

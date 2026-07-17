@@ -248,11 +248,11 @@ Already supported:
 - stable API error contract and global exception handling
 - database-backed safe client diagnostic ingestion and exact-reference lookup
   by `IT_ADMIN`
+- reusable product-neutral audit recording port and structurally validated
+  envelope without centralized Orca audit storage
 
 Planned / gap:
 
-- proposed reusable audit recording boundary that does not require centralized
-  Orca audit storage
 - structured application logging
 - correlation / request id propagation
 - audit storage adapters and workflow-specific audit emission
@@ -387,7 +387,8 @@ Required safety boundaries:
 
 ### Audit and Operational Support
 
-Status: reusable audit boundary proposed / broader audit workflow remains a gap.
+Status: reusable audit boundary implemented / broader audit workflow remains a
+gap.
 
 Purpose:
 
@@ -400,6 +401,8 @@ Current support:
 
 - `auth-10` defines auth-owned login failure audit records and opaque
   troubleshooting references
+- `reference-core-03` defines the product-neutral audit envelope, structural
+  validation, and replaceable recording port
 - `organization-01` mentions auditable creation, but there is no complete audit
   workflow or audit storage model
 
@@ -407,7 +410,7 @@ Completed first auth-related slice:
 
 - `auth-10` login failure audit / troubleshooting reference
 
-Proposed reference-core slice:
+Completed reference-core slice:
 
 - `reference-core-03` reusable audit recording boundary
 

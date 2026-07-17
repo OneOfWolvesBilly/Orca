@@ -53,6 +53,7 @@ Already supported by authoritative slices:
 * organization group creation and invitation lifecycle commands
 * stable API error contract for backend HTTP APIs
 * safe client diagnostic ingestion and protected lookup
+* reusable product-neutral audit recording boundary
 * React frontend login result shell and client failure observability foundation
 
 Planned or gap areas:
@@ -61,7 +62,6 @@ Planned or gap areas:
 * credential setup, password reset, and recovery flows
 * MFA, including future TOTP or QR-based authentication slices if specified
 * future Passkey / WebAuthn support if specified
-* proposed reusable audit recording boundary, with implementation still pending
 * structured application logging and correlation support
 * broader frontend protected workflows
 * production-oriented cloud deployment work

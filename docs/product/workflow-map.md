@@ -391,8 +391,8 @@ Main success flow:
    timestamp.
 3. The record is persisted before the reference is returned.
 4. An authenticated `IT_ADMIN` looks up the safe record by exact reference.
-5. A caller may submit a product-neutral audit record through a reusable audit
-   boundary once `reference-core-03` is approved and implemented.
+5. A caller may submit a product-neutral audit record through the reusable
+   audit boundary defined by `reference-core-03`.
 
 Currently supported slices:
 
@@ -401,9 +401,6 @@ Currently supported slices:
 Currently supported reference-core foundation:
 
 - `reference-core-02` client diagnostics foundation.
-
-Proposed reference-core slice:
-
 - `reference-core-03` reusable audit recording boundary.
 
 Known gaps:
@@ -432,7 +429,8 @@ Explicit unknowns:
 
 ## Workflow: Reusable Audit Recording Boundary
 
-Status: proposed / no implementation yet.
+Status: reusable boundary implemented / workflow-specific emission not yet
+adopted.
 
 Primary actor:
 
@@ -460,28 +458,30 @@ Preconditions:
 
 Main success flow:
 
-1. The workflow produces or maps a typed event outside reference-core.
-2. The mapper creates a product-neutral audit record envelope.
-3. Reference-core validates required audit fields and sensitive-data
-   restrictions.
-4. The configured recorder receives the validated audit record.
-5. The recorder implementation decides storage or transport outside the core
+1. The workflow produces a typed event or command result outside reference-core.
+2. The workflow-owned mapper applies its event and outcome identifiers, actor
+   representation, metadata allowlist, and sensitive-data exclusions.
+3. The mapper creates a product-neutral audit record envelope.
+4. Reference-core validates only the common structural rules of that envelope.
+5. The configured recorder receives the structurally valid audit record.
+6. The recorder implementation decides storage or transport outside the core
    API.
 
 Alternative / failure flows:
 
 - Missing required audit fields are rejected before recording.
-- Forbidden sensitive values are rejected before recording.
-- Recorder implementation failure is handled by a future workflow-specific
-  failure policy, not by one global rule in the core API.
+- A workflow-owned typed mapper prevents fields or values that its workflow
+  specification does not authorize from entering the common envelope.
+- Recorder implementation failure remains observable to the calling workflow;
+  policy selection belongs to a future workflow-specific audit-emission slice,
+  not to one global rule in the core API.
 
-Proposed slice:
+Implemented boundary slice:
 
 - `reference-core-03` reusable audit recording boundary.
 
 Known gaps:
 
-- implementation tests and production code
 - storage adapters
 - workflow-specific audit emission from auth or organization commands
 - audit lookup, retention, and access policy

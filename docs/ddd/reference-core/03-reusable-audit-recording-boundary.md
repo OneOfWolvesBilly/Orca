@@ -1,6 +1,6 @@
 # DDD Derivation - 03 Reusable Audit Recording Boundary
 
-Status: Proposed.
+Status: Approved / Implemented.
 
 This note is **derived from**
 `docs/specs/reference-core/03-reusable-audit-recording-boundary.md`.
@@ -239,3 +239,4 @@ Infrastructure tests:
 - Auth-10 migration.
 - Organization audit migration.
 - Production adapter implementation.
+- Transactional outbox, outbox table, or outbox dispatcher.

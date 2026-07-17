@@ -292,7 +292,7 @@ Existing slices:
 
 - `auth-10` for login failure audit/reference.
 - `reference-core-02` client diagnostics foundation is implemented.
-- `reference-core-03` reusable audit recording boundary is proposed.
+- `reference-core-03` reusable audit recording boundary is implemented.
 - No dedicated general application logging or observability slice.
 
 Existing capabilities:
@@ -309,12 +309,10 @@ Implemented foundation:
 - exact-reference diagnostic lookup restricted to `IT_ADMIN`
 - separation between auth-owned login failure references and reference-core
   client failure references
-
-Proposed foundation:
-
 - product-neutral audit recording port and envelope
-- sensitive-field restrictions for audit metadata
-- consuming-product ownership of product-specific event definitions
+- common structural constraints for immutable string audit metadata
+- consuming-workflow ownership of event definitions, metadata allowlists,
+  sensitive-data exclusions, and typed mapper tests
 - no centralized Orca audit database requirement
 
 Missing capabilities / possible future slices:
@@ -324,7 +322,6 @@ Missing capabilities / possible future slices:
 - correlation / request id propagation
 - diagnostic retention and cleanup
 - safe logging policy for auth inputs, cookies, and credentials
-- implementation of the reusable audit recording boundary
 - workflow-specific audit emission for provisioning and organization membership
   commands
 - audit storage adapters and event-specific failure policies
@@ -335,8 +332,8 @@ Sequencing notes:
 - Login failure audit is covered by the active auth track.
 - `reference-core-02` is available before frontend behavior displays a
   queryable client failure reference.
-- `reference-core-03` should establish the reusable audit boundary before auth
-  or organization workflows are migrated to it.
+- `reference-core-03` establishes the reusable audit boundary before auth or
+  organization workflows are migrated to it.
 - General logging and observability are cross-cutting support capabilities.
 - Logs and audit must not store passwords, raw session cookie values, or
   credential secrets.
