@@ -178,7 +178,7 @@ Existing slices:
 - `auth-10`
 - `auth-11`
 
-Approved integration slice:
+Embedded integration slice:
 
 - `auth-12` embedded auth and actor-context integration
 
@@ -192,7 +192,7 @@ Existing capabilities:
 - login failure audit and opaque troubleshooting reference
 - logout and session revocation
 
-Approved / implementation pending:
+Embedded integration capabilities:
 
 - explicit embedded auth entry point for a same-process consumer
 - product-neutral protected consumer command declaration

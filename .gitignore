@@ -16,3 +16,4 @@ orca_frontend/build/
 
 # backend build (optional if you want root-level backup rules)
 orca_backend/target/
+minimal_consumer_fixture/target/

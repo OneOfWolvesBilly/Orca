@@ -40,15 +40,6 @@ import java.util.List;
 @Configuration
 class AuthConfiguration {
 
-    private static final String[] PROTECTED_HTTP_COMMAND_PATHS = {
-            "/api/groups",
-            "/api/groups/{groupId}/invitations",
-            "/api/group-invitations/{invitationId}/accept",
-            "/api/group-invitations/{invitationId}/reject",
-            "/api/group-invitations/{invitationId}/revoke",
-            "/api/client-diagnostics/lookup"
-    };
-
     @Bean
     RegisteredUserIdentityRepository registeredUserIdentityRepository(DataSource dataSource) {
         return new JdbcRegisteredUserIdentityRepository(dataSource);
@@ -182,7 +173,7 @@ class AuthConfiguration {
             @Override
             public void addInterceptors(InterceptorRegistry registry) {
                 registry.addInterceptor(currentUserContextInterceptor)
-                        .addPathPatterns(PROTECTED_HTTP_COMMAND_PATHS);
+                        .addPathPatterns("/**");
             }
 
             @Override

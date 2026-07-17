@@ -159,7 +159,7 @@ Explicit unknowns:
 
 ## Workflow: Embedded Core Authentication Consumption
 
-Status: approved slice / implementation pending.
+Status: supported.
 
 Primary actor:
 
@@ -207,13 +207,12 @@ Alternative / failure flows:
 - Logout prevents the same session from executing the protected consumer
   command again.
 
-Approved slice:
+Supported slice:
 
 - `auth-12` embedded auth and actor-context integration.
 
 Known gaps:
 
-- implementation and consumer contract verification for `auth-12`
 - later reusable frontend login and branding integration
 - later stable exception, logging, correlation, and artifact-delivery proof
 

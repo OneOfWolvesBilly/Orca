@@ -1,5 +1,6 @@
 package io.github.oneofwolvesbilly.orca.organization.web;
 
+import io.github.oneofwolvesbilly.orca.auth.api.OrcaProtectedCommand;
 import io.github.oneofwolvesbilly.orca.auth.domain.CurrentUserContext;
 import io.github.oneofwolvesbilly.orca.organization.application.AcceptInvitationCommand;
 import io.github.oneofwolvesbilly.orca.organization.application.AcceptInvitationUseCase;
@@ -49,6 +50,7 @@ final class OrganizationCommandController {
     }
 
     @PostMapping("/groups")
+    @OrcaProtectedCommand
     CreateGroupResponse createGroup(
             CurrentUserContext currentUserContext,
             @RequestBody CreateGroupRequest request
@@ -63,6 +65,7 @@ final class OrganizationCommandController {
     }
 
     @PostMapping("/groups/{groupId}/invitations")
+    @OrcaProtectedCommand
     InviteMemberResponse inviteMember(
             CurrentUserContext currentUserContext,
             @PathVariable String groupId,
@@ -79,6 +82,7 @@ final class OrganizationCommandController {
     }
 
     @PostMapping("/group-invitations/{invitationId}/accept")
+    @OrcaProtectedCommand
     InvitationStatusResponse acceptInvitation(
             CurrentUserContext currentUserContext,
             @PathVariable String invitationId,
@@ -92,6 +96,7 @@ final class OrganizationCommandController {
     }
 
     @PostMapping("/group-invitations/{invitationId}/reject")
+    @OrcaProtectedCommand
     InvitationStatusResponse rejectInvitation(
             CurrentUserContext currentUserContext,
             @PathVariable String invitationId,
@@ -105,6 +110,7 @@ final class OrganizationCommandController {
     }
 
     @PostMapping("/group-invitations/{invitationId}/revoke")
+    @OrcaProtectedCommand
     InvitationStatusResponse revokeInvitation(
             CurrentUserContext currentUserContext,
             @PathVariable String invitationId,

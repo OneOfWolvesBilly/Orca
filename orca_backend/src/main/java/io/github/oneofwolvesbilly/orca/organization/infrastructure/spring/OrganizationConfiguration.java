@@ -31,16 +31,6 @@ class OrganizationConfiguration {
     }
 
     @Bean
-    Flyway flyway(DataSource dataSource) {
-        Flyway flyway = Flyway.configure()
-                .dataSource(dataSource)
-                .locations("classpath:db/migration")
-                .load();
-        flyway.migrate();
-        return flyway;
-    }
-
-    @Bean
     GroupRepository groupRepository(DataSource dataSource, GroupEntityMapper mapper, Flyway flyway) {
         return new JdbcGroupRepositoryAdapter(dataSource, mapper);
     }

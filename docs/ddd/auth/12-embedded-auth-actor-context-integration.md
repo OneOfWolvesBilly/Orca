@@ -1,6 +1,6 @@
 # DDD Derivation - 12 Embedded Auth and Actor-context Integration
 
-Status: Approved.
+Status: Approved / Implemented.
 
 This note is **derived from**
 `docs/specs/auth/12-embedded-auth-actor-context-integration.md`.
@@ -234,4 +234,3 @@ store those values in fixture behavior.
 - Non-Spring integration.
 - Separately deployed Orca service.
 - Production artifact publication.
-

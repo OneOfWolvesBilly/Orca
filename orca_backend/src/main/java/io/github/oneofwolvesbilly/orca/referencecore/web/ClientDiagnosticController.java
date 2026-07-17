@@ -1,6 +1,7 @@
 package io.github.oneofwolvesbilly.orca.referencecore.web;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import io.github.oneofwolvesbilly.orca.auth.api.OrcaProtectedCommand;
 import io.github.oneofwolvesbilly.orca.auth.domain.CurrentUserContext;
 import io.github.oneofwolvesbilly.orca.referencecore.application.ClientApplication;
 import io.github.oneofwolvesbilly.orca.referencecore.application.ClientDiagnosticCategory;
@@ -52,6 +53,7 @@ final class ClientDiagnosticController {
     }
 
     @PostMapping("/lookup")
+    @OrcaProtectedCommand
     ClientDiagnosticResponse lookup(
             @RequestBody ClientDiagnosticLookupRequest request,
             CurrentUserContext currentUserContext

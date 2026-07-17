@@ -2,6 +2,7 @@ package io.github.oneofwolvesbilly.orca.auth.web;
 
 import io.github.oneofwolvesbilly.orca.auth.application.EstablishCurrentUserContextUseCase;
 import io.github.oneofwolvesbilly.orca.auth.application.ResolveCurrentUserContextFromSessionUseCase;
+import io.github.oneofwolvesbilly.orca.auth.api.OrcaProtectedCommand;
 import io.github.oneofwolvesbilly.orca.auth.domain.AuthenticatedSession;
 import io.github.oneofwolvesbilly.orca.auth.domain.AuthenticatedSessionId;
 import io.github.oneofwolvesbilly.orca.auth.domain.AuthenticatedUserId;
@@ -12,6 +13,7 @@ import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.web.method.HandlerMethod;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -54,7 +56,7 @@ class CurrentUserContextInterceptorTest {
         request.setMethod("POST");
         request.setCookies(new Cookie(PasswordLoginController.SESSION_COOKIE_NAME, SESSION_ID.value()));
 
-        assertTrue(interceptor.preHandle(request, new MockHttpServletResponse(), new Object()));
+        assertTrue(interceptor.preHandle(request, new MockHttpServletResponse(), protectedHandler()));
 
         CurrentUserContext context = (CurrentUserContext) request.getAttribute(
                 CurrentUserContextRequestAttribute.ATTRIBUTE_NAME
@@ -68,7 +70,7 @@ class CurrentUserContextInterceptorTest {
         request.setMethod("POST");
 
         assertThrows(UnauthenticatedHttpRequestException.class, () ->
-                interceptor.preHandle(request, new MockHttpServletResponse(), new Object())
+                interceptor.preHandle(request, new MockHttpServletResponse(), protectedHandler())
         );
     }
 
@@ -79,7 +81,7 @@ class CurrentUserContextInterceptorTest {
         request.setCookies(new Cookie(PasswordLoginController.SESSION_COOKIE_NAME, "   "));
 
         assertThrows(UnauthenticatedHttpRequestException.class, () ->
-                interceptor.preHandle(request, new MockHttpServletResponse(), new Object())
+                interceptor.preHandle(request, new MockHttpServletResponse(), protectedHandler())
         );
     }
 
@@ -90,7 +92,7 @@ class CurrentUserContextInterceptorTest {
         request.setCookies(new Cookie(PasswordLoginController.SESSION_COOKIE_NAME, "missing-session"));
 
         assertThrows(UnauthenticatedHttpRequestException.class, () ->
-                interceptor.preHandle(request, new MockHttpServletResponse(), new Object())
+                interceptor.preHandle(request, new MockHttpServletResponse(), protectedHandler())
         );
     }
 
@@ -101,7 +103,7 @@ class CurrentUserContextInterceptorTest {
         request.addHeader("X-User-Id", "user-1");
 
         assertThrows(UnauthenticatedHttpRequestException.class, () ->
-                interceptor.preHandle(request, new MockHttpServletResponse(), new Object())
+                interceptor.preHandle(request, new MockHttpServletResponse(), protectedHandler())
         );
     }
 
@@ -110,7 +112,57 @@ class CurrentUserContextInterceptorTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setMethod("GET");
 
-        assertTrue(interceptor.preHandle(request, new MockHttpServletResponse(), new Object()));
+        assertTrue(interceptor.preHandle(request, new MockHttpServletResponse(), protectedHandler()));
         assertNull(request.getAttribute(CurrentUserContextRequestAttribute.ATTRIBUTE_NAME));
+    }
+
+    @Test
+    void pre_handle_does_not_require_context_for_unprotected_post_handler() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setMethod("POST");
+
+        assertTrue(interceptor.preHandle(request, new MockHttpServletResponse(), unprotectedHandler()));
+        assertNull(request.getAttribute(CurrentUserContextRequestAttribute.ATTRIBUTE_NAME));
+    }
+
+    @Test
+    void pre_handle_rejects_multiple_session_cookies_without_selecting_one() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setMethod("POST");
+        request.setCookies(
+                new Cookie(PasswordLoginController.SESSION_COOKIE_NAME, SESSION_ID.value()),
+                new Cookie(PasswordLoginController.SESSION_COOKIE_NAME, "other-session")
+        );
+
+        assertThrows(UnauthenticatedHttpRequestException.class, () ->
+                interceptor.preHandle(request, new MockHttpServletResponse(), protectedHandler())
+        );
+        assertNull(request.getAttribute(CurrentUserContextRequestAttribute.ATTRIBUTE_NAME));
+    }
+
+    private static HandlerMethod protectedHandler() {
+        try {
+            return new HandlerMethod(new TestController(), TestController.class.getDeclaredMethod("protectedCommand"));
+        } catch (NoSuchMethodException ex) {
+            throw new AssertionError(ex);
+        }
+    }
+
+    private static HandlerMethod unprotectedHandler() {
+        try {
+            return new HandlerMethod(new TestController(), TestController.class.getDeclaredMethod("unprotectedCommand"));
+        } catch (NoSuchMethodException ex) {
+            throw new AssertionError(ex);
+        }
+    }
+
+    private static final class TestController {
+
+        @OrcaProtectedCommand
+        void protectedCommand() {
+        }
+
+        void unprotectedCommand() {
+        }
     }
 }

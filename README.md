@@ -50,6 +50,8 @@ Already supported by authoritative slices:
 * protected command actor context from the `ORCA_SESSION` cookie
 * auth-owned login failure audit with an opaque troubleshooting reference
 * logout and session revocation
+* embedded consumer auth and actor-context integration through a public Orca
+  boundary
 * organization group creation and invitation lifecycle commands
 * stable API error contract for backend HTTP APIs
 * safe client diagnostic ingestion and protected lookup
@@ -64,8 +66,6 @@ Planned or gap areas:
 * future Passkey / WebAuthn support if specified
 * structured application logging and correlation support
 * broader frontend protected workflows
-* embedded consumer verification through the approved `auth-12` public
-  actor-context integration slice
 * production-oriented cloud deployment work
 
 Planned capabilities are not implied to exist. They must enter through the same

@@ -1,5 +1,6 @@
 package io.github.oneofwolvesbilly.orca.auth.web;
 
+import io.github.oneofwolvesbilly.orca.auth.api.AuthenticatedActor;
 import io.github.oneofwolvesbilly.orca.auth.domain.CurrentUserContext;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -12,7 +13,8 @@ public final class CurrentUserContextArgumentResolver implements HandlerMethodAr
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        return parameter.getParameterType().equals(CurrentUserContext.class);
+        return parameter.getParameterType().equals(CurrentUserContext.class)
+                || parameter.getParameterType().equals(AuthenticatedActor.class);
     }
 
     @Override
@@ -26,6 +28,10 @@ public final class CurrentUserContextArgumentResolver implements HandlerMethodAr
         if (request == null) {
             throw new IllegalStateException("HTTP request is required");
         }
-        return CurrentUserContextRequestAttribute.load(request);
+        CurrentUserContext context = CurrentUserContextRequestAttribute.load(request);
+        if (parameter.getParameterType().equals(AuthenticatedActor.class)) {
+            return AuthenticatedActor.of(context.authenticatedUserId().value());
+        }
+        return context;
     }
 }

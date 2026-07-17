@@ -1,6 +1,6 @@
 # Spec 12 - Embedded Auth and Actor-context Integration
 
-Status: Approved.
+Status: Approved / Implemented.
 
 ## Slice Intake
 
@@ -350,4 +350,3 @@ those values part of the public actor contract or response.
 - Separately deployed Orca service.
 - Production artifact publication or repository selection.
 - New database schema or Flyway migration.
-
