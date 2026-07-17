@@ -178,6 +178,10 @@ Existing slices:
 - `auth-10`
 - `auth-11`
 
+Approved integration slice:
+
+- `auth-12` embedded auth and actor-context integration
+
 Existing capabilities:
 
 - current user context
@@ -187,6 +191,13 @@ Existing capabilities:
 - session-backed actor context for protected commands
 - login failure audit and opaque troubleshooting reference
 - logout and session revocation
+
+Approved / implementation pending:
+
+- explicit embedded auth entry point for a same-process consumer
+- product-neutral protected consumer command declaration
+- public authenticated actor value resolved from Orca session state
+- Minimal Consumer Fixture contract proof through a normal build dependency
 
 Missing capabilities / possible future slices:
 
@@ -204,6 +215,10 @@ Sequencing notes:
 - `auth-11` defines logout and session revocation semantics that any future
   session cache must preserve.
 - External login should come after internal auth/session semantics are stable.
+- `auth-12` must reuse auth-08, auth-09, and auth-11 behavior without exposing
+  session persistence or introducing product authorization rules.
+- The fixture must remain product-neutral and must not rely on Orca internal
+  infrastructure packages.
 
 ### Capability Group: Auth System Role Boundary
 

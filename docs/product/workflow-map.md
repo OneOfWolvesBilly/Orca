@@ -157,6 +157,75 @@ Explicit unknowns:
 
 ---
 
+## Workflow: Embedded Core Authentication Consumption
+
+Status: approved slice / implementation pending.
+
+Primary actor:
+
+- Registered User
+
+Supporting actors:
+
+- Auth
+- HTTP auth boundary
+- Application developer embedding Orca Core
+- Minimal Consumer Fixture
+
+Goal:
+
+Allow a same-process consuming application to reuse Orca login and server-side
+session behavior and receive exactly one authenticated actor id for a
+product-neutral protected command through an explicit public boundary.
+
+Preconditions:
+
+- Password login and server-side session behavior from `auth-08` exists.
+- Protected session context from `auth-09` exists.
+- Logout and session revocation from `auth-11` exists.
+- Stable unauthenticated error behavior from `reference-core-01` exists.
+
+Main success flow:
+
+1. A registered user completes the existing Orca password login.
+2. The browser presents the opaque `ORCA_SESSION` cookie to a protected
+   consumer command.
+3. Orca resolves the authenticated user only from auth-owned server-side
+   session state.
+4. Orca supplies one product-neutral authenticated actor id through the public
+   embedded boundary.
+5. The consumer command executes without reading the cookie or auth-owned
+   persistence.
+
+Alternative / failure flows:
+
+- Missing, blank, malformed, unknown, expired, invalid, revoked, or multiple
+  session cookies reject the command as unauthenticated without identifying the
+  failed condition.
+- `X-User-Id` cannot establish actor context.
+- Rejection occurs before consumer behavior executes.
+- Logout prevents the same session from executing the protected consumer
+  command again.
+
+Approved slice:
+
+- `auth-12` embedded auth and actor-context integration.
+
+Known gaps:
+
+- implementation and consumer contract verification for `auth-12`
+- later reusable frontend login and branding integration
+- later stable exception, logging, correlation, and artifact-delivery proof
+
+Explicit unknowns:
+
+- production artifact repository and publication coordinates
+- non-Spring consumer integration
+- separately deployed Core integration
+- cross-product authentication, which is not part of the embedded MVP
+
+---
+
 ## Workflow: Organization Membership
 
 Status: partially supported.

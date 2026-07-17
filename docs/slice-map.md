@@ -83,6 +83,7 @@ frontend business rules.
 | `auth-09` | [Protected HTTP Session Context](specs/auth/09-protected-http-session-context.md) | [DDD](ddd/auth/09-protected-http-session-context.md) | Done |
 | `auth-10` | [Login Failure Audit](specs/auth/10-login-failure-audit.md) | [DDD](ddd/auth/10-login-failure-audit.md) | Done |
 | `auth-11` | [Logout and Session Revocation](specs/auth/11-logout-session-revocation.md) | [DDD](ddd/auth/11-logout-session-revocation.md) | Done |
+| `auth-12` | [Embedded Auth and Actor-context Integration](specs/auth/12-embedded-auth-actor-context-integration.md) | [DDD](ddd/auth/12-embedded-auth-actor-context-integration.md) | Approved |
 
 ## Reference Core
 

@@ -64,6 +64,8 @@ Planned or gap areas:
 * future Passkey / WebAuthn support if specified
 * structured application logging and correlation support
 * broader frontend protected workflows
+* embedded consumer verification through the approved `auth-12` public
+  actor-context integration slice
 * production-oriented cloud deployment work
 
 Planned capabilities are not implied to exist. They must enter through the same
