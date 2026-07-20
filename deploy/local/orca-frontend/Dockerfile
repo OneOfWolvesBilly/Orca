@@ -1,8 +1,11 @@
 FROM node:20
 
-WORKDIR /workspace/orca_frontend/react
+WORKDIR /workspace
 
-COPY orca_frontend/react/package*.json ./
+COPY orca_frontend/packages/react-login ./orca_frontend/packages/react-login
+COPY orca_frontend/react/package*.json ./orca_frontend/react/
+
+WORKDIR /workspace/orca_frontend/react
 RUN npm ci
 
 COPY orca_frontend/react ./
