@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   CLIENT_ERROR_CATALOG,
   createClientErrorPresentation,
-} from "./clientErrorCatalog";
+} from "../../../packages/react-login/src/internal/errors/clientErrorCatalog";
 
 describe("client error catalog", () => {
   it("defines the safe request unavailable presentation", () => {

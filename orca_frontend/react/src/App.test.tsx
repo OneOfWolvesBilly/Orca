@@ -1,8 +1,8 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { OrcaLogin } from "@oneofwolvesbilly/orca-react-login";
 import App from "./App";
-import AuthShell from "./components/AuthShell";
 
 describe("frontend login result shell", () => {
   afterEach(() => {
@@ -19,19 +19,17 @@ describe("frontend login result shell", () => {
     expect(screen.queryByText(/authenticated/i)).not.toBeInTheDocument();
   });
 
-  it("presents another product without fixed Orca shell content", () => {
+  it("presents consumer branding with fixed Orca attribution", () => {
     render(
-      <AuthShell productName="Example" description="Example access">
-        <p>Shared login content</p>
-      </AuthShell>,
+      <OrcaLogin
+        branding={{ productName: "Example", supportingCopy: "Example access" }}
+      />,
     );
 
     expect(screen.getByRole("heading", { name: "Sign in to Example" })).toBeVisible();
     expect(screen.getByText("Example access")).toBeVisible();
-    expect(screen.getByText("Shared login content")).toBeVisible();
-    expect(screen.queryByText("Orca")).not.toBeInTheDocument();
-    expect(screen.queryByText("Available now")).not.toBeInTheDocument();
-    expect(screen.queryByText("Coming later")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Powered by Orca" })).toBeVisible();
+    expect(screen.getByText("© 2026 Chen Chih-hao")).toBeVisible();
   });
 
   it("submits credentials and shows a safe success result", async () => {

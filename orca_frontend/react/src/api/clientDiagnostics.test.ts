@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { recordClientDiagnostic } from "./clientDiagnostics";
+import { recordClientDiagnostic } from "../../../packages/react-login/src/internal/api/clientDiagnostics";
 
 describe("client diagnostic adapter", () => {
   afterEach(() => {
