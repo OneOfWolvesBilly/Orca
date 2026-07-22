@@ -59,6 +59,7 @@ class PasswordLoginUseCaseTest {
         assertEquals(AuthenticatedUserId.of("user-1"), saved.authenticatedUserId());
         assertEquals(NOW, saved.createdAt());
         assertEquals(NOW.plus(SESSION_LIFETIME), saved.expiresAt());
+        assertEquals(saved.expiresAt(), result.expiresAt());
         assertTrue(auditRepository.savedRecords().isEmpty());
     }
 

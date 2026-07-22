@@ -16,6 +16,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +29,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest(classes = OrcaApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class PasswordLoginWebIntegrationTest {
+
+    private static final String SESSION_EXPIRES_AT_HEADER = "Orca-Session-Expires-At";
 
     @LocalServerPort
     private int port;
@@ -55,7 +59,7 @@ class PasswordLoginWebIntegrationTest {
     }
 
     @Test
-    void login_returns_http_only_secure_same_site_session_cookie_without_user_details() throws Exception {
+    void login_returns_session_cookie_and_persisted_expiry_without_sensitive_details() throws Exception {
         HttpResponse<String> response = postLogin("""
                 {
                   "loginIdentifier": "employee-login-001",
@@ -76,6 +80,23 @@ class PasswordLoginWebIntegrationTest {
         assertTrue(cookie.contains("Max-Age="));
         assertFalse(cookie.contains("user-1"));
         assertFalse(cookie.contains("employee-login-001"));
+        String sessionId = cookie.substring("ORCA_SESSION=".length(), cookie.indexOf(';'));
+
+        List<String> expiryHeaders = response.headers().allValues(SESSION_EXPIRES_AT_HEADER);
+        assertEquals(1, expiryHeaders.size());
+        String expiryHeader = expiryHeaders.getFirst();
+        Instant exposedExpiry = Instant.parse(expiryHeader);
+        assertEquals(exposedExpiry.toString(), expiryHeader);
+
+        Timestamp persistedExpiry = jdbcTemplate.queryForObject(
+                "SELECT expires_at FROM auth_authenticated_sessions WHERE user_id = ?",
+                Timestamp.class,
+                "user-1"
+        );
+        assertEquals(persistedExpiry.toInstant(), exposedExpiry);
+        assertFalse(expiryHeader.contains(sessionId));
+        assertFalse(expiryHeader.contains("user-1"));
+        assertFalse(expiryHeader.contains("employee-login-001"));
 
         Integer sessionCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM auth_authenticated_sessions WHERE user_id = ?",
@@ -170,6 +191,7 @@ class PasswordLoginWebIntegrationTest {
     private static void assertLoginRejectedWithoutCookie(HttpResponse<String> response) {
         assertEquals(401, response.statusCode());
         assertTrue(response.headers().allValues("Set-Cookie").isEmpty());
+        assertTrue(response.headers().allValues(SESSION_EXPIRES_AT_HEADER).isEmpty());
         assertFalse(response.body().contains("missing-login"));
         assertFalse(response.body().contains("wrong-password"));
         assertFalse(response.body().contains("employee-login-001"));

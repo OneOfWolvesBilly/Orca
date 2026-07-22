@@ -19,6 +19,7 @@ import java.util.Objects;
 final class PasswordLoginController {
 
     static final String SESSION_COOKIE_NAME = "ORCA_SESSION";
+    static final String SESSION_EXPIRES_AT_HEADER = "Orca-Session-Expires-At";
 
     private final PasswordLoginUseCase passwordLoginUseCase;
     private final Duration sessionLifetime;
@@ -43,6 +44,7 @@ final class PasswordLoginController {
                 .build();
         return ResponseEntity.noContent()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .header(SESSION_EXPIRES_AT_HEADER, result.expiresAt().toString())
                 .build();
     }
 

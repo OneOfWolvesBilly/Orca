@@ -1,6 +1,6 @@
 # DDD Derivation - 13 Client Session Expiry Coordination
 
-Status: Draft / Awaiting DDD approval.
+Status: Approved / Implemented.
 
 This note is **derived from**
 `docs/specs/auth/13-client-session-expiry-coordination.md`.

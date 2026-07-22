@@ -1,6 +1,6 @@
 # Spec 13 - Client Session Expiry Coordination
 
-Status: Approved.
+Status: Approved / Implemented.
 
 ## Slice Intake
 
