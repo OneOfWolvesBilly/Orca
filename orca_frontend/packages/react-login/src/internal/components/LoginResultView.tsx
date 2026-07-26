@@ -19,6 +19,10 @@ export default function LoginResultView({ result }: LoginResultViewProps) {
     );
   }
 
+  if (result.kind === "session-established") {
+    return null;
+  }
+
   const { presentation } = result;
   return (
     <div className="result error" role="alert">

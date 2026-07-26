@@ -71,6 +71,9 @@ class EmbeddedAuthConsumerContractTest {
                 """, null);
 
         assertEquals(204, login.statusCode());
+        String sessionExpiresAt = login.headers().firstValue("Orca-Session-Expires-At")
+                .orElseThrow();
+        assertFalse(sessionExpiresAt.isBlank());
         String sessionCookie = login.headers().firstValue("Set-Cookie")
                 .orElseThrow()
                 .split(";", 2)[0];

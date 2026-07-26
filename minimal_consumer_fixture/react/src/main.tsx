@@ -1,10 +1,8 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import {
-  OrcaLogin,
-  type OrcaLoginBranding,
-} from "@oneofwolvesbilly/orca-react-login";
+import { type OrcaLoginBranding } from "@oneofwolvesbilly/orca-react-login";
 import customerLogo from "./assets/example-product-logo.png";
+import FixtureSessionLifecycle from "./FixtureSessionLifecycle";
 import "./styles.css";
 
 const branding: OrcaLoginBranding = {
@@ -18,6 +16,6 @@ const branding: OrcaLoginBranding = {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <OrcaLogin branding={branding} />
+    <FixtureSessionLifecycle branding={branding} />
   </StrictMode>,
 );

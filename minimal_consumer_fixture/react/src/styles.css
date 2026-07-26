@@ -9,3 +9,68 @@
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; min-height: 100vh; }
 button, input { font: inherit; }
+
+.fixture-protected-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+
+.fixture-protected-card {
+  width: min(100%, 34rem);
+  padding: 2rem;
+  border: 1px solid #cbd8d0;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 1rem 2.5rem rgb(23 36 31 / 10%);
+}
+
+.fixture-product-name {
+  margin: 0;
+  color: #476258;
+  font-weight: 700;
+}
+
+.fixture-protected-card h1 {
+  margin: 0.5rem 0 0;
+}
+
+.fixture-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.fixture-actions button {
+  padding: 0.7rem 1rem;
+  border: 1px solid #355f50;
+  border-radius: 0.5rem;
+  color: #fff;
+  background: #355f50;
+  cursor: pointer;
+}
+
+.fixture-actions button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.fixture-result {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 1.25rem;
+  padding: 0.9rem;
+  border-radius: 0.5rem;
+}
+
+.fixture-result.success {
+  color: #174f36;
+  background: #e4f4eb;
+}
+
+.fixture-result.error {
+  color: #77262d;
+  background: #fbeaec;
+}

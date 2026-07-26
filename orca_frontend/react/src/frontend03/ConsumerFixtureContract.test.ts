@@ -39,20 +39,23 @@ describe("frontend-03 React Minimal Consumer Fixture contract", () => {
     expect(logo.size).toBeLessThanOrEqual(256 * 1024);
   });
 
-  it("contains no protected session lifecycle behavior", async () => {
+  it("adds only the approved product-neutral protected session lifecycle", async () => {
     const source = await readFixtureSource();
 
-    expect(source).not.toContain("/api/fixture/actor-context-check");
-    expect(source).not.toContain("/api/auth/logout");
+    expect(source).toContain("/api/fixture/actor-context-check");
+    expect(source).toContain("logoutOrcaSession");
     expect(source).not.toContain("ORCA_SESSION");
     expect(source).not.toContain("AuthenticatedActor");
+    expect(source).not.toMatch(/project|issue|sprint|ticket|organization console/i);
   });
 });
 
 async function readFixtureSource(): Promise<string> {
   const sourceDirectory = `${fixtureDirectory}/src`;
   const entries = await readdir(sourceDirectory, { recursive: true });
-  const sourceFiles = entries.filter((entry) => /\.(ts|tsx)$/.test(entry));
+  const sourceFiles = entries.filter(
+    (entry) => /\.(ts|tsx)$/.test(entry) && !/\.test\.(ts|tsx)$/.test(entry),
+  );
   const contents = await Promise.all(
     sourceFiles.map((entry) => readFile(`${sourceDirectory}/${entry}`, "utf8")),
   );

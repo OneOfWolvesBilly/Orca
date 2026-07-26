@@ -21,13 +21,30 @@ export const OrcaLoginBranding = Object.freeze({
 
 const ATTRIBUTION_URL = "https://github.com/OneOfWolvesBilly/Orca";
 
-export function OrcaLogin({ branding }: { branding: OrcaLoginBranding }) {
+export type OrcaLoginSession = Readonly<{
+  expiresAt: string;
+}>;
+
+export type OrcaLoginProps = {
+  branding: OrcaLoginBranding;
+  onSessionEstablished?: (session: OrcaLoginSession) => void;
+};
+
+export function OrcaLogin({ branding, onSessionEstablished }: OrcaLoginProps) {
   const [result, setResult] = useState<LoginResult | null>(null);
   const customerLogo = validCustomerLogo(branding.customerLogo);
 
   async function handleLogin(request: LoginRequest) {
     setResult(null);
-    setResult(await submitLogin(request));
+    const nextResult = await submitLogin(
+      request,
+      onSessionEstablished !== undefined,
+    );
+    if (nextResult.kind === "session-established") {
+      onSessionEstablished?.(nextResult.session);
+      return;
+    }
+    setResult(nextResult);
   }
 
   return (

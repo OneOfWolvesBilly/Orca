@@ -6,6 +6,9 @@ import {
   recordClientDiagnostic,
   type ClientDiagnosticCategory,
 } from "./clientDiagnostics";
+import { logoutOrcaSession } from "./logout";
+import { parseStableApiError } from "./stableApiError";
+import { parseSessionPresentationExpiry } from "../session/expiry";
 
 export type LoginRequest = {
   loginIdentifier: string;
@@ -14,17 +17,14 @@ export type LoginRequest = {
 
 export type LoginResult =
   | { kind: "success" }
+  | { kind: "session-established"; session: { expiresAt: string } }
   | { kind: "stable-error"; presentation: ErrorPresentation }
   | { kind: "generic-error"; presentation: ErrorPresentation };
 
-type StableApiError = {
-  status: number;
-  code: string;
-  message: string;
-  loginFailureReferenceId?: string;
-};
-
-export async function submitLogin(request: LoginRequest): Promise<LoginResult> {
+export async function submitLogin(
+  request: LoginRequest,
+  sessionCoordination = false,
+): Promise<LoginResult> {
   let response: Response;
   try {
     response = await fetch("/api/auth/login", {
@@ -38,6 +38,18 @@ export async function submitLogin(request: LoginRequest): Promise<LoginResult> {
   }
 
   if (response.status === 204) {
+    if (sessionCoordination) {
+      const expiry = parseSessionPresentationExpiry(response, Date.now());
+      if (!expiry) {
+        void logoutOrcaSession();
+        return safeGenericFailure();
+      }
+
+      return {
+        kind: "session-established",
+        session: { expiresAt: expiry.expiresAt },
+      };
+    }
     return { kind: "success" };
   }
 
@@ -68,51 +80,6 @@ export async function submitLogin(request: LoginRequest): Promise<LoginResult> {
   };
 }
 
-async function parseStableApiError(
-  response: Response,
-): Promise<StableApiError | null> {
-  let body: unknown;
-  try {
-    body = await response.json();
-  } catch {
-    return null;
-  }
-
-  if (!isRecord(body)) {
-    return null;
-  }
-
-  const { status, code, message, loginFailureReferenceId } = body;
-  if (
-    typeof status !== "number" ||
-    status !== response.status ||
-    typeof code !== "string" ||
-    code.length === 0 ||
-    typeof message !== "string" ||
-    message.length === 0
-  ) {
-    return null;
-  }
-
-  if (
-    loginFailureReferenceId !== undefined &&
-    loginFailureReferenceId !== null &&
-    typeof loginFailureReferenceId !== "string"
-  ) {
-    return null;
-  }
-
-  return {
-    status,
-    code,
-    message,
-    loginFailureReferenceId:
-      typeof loginFailureReferenceId === "string"
-        ? loginFailureReferenceId
-        : undefined,
-  };
-}
-
 async function clientFailure(
   category: ClientDiagnosticCategory,
   responseStatus?: number,
@@ -129,6 +96,9 @@ async function clientFailure(
   };
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+function safeGenericFailure(): LoginResult {
+  return {
+    kind: "generic-error",
+    presentation: createClientErrorPresentation("REQUEST_UNAVAILABLE"),
+  };
 }

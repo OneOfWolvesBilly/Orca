@@ -19,12 +19,13 @@ describe("frontend-03 public package contract", () => {
     expect(Object.keys(manifest.exports ?? {})).toEqual(["."]);
   });
 
-  it("exports only OrcaLogin and OrcaLoginBranding from the package root", async () => {
+  it("exports the approved login and session coordination surface from the package root", async () => {
     const publicPackage = await importPublicPackage();
 
     expect(Object.keys(publicPackage).sort()).toEqual([
       "OrcaLogin",
       "OrcaLoginBranding",
+      "logoutOrcaSession",
     ]);
   });
 
