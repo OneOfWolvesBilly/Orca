@@ -1,6 +1,6 @@
 # Frontend 04 - React Fixture Protected Session Lifecycle
 
-Status: Approved.
+Status: Approved amendment.
 
 ## Slice Intake
 
@@ -145,7 +145,7 @@ Frontend delivery owns only:
 - safe consumption of the auth-13 expiry response metadata;
 - memory-only presentation phase and deadline coordination;
 - invocation of existing protected fixture and logout commands;
-- safe presentation of their outcomes;
+- safe, product-neutral presentation of their observable lifecycle outcomes;
 - cancellation and race handling for frontend-local work.
 
 This slice does not create a frontend domain bounded context or authenticated
@@ -241,6 +241,48 @@ The protected fixture presentation provides explicit user actions for:
 Login success does not automatically invoke the protected command. This slice
 adds no router or protected product route.
 
+## Lifecycle End Presentation
+
+The React fixture distinguishes a completed user-requested logout from a
+session lifecycle that ended because the frontend reached its deadline or the
+server rejected a protected command.
+
+After a successful manual logout, the login presentation shows this primary
+message exactly:
+
+```text
+You have signed out.
+```
+
+After either deadline handling or a valid stable `401 UNAUTHENTICATED`
+protected-command response, the login presentation shows this primary message
+exactly:
+
+```text
+Your session has ended. Please sign in again.
+```
+
+Deadline handling and server rejection remain distinct observable causes for
+frontend coordination, but intentionally share one user-facing primary
+message. The shared wording does not claim whether the backend session expired,
+was revoked, was forcibly ended, or ended for another reason.
+
+For a valid stable `401 UNAUTHENTICATED` response, the stable code and backend
+safe message may remain visible as supplementary rejection detail. They must
+not replace or reclassify the primary lifecycle-end message. Deadline logout
+failure may likewise be shown only as supplementary safe cleanup detail and
+must not replace the primary lifecycle-end message.
+
+The manual-logout message is shown only after that manual request receives
+`204 No Content`. A failed manual logout must not show it. If deadline handling
+or server rejection ends the lifecycle while manual logout is pending, the
+shared lifecycle-end message takes precedence and a later manual-logout
+response must not overwrite it.
+
+These fixed messages are product-neutral lifecycle status. They do not change
+or authorize customer-owned branding, attribution, logo, copyright, or general
+presentation overrides.
+
 ## Expiry Metadata Validation
 
 An opted-in lifecycle may enter protected fixture presentation only when the
@@ -296,10 +338,12 @@ When the deadline is handled, the frontend:
    immediately;
 2. cancels the current lifecycle timer;
 3. submits the existing logout request at most once;
-4. returns to login presentation regardless of logout success or failure;
+4. returns to login presentation and shows `Your session has ended. Please
+   sign in again.` regardless of logout success or failure;
 5. does not restore protected presentation because of the logout response;
-6. may display `REQUEST_UNAVAILABLE` if the logout request cannot be completed,
-   but must not claim that the session remains valid.
+6. may display `REQUEST_UNAVAILABLE` only as supplementary cleanup detail if
+   the logout request cannot be completed, but must not replace the primary
+   lifecycle-end message or claim that the session remains valid.
 
 Client clock skew, sleeping tabs, and timer throttling may affect when the
 presentation transition runs. They never affect server-side validity. This
@@ -333,7 +377,10 @@ For a valid stable `401 UNAUTHENTICATED` response:
 - the current timer is cancelled;
 - protected presentation ends;
 - login presentation is restored;
-- the stable code and safe message are displayed;
+- `Your session has ended. Please sign in again.` is displayed as the primary
+  lifecycle-end message;
+- the stable code and safe message may be displayed only as supplementary
+  rejection detail;
 - no cleanup logout is required to claim that the rejected session is invalid;
 - a later response or timer callback must not restore the ended lifecycle.
 
@@ -371,6 +418,7 @@ For `204 No Content`:
 - the timer is cancelled;
 - protected presentation ends;
 - login presentation is restored;
+- `You have signed out.` is displayed as the primary lifecycle-end message;
 - no session, actor, or revocation detail is displayed.
 
 For a transport failure, non-204 response, or malformed response:
@@ -383,8 +431,10 @@ For a transport failure, non-204 response, or malformed response:
 - the frontend does not claim logout or revocation succeeded.
 
 If the deadline is reached while manual logout is in progress, deadline
-handling wins: protected presentation ends and no second logout request is
-started for the same lifecycle.
+handling wins: protected presentation ends, `Your session has ended. Please
+sign in again.` remains the primary message, no second logout request is
+started for the same lifecycle, and a later manual-logout response cannot
+replace that message.
 
 ## Logout and Post-logout Rejection Proof
 
@@ -417,7 +467,8 @@ Frontend-local coordination must ensure:
 - a `401 UNAUTHENTICATED` result ends the lifecycle even when another request
   or timer is pending;
 - a response belonging to an ended or replaced lifecycle cannot update the
-  current lifecycle or restore protected presentation;
+  current lifecycle, restore protected presentation, or overwrite the primary
+  lifecycle-end message;
 - cleanup is frontend-local and introduces no polling, retry loop, keepalive,
   renewal, or browser persistence.
 
@@ -479,7 +530,10 @@ server-side session commands.
 
 - The timer is cancelled.
 - Protected presentation ends immediately.
-- Login presentation and the stable safe rejection are shown.
+- Login presentation shows `Your session has ended. Please sign in again.` as
+  the primary message.
+- The stable code and safe message may remain visible only as supplementary
+  rejection detail.
 - The future client deadline does not override the server rejection.
 
 ### Scenario: User logs out and the same command is rejected
@@ -495,6 +549,7 @@ server-side session commands.
 **Then**
 
 - Protected presentation ends and the timer is cancelled.
+- Login presentation shows `You have signed out.` as the primary message.
 - The same protected fixture command is rejected as unauthenticated when the
   contract proof invokes it again.
 - Frontend application code does not clear or inspect the cookie.
@@ -515,6 +570,8 @@ server-side session commands.
 - Protected presentation ends immediately.
 - React submits the existing logout request at most once.
 - Login presentation is restored regardless of request outcome.
+- Login presentation shows `Your session has ended. Please sign in again.` as
+  the primary message regardless of request outcome.
 - A failed or delayed logout does not extend or restore presentation.
 
 ### Scenario: Successful login has unusable expiry metadata
@@ -583,20 +640,32 @@ server-side session commands.
 - Protected command success MUST NOT change the presentation deadline.
 - Stable `401 UNAUTHENTICATED` MUST immediately end protected presentation and
   cancel the timer.
+- Stable `401 UNAUTHENTICATED` MUST show `Your session has ended. Please sign
+  in again.` as the primary lifecycle-end message.
+- The stable code and safe backend message from `401 UNAUTHENTICATED` MAY be
+  shown only as supplementary rejection detail.
 - Server rejection MUST take precedence over the client deadline.
 - Valid non-401 stable errors MUST be displayed by code and safe message
   without inferring session validity.
 - Transport, malformed, and unexpected results MUST expose no raw exception,
   response body, header, or technical detail.
-- Manual logout `204` MUST cancel the timer and restore login presentation.
+- Manual logout `204` MUST cancel the timer, restore login presentation, and
+  show `You have signed out.` as the primary lifecycle-end message.
 - Failed manual logout MUST NOT claim revocation succeeded and MAY remain
   retryable only before the deadline or an earlier server rejection.
+- Failed manual logout MUST NOT show the successful manual-logout message.
 - Deadline handling MUST end protected presentation immediately and invoke the
   existing logout request at most once.
+- Deadline handling MUST show `Your session has ended. Please sign in again.`
+  as the primary lifecycle-end message regardless of logout outcome.
 - Deadline logout failure MUST NOT extend or restore protected presentation.
 - One lifecycle MUST have at most one active timer and at most one logout
   request across a manual-logout/deadline race.
 - Stale asynchronous results MUST NOT restore an ended or replaced lifecycle.
+- A stale manual-logout response MUST NOT replace the primary lifecycle-end
+  message selected by deadline handling or server rejection.
+- Frontend presentation MUST NOT describe deadline handling or stable
+  `401 UNAUTHENTICATED` as forced logout, revocation, or proven session expiry.
 - Contract verification MUST prove login, protected success, logout, and
   post-logout stable unauthenticated rejection.
 - Frontend application code MUST NOT read, parse, clear, display, or persist
@@ -646,15 +715,24 @@ React fixture lifecycle tests must verify:
 - protected command is explicit rather than automatic;
 - protected `204` shows a safe success without changing the deadline;
 - stable `401 UNAUTHENTICATED` cancels the timer and ends protected
-  presentation;
+  presentation with `Your session has ended. Please sign in again.` as the
+  primary message;
+- stable `401 UNAUTHENTICATED` safe error detail, when retained, remains
+  supplementary to the primary lifecycle-end message;
 - another stable error is displayed without ending presentation;
 - transport or malformed protected response uses a safe generic result;
-- manual logout `204` returns to login and cancels the timer;
+- manual logout `204` returns to login, cancels the timer, and shows `You have
+  signed out.` as the primary message;
+- failed manual logout does not show the successful manual-logout message;
 - failed manual logout remains safely retryable only before lifecycle end;
 - deadline handling invokes logout once and returns to login regardless of
-  logout outcome;
+  logout outcome, showing `Your session has ended. Please sign in again.` as
+  the primary message;
 - manual logout, deadline, protected response, and replacement-login races
-  ignore stale results and never restore ended presentation;
+  ignore stale results, never restore ended presentation, and do not overwrite
+  the primary lifecycle-end message selected by the winning transition;
+- deadline and stable `401 UNAUTHENTICATED` presentation never claim forced
+  logout, revocation, or proven session expiry;
 - no cookie or sensitive value is read or displayed.
 
 Consumer contract verification must prove through the existing backend:

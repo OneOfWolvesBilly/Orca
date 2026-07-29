@@ -1,6 +1,6 @@
 # DDD Derivation - Frontend 04 React Fixture Protected Session Lifecycle
 
-Status: Approved.
+Status: Approved amendment.
 
 This note is **derived from**
 `docs/specs/frontend/04-react-fixture-protected-session-lifecycle.md`.
@@ -232,6 +232,7 @@ FixtureSessionLifecycle
   current expiry deadline
   current operation state
   safe current result
+  lifecycle-end presentation
 ```
 
 The fixture component owns no credentials beyond the existing `OrcaLogin`
@@ -272,6 +273,46 @@ generic-error(REQUEST_UNAVAILABLE, safe message)
 
 It contains no actor, session, response body, technical cause, role,
 organization, or profile information.
+
+### Lifecycle-end presentation
+
+The fixture owns a separate presentation-only result for transitions back to
+login:
+
+```text
+LifecycleEndPresentation
+  manual-logout-completed
+  session-ended(optional supplementary safe error)
+```
+
+The fixed primary copy is mapped by the fixture presentation layer:
+
+| Observable transition | Presentation variant | Primary message |
+| --- | --- | --- |
+| Manual logout receives `204` while its lifecycle is current | `manual-logout-completed` | `You have signed out.` |
+| The frontend handles the accepted deadline | `session-ended` | `Your session has ended. Please sign in again.` |
+| Protected command receives stable `401 UNAUTHENTICATED` | `session-ended` | `Your session has ended. Please sign in again.` |
+
+The presentation variant is not an auth result, backend error code, diagnostic
+category, or session-revocation reason. Deadline and server rejection remain
+separate coordinator inputs even though they map to the same visible primary
+copy.
+
+`LifecycleEndPresentation` remains private to the React Minimal Consumer
+Fixture. The amendment requires no new public package export and no change to
+the login, logout, or protected-command adapter result contracts.
+
+Only the stable `401 UNAUTHENTICATED` path may attach its existing safe error
+presentation as supplementary rejection detail. Deadline cleanup failure may
+optionally attach `REQUEST_UNAVAILABLE` as supplementary cleanup detail, but
+the smallest implementation may ignore that cleanup result as before. Neither
+supplementary detail can replace the primary message.
+
+The fixture must not derive presentation behavior from backend message text.
+It branches only on the stable status/code pair already recognized by the
+protected-command adapter and on frontend-observed lifecycle transitions.
+A new accepted login clears the prior lifecycle-end presentation before the
+fixture enters protected presentation.
 
 ## Fixture Protected-command Adapter
 
@@ -344,15 +385,17 @@ generation is still current.
 
 A lifecycle is ended or replaced when:
 
-- manual logout succeeds;
-- the deadline is handled;
-- protected command returns stable `401 UNAUTHENTICATED`;
+- manual logout succeeds, producing `manual-logout-completed`;
+- the deadline is handled, producing `session-ended`;
+- protected command returns stable `401 UNAUTHENTICATED`, producing
+  `session-ended` with optional supplementary safe rejection detail;
 - a later valid login establishes a replacement lifecycle;
 - the component unmounts.
 
 Ending a lifecycle invalidates its generation and cancels its timer. A stale
 protected response, logout response, or timer callback then has no authority to
-restore presentation or modify the new lifecycle.
+restore presentation, modify the new lifecycle, or replace its lifecycle-end
+presentation.
 
 This is frontend race isolation only. It is not a distributed lock, server
 transaction, session version, or concurrency protocol.
@@ -405,8 +448,11 @@ The marker is memory-only and has no server-side meaning.
 - Invoke its protected command only from an explicit user action.
 - End presentation on stable `401 UNAUTHENTICATED` before any client timer
   claim.
+- Map successful manual logout to `manual-logout-completed` and map deadline or
+  stable `401 UNAUTHENTICATED` to `session-ended`.
 - Coordinate manual and deadline logout without duplicate requests.
-- Ignore stale asynchronous results.
+- Ignore stale asynchronous results, including results that would overwrite a
+  lifecycle-end presentation selected by an earlier winning transition.
 
 ### Browser adapter rules
 
@@ -470,9 +516,17 @@ product-neutral panel containing:
 The protected panel must not become a workspace, navigation shell,
 organization console, profile view, or branding amendment.
 
-Exact copy and styling remain presentation implementation details as long as
-the visible result distinguishes safe success, stable error, and generic error
-without exposing forbidden data.
+Protected-command copy and styling remain presentation implementation details
+as long as the visible result distinguishes safe success, stable error, and
+generic error without exposing forbidden data. Lifecycle-end primary copy is
+fixed by the authoritative SDD and is rendered adjacent to the restored login
+presentation through a dedicated safe status view.
+
+That status view should use status semantics for the successful
+user-requested logout and lifecycle-end notification. Supplementary stable or
+generic error detail, when present, retains the existing safe error semantics.
+The fixed lifecycle copy is product-neutral and does not add a customer
+branding or general copy override.
 
 ## Error Mapping
 
@@ -496,7 +550,9 @@ this lifecycle-specific contract failure.
 
 401 UNAUTHENTICATED
   -> end lifecycle
-  -> login presentation + stable safe error
+  -> login presentation
+  -> primary session-ended message
+  -> optional supplementary stable safe error
 
 other valid stable error
   -> keep lifecycle + stable safe error
@@ -511,6 +567,7 @@ transport / malformed / unexpected
 204
   -> end lifecycle
   -> login presentation
+  -> primary manual-logout-completed message
 
 valid stable error
   -> keep lifecycle before deadline + stable safe error
@@ -526,11 +583,13 @@ deadline observed
   -> end lifecycle immediately
   -> start logout once if not already started
   -> login presentation regardless of result
-  -> optional REQUEST_UNAVAILABLE on failure
+  -> primary session-ended message
+  -> optional supplementary REQUEST_UNAVAILABLE on failure
 ```
 
 None of these mappings infer a hidden session reason or override auth-owned
-server decisions.
+server decisions. In particular, neither deadline nor `401 UNAUTHENTICATED`
+is labelled as forced logout, revocation, or proven expiry.
 
 ## Sensitive Data Design
 
@@ -555,7 +614,8 @@ Lifecycle state receives only:
 - frontend-local generation;
 - parsed presentation deadline;
 - phase and operation state;
-- safe result code/message.
+- safe result code/message;
+- lifecycle-end presentation variant and optional supplementary safe error.
 
 The following values must never enter those boundaries:
 
@@ -606,13 +666,21 @@ Validate with fixed clock and fake timers:
 - no automatic protected command;
 - protected success and safe data exclusions;
 - stable 401 ends lifecycle and cancels the timer;
+- stable 401 shows the fixed session-ended primary message and retains any
+  stable safe error only as supplementary detail;
 - other stable error retains lifecycle;
 - generic protected failure remains deadline-bounded;
-- manual logout success returns to login;
+- manual logout success returns to login with the fixed signed-out primary
+  message;
+- failed manual logout never shows the signed-out primary message;
 - failed manual logout remains explicitly retryable before deadline;
-- deadline ends presentation and starts logout once;
+- deadline ends presentation, starts logout once, and shows the fixed
+  session-ended primary message regardless of cleanup result;
 - manual logout/deadline race does not duplicate logout;
-- stale protected, logout, timer, and replacement-lifecycle results are ignored;
+- stale protected, logout, timer, and replacement-lifecycle results are ignored
+  and cannot overwrite the winning lifecycle-end presentation;
+- deadline and stable 401 presentation never claims forced logout, revocation,
+  or proven session expiry;
 - unmount cancels local timer work without claiming logout.
 
 ### Fixture adapter tests
@@ -657,14 +725,16 @@ added to the existing fixture test for the already-implemented auth-13 header.
 
 After explicit TDD authorization, the recommended RED sequence is:
 
-1. public opt-in expiry handoff and legacy compatibility tests;
-2. invalid expiry cleanup and logout adapter tests;
-3. fixture protected-command adapter tests;
-4. fixture component phase and explicit-action tests;
-5. fake-timer deadline tests;
-6. server-rejection and stale-result race tests;
-7. cross-boundary login/protected/logout/rejection contract assertion;
-8. branding, public-export, build, and Maven regression verification.
+1. fixture lifecycle-end primary-message and failure-exclusion tests;
+2. deadline, server-rejection, and manual-logout message-precedence tests;
+3. public opt-in expiry handoff and legacy compatibility tests;
+4. invalid expiry cleanup and logout adapter tests;
+5. fixture protected-command adapter tests;
+6. fixture component phase and explicit-action tests;
+7. fake-timer deadline tests;
+8. server-rejection and stale-result race tests;
+9. cross-boundary login/protected/logout/rejection contract assertion;
+10. branding, public-export, build, and Maven regression verification.
 
 TDD RED must not modify production implementation and must not be committed
 while failing.
