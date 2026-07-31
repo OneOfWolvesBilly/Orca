@@ -1,8 +1,16 @@
-import { act, fireEvent, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import FixtureSessionLifecycle from "./FixtureSessionLifecycle";
 
 const FUTURE_EXPIRY = "2999-07-24T00:00:00Z";
+const SIGNED_OUT_MESSAGE = "You have signed out.";
+const SESSION_ENDED_MESSAGE =
+  "Your session has ended. Please sign in again.";
+const BRANDING = {
+  productName: "Example Product",
+  supportingCopy: "Sign in to continue to your workspace.",
+};
 
 describe("frontend-04 React fixture protected session lifecycle", () => {
   beforeEach(() => {
@@ -25,6 +33,27 @@ describe("frontend-04 React fixture protected session lifecycle", () => {
       await screen.findByRole("heading", { name: "Sign in to Example Product" }),
     ).toBeVisible();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("starts each fresh mount at login without probing or restoring session state", () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch");
+
+    const firstMount = render(
+      <FixtureSessionLifecycle branding={BRANDING} />,
+    );
+    expect(
+      screen.getByRole("heading", { name: "Sign in to Example Product" }),
+    ).toBeVisible();
+    firstMount.unmount();
+
+    const secondMount = render(
+      <FixtureSessionLifecycle branding={BRANDING} />,
+    );
+    expect(
+      screen.getByRole("heading", { name: "Sign in to Example Product" }),
+    ).toBeVisible();
+    expect(fetchMock).not.toHaveBeenCalled();
+    secondMount.unmount();
   });
 
   it("enters protected presentation after valid login without invoking the command", async () => {
@@ -100,6 +129,9 @@ describe("frontend-04 React fixture protected session lifecycle", () => {
     expect(
       await screen.findByRole("heading", { name: "Sign in to Example Product" }),
     ).toBeVisible();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      SESSION_ENDED_MESSAGE,
+    );
     expect(screen.getByRole("alert")).toHaveTextContent("UNAUTHENTICATED");
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Authentication is required",
@@ -202,6 +234,8 @@ describe("frontend-04 React fixture protected session lifecycle", () => {
     expect(
       await screen.findByRole("heading", { name: "Sign in to Example Product" }),
     ).toBeVisible();
+    expect(screen.getByRole("status")).toHaveTextContent(SIGNED_OUT_MESSAGE);
+    expect(screen.queryByText(SESSION_ENDED_MESSAGE)).not.toBeInTheDocument();
   });
 
   it("keeps failed manual logout safely retryable before the deadline", async () => {
@@ -219,6 +253,7 @@ describe("frontend-04 React fixture protected session lifecycle", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "REQUEST_UNAVAILABLE",
     );
+    expect(screen.queryByText(SIGNED_OUT_MESSAGE)).not.toBeInTheDocument();
     expect(document.body).not.toHaveTextContent("private transport detail");
     const retry = screen.getByRole("button", { name: /log out/i });
     expect(retry).toBeEnabled();
@@ -256,6 +291,9 @@ describe("frontend-04 React fixture protected session lifecycle", () => {
     expect(
       screen.getByRole("heading", { name: "Sign in to Example Product" }),
     ).toBeVisible();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      SESSION_ENDED_MESSAGE,
+    );
   });
 
   it("does not restore presentation when deadline logout fails", async () => {
@@ -276,7 +314,27 @@ describe("frontend-04 React fixture protected session lifecycle", () => {
     expect(
       screen.getByRole("heading", { name: "Sign in to Example Product" }),
     ).toBeVisible();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      SESSION_ENDED_MESSAGE,
+    );
     expect(document.body).not.toHaveTextContent("private transport detail");
+  });
+
+  it("cancels deadline work on unmount without claiming server logout", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-24T00:00:00Z"));
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(loginResponse("2026-07-24T00:00:01Z"));
+    const fixture = render(<FixtureSessionLifecycle branding={BRANDING} />);
+    await submitLoginWithFireEvent();
+
+    fixture.unmount();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000);
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("does not duplicate a protected command while its request is pending", async () => {
@@ -319,13 +377,21 @@ describe("frontend-04 React fixture protected session lifecycle", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(
+      screen.getByRole("heading", { name: "Sign in to Example Product" }),
+    ).toBeVisible();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      SESSION_ENDED_MESSAGE,
+    );
+    expect(screen.queryByText(SIGNED_OUT_MESSAGE)).not.toBeInTheDocument();
     pendingLogout.resolve(new Response(null, { status: 204 }));
     await act(async () => {
       await pendingLogout.promise;
     });
-    expect(
-      screen.getByRole("heading", { name: "Sign in to Example Product" }),
-    ).toBeVisible();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      SESSION_ENDED_MESSAGE,
+    );
+    expect(screen.queryByText(SIGNED_OUT_MESSAGE)).not.toBeInTheDocument();
   });
 
   it("ignores a stale protected success after the deadline ends presentation", async () => {
@@ -355,7 +421,50 @@ describe("frontend-04 React fixture protected session lifecycle", () => {
     expect(
       screen.getByRole("heading", { name: "Sign in to Example Product" }),
     ).toBeVisible();
-    expect(screen.queryByText(/protected fixture command succeeded/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      SESSION_ENDED_MESSAGE,
+    );
+    expect(
+      screen.queryByText(/protected fixture command succeeded/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("clears the ended-session message for a replacement lifecycle and ignores its stale predecessor", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-24T00:00:00Z"));
+    const pendingProtected = deferred<Response>();
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(loginResponse("2026-07-24T00:00:01Z"))
+      .mockReturnValueOnce(pendingProtected.promise)
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(loginResponse(FUTURE_EXPIRY));
+    await renderFixture();
+    await submitLoginWithFireEvent();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /protected fixture command/i }),
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000);
+    });
+    await submitLoginWithFireEvent();
+
+    expect(
+      screen.getByRole("button", { name: /protected fixture command/i }),
+    ).toBeVisible();
+    expect(screen.queryByText(SESSION_ENDED_MESSAGE)).not.toBeInTheDocument();
+
+    pendingProtected.resolve(new Response(null, { status: 204 }));
+    await act(async () => {
+      await pendingProtected.promise;
+    });
+
+    expect(
+      screen.getByRole("button", { name: /protected fixture command/i }),
+    ).toBeVisible();
+    expect(
+      screen.queryByText(/protected fixture command succeeded/i),
+    ).not.toBeInTheDocument();
   });
 });
 

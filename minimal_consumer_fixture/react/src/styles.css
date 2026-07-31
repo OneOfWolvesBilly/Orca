@@ -70,6 +70,11 @@ button, input { font: inherit; }
   background: #e4f4eb;
 }
 
+.fixture-result.lifecycle-status {
+  color: #25473b;
+  background: #e8f0ec;
+}
+
 .fixture-result.error {
   color: #77262d;
   background: #fbeaec;

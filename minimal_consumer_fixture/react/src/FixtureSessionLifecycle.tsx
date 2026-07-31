@@ -15,7 +15,16 @@ import {
 type Phase = "login" | "protected";
 type Operation = "idle" | "protected-command" | "manual-logout";
 type SafeResult = FixtureCommandResult | LogoutResult;
+type LifecycleEndPresentation =
+  | { kind: "manual-logout-completed" }
+  | {
+      kind: "session-ended";
+      supplementaryError?: FixtureErrorPresentation;
+    };
 const MAX_TIMER_DELAY_MILLISECONDS = 2_147_483_647;
+const SIGNED_OUT_MESSAGE = "You have signed out.";
+const SESSION_ENDED_MESSAGE =
+  "Your session has ended. Please sign in again.";
 
 type FixtureSessionLifecycleProps = {
   branding: OrcaLoginBranding;
@@ -27,8 +36,8 @@ export default function FixtureSessionLifecycle({
   const [phase, setPhase] = useState<Phase>("login");
   const [operation, setOperation] = useState<Operation>("idle");
   const [protectedResult, setProtectedResult] = useState<SafeResult | null>(null);
-  const [loginResult, setLoginResult] =
-    useState<FixtureErrorPresentation | null>(null);
+  const [lifecycleEndPresentation, setLifecycleEndPresentation] =
+    useState<LifecycleEndPresentation | null>(null);
   const generation = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const logoutStarted = useRef(false);
@@ -48,7 +57,7 @@ export default function FixtureSessionLifecycle({
     generation.current = currentGeneration;
     cancelTimer();
     logoutStarted.current = false;
-    setLoginResult(null);
+    setLifecycleEndPresentation(null);
     setProtectedResult(null);
     setOperation("idle");
     setPhase("protected");
@@ -80,7 +89,7 @@ export default function FixtureSessionLifecycle({
 
     const shouldStartLogout = !logoutStarted.current;
     logoutStarted.current = true;
-    endLifecycle(currentGeneration);
+    endLifecycle(currentGeneration, { kind: "session-ended" });
     if (shouldStartLogout) {
       void logoutOrcaSession();
     }
@@ -104,7 +113,10 @@ export default function FixtureSessionLifecycle({
       result.status === 401 &&
       result.presentation.code === "UNAUTHENTICATED"
     ) {
-      endLifecycle(currentGeneration, result.presentation);
+      endLifecycle(currentGeneration, {
+        kind: "session-ended",
+        supplementaryError: result.presentation,
+      });
       return;
     }
 
@@ -127,7 +139,7 @@ export default function FixtureSessionLifecycle({
     }
 
     if (result.kind === "success") {
-      endLifecycle(currentGeneration);
+      endLifecycle(currentGeneration, { kind: "manual-logout-completed" });
       return;
     }
 
@@ -138,7 +150,7 @@ export default function FixtureSessionLifecycle({
 
   function endLifecycle(
     currentGeneration: number,
-    result: FixtureErrorPresentation | null = null,
+    presentation: LifecycleEndPresentation,
   ) {
     if (!isCurrent(currentGeneration)) {
       return;
@@ -148,7 +160,7 @@ export default function FixtureSessionLifecycle({
     cancelTimer();
     setOperation("idle");
     setProtectedResult(null);
-    setLoginResult(result);
+    setLifecycleEndPresentation(presentation);
     setPhase("login");
   }
 
@@ -170,7 +182,9 @@ export default function FixtureSessionLifecycle({
           branding={branding}
           onSessionEstablished={establishSession}
         />
-        {loginResult && <SafeErrorView presentation={loginResult} />}
+        {lifecycleEndPresentation && (
+          <LifecycleEndView presentation={lifecycleEndPresentation} />
+        )}
       </>
     );
   }
@@ -207,6 +221,29 @@ export default function FixtureSessionLifecycle({
         <SafeResultView result={protectedResult} />
       </section>
     </main>
+  );
+}
+
+function LifecycleEndView({
+  presentation,
+}: {
+  presentation: LifecycleEndPresentation;
+}) {
+  const message =
+    presentation.kind === "manual-logout-completed"
+      ? SIGNED_OUT_MESSAGE
+      : SESSION_ENDED_MESSAGE;
+
+  return (
+    <>
+      <div className="fixture-result lifecycle-status" role="status">
+        {message}
+      </div>
+      {presentation.kind === "session-ended" &&
+        presentation.supplementaryError && (
+          <SafeErrorView presentation={presentation.supplementaryError} />
+        )}
+    </>
   );
 }
 
