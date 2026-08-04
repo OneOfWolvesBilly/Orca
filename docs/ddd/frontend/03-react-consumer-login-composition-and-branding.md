@@ -1,6 +1,6 @@
 # DDD Derivation - Frontend 03 React Consumer Login Composition and Branding
 
-Status: Approved.
+Status: Approved / Implemented.
 
 This note is **derived from**
 `docs/specs/frontend/03-react-consumer-login-composition-and-branding.md`.
@@ -500,7 +500,7 @@ slice.
 
 ## Follow-up Boundary
 
-Provisional `frontend-04` remains responsible for the protected session
-lifecycle proof after `frontend-03` is complete. This DDD note derives no
-protected command, authenticated actor, logout, post-logout rejection, route,
-session inspection, or restoration behavior.
+`frontend-04` was implemented separately and remains authoritative for the
+protected session lifecycle proof. This DDD note derives no protected command,
+authenticated actor, logout, post-logout rejection, route, session inspection,
+or restoration behavior.

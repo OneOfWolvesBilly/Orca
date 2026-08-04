@@ -1,6 +1,6 @@
 # DDD Derivation - Frontend 04 React Fixture Protected Session Lifecycle
 
-Status: Approved amendment.
+Status: Approved amendment / Implemented.
 
 This note is **derived from**
 `docs/specs/frontend/04-react-fixture-protected-session-lifecycle.md`.

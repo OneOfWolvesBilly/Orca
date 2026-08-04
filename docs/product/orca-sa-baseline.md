@@ -28,8 +28,9 @@ boundaries:
 - admin-managed user provisioning
 - organization membership and invitation workflows
 - persistence and HTTP delivery integration
-- React frontend login result and client failure observability foundation
-- local MariaDB runtime direction for login-facing workflows
+- React frontend login, client failure observability, reusable consumer
+  composition, and product-neutral protected session lifecycle
+- local MariaDB runtime support for login-facing workflows
 - safe diagnostic and audit/log support boundaries
 
 Orca is not currently a CRM product, a project-management product, or a generic
@@ -38,9 +39,11 @@ but product-domain workflows for CRM, project management, or other domains must
 be defined in their own project baselines.
 
 Frontend work is part of the showcase only where an authoritative frontend
-delivery slice exists. The current implemented frontend baseline is the React
-login result shell and client failure observability foundation. Vue and Angular
-ports remain planned unless their implementation slices are completed.
+delivery slice exists. The current implemented frontend baseline includes the
+React login result shell, client failure observability, reusable consumer login
+composition and branding, and the product-neutral React fixture protected
+session lifecycle. Vue and Angular ports remain planned unless their
+implementation slices are completed.
 
 Reusable audit and logging support are product-neutral boundaries. Orca may
 provide shared interfaces, record envelopes, diagnostics, and safety rules, but
@@ -193,6 +196,7 @@ Already supported:
 
 - password login with server-side session
 - opaque session cookie
+- auth-owned session expiry coordination value for browser presentation
 - session-backed protected HTTP command actor context
 - logout and session revocation
 
@@ -287,6 +291,9 @@ Already supported:
 - React frontend login result shell
 - stable login result and error presentation in the React reference
 - React client failure observability and safe diagnostic reference presentation
+- reusable React login package with bounded consumer branding
+- product-neutral React fixture protected session lifecycle using the existing
+  login, expiry, protected-command, and logout boundaries
 
 Planned framework ports:
 
@@ -295,7 +302,7 @@ Planned framework ports:
 
 Planned / gap:
 
-- protected route/session state
+- protected product route and refresh-time session restoration
 - organization command console
 - stable error display beyond the login shell
 - Vue and Angular parity for implemented frontend behaviors
@@ -430,6 +437,8 @@ Already supported:
 - password login through auth-owned credential verification
 - opaque server-side session
 - `ORCA_SESSION` cookie
+- auth-owned session expiry coordination through
+  `Orca-Session-Expires-At`
 - protected command context from server-side session state
 - login failure audit / troubleshooting reference
 - logout
@@ -572,8 +581,9 @@ Status: React reference implemented / Vue and Angular ports planned.
 Purpose:
 
 - show how a frontend consumes Orca's backend reference core
-- demonstrate login, protected route/session state, organization commands, and
-  stable error display
+- demonstrate login and safe protected-session integration, with future
+  protected product routes, organization commands, and broader stable error
+  display
 
 Current support:
 
@@ -587,12 +597,18 @@ Current support:
   and Angular
 - the React frontend-02 reference implementation is available under
   `orca_frontend/react/`
+- `frontend-03` provides the reusable React login package, consumer composition,
+  and bounded branding contract
+- `auth-13` exposes the auth-owned session expiry coordination value consumed
+  by the protected-session fixture lifecycle
+- `frontend-04` provides the memory-only product-neutral React fixture
+  protected session lifecycle
 - Vue and Angular ports remain planned
 
 Planned / gap:
 
-- protected route
-- current session state
+- protected product route
+- refresh-time session restoration or inspection
 - organization command console
 - stable error display beyond the login shell
 - Vue and Angular parity for the login result shell

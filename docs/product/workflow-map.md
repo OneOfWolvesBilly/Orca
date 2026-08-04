@@ -113,7 +113,8 @@ Main success flow:
 1. User submits login identifier and password to `POST /api/auth/login`.
 2. Auth verifies credentials against auth-owned credential state.
 3. Auth creates server-side session state for exactly one registered user.
-4. Auth returns an opaque `ORCA_SESSION` cookie.
+4. Auth returns an opaque `ORCA_SESSION` cookie and the auth-owned session
+   expiry coordination value.
 5. A protected command request presents the cookie.
 6. Auth resolves current user context from server-side session state.
 7. Downstream protected command behavior receives the authenticated actor id.
@@ -137,6 +138,7 @@ Currently supported slices:
 - `auth-09` protected HTTP session context
 - `auth-10` login failure audit
 - `auth-11` logout and session revocation
+- `auth-13` client session expiry coordination
 
 Known gaps:
 
@@ -213,8 +215,13 @@ Supported slice:
 
 Known gaps:
 
-- later reusable frontend login and branding integration
-- later stable exception, logging, correlation, and artifact-delivery proof
+- production artifact publication and delivery proof
+- later structured logging and correlation support
+
+Completed delivery support:
+
+- `frontend-03` reusable React consumer login composition and branding
+- `frontend-04` React fixture protected session lifecycle
 
 Explicit unknowns:
 
@@ -465,6 +472,8 @@ Main success flow:
 Currently supported slices:
 
 - `auth-10` supports auth-owned login failure audit.
+- `frontend-02` supports client-side login failure classification and safe
+  diagnostic submission.
 
 Currently supported reference-core foundation:
 
@@ -475,7 +484,6 @@ Known gaps:
 
 - structured logs
 - correlation / request id propagation
-- client-side failure reporting behavior
 - diagnostic retention and cleanup
 - safe logging rules for auth/session data
 - audit storage adapters and workflow-specific audit emission
@@ -647,14 +655,23 @@ Main success flow:
 4. The frontend shows a safe login success result or a stable login rejection
    result.
 5. Login rejection displays the opaque `loginFailureReferenceId`.
-6. Protected route/session state and organization command behavior remain
-   outside the first frontend slice.
+6. A React consumer may reuse the login behavior through the supported public
+   package with bounded branding.
+7. The product-neutral React fixture may coordinate a memory-only protected
+   session presentation from the auth-owned expiry value, invoke the fixture
+   command, and use the existing logout behavior.
+8. Protected product routes, refresh restoration, and organization command UI
+   remain outside the implemented frontend baseline.
 
 Currently supported slices:
 
 - `frontend-01` React frontend login result shell
 - `frontend-02` React client failure observability
+- `frontend-03` React consumer login composition and branding
+- `frontend-04` React fixture protected session lifecycle
 - `reference-core-02` client diagnostics foundation
+- `auth-12` embedded protected actor-context integration
+- `auth-13` client session expiry coordination
 
 Planned framework ports:
 
@@ -663,7 +680,7 @@ Planned framework ports:
 
 Known gaps:
 
-- protected route/session state
+- protected product route and refresh-time session restoration
 - organization command console
 - non-login API error display beyond the login shell
 - frontend terminology aligned with backend domain terms

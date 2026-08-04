@@ -50,13 +50,17 @@ Already supported by authoritative slices:
 * protected command actor context from the `ORCA_SESSION` cookie
 * auth-owned login failure audit with an opaque troubleshooting reference
 * logout and session revocation
+* auth-owned client session expiry coordination for browser presentation
 * embedded consumer auth and actor-context integration through a public Orca
   boundary
 * organization group creation and invitation lifecycle commands
 * stable API error contract for backend HTTP APIs
 * safe client diagnostic ingestion and protected lookup
 * reusable product-neutral audit recording boundary
-* React frontend login result shell and client failure observability foundation
+* reusable React login composition with bounded consumer branding
+* React frontend login, client failure observability, and product-neutral
+  protected session lifecycle reference
+* local Docker Compose and MariaDB login runtime support
 
 Planned or gap areas:
 

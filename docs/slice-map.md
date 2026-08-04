@@ -84,6 +84,7 @@ frontend business rules.
 | `auth-10` | [Login Failure Audit](specs/auth/10-login-failure-audit.md) | [DDD](ddd/auth/10-login-failure-audit.md) | Done |
 | `auth-11` | [Logout and Session Revocation](specs/auth/11-logout-session-revocation.md) | [DDD](ddd/auth/11-logout-session-revocation.md) | Done |
 | `auth-12` | [Embedded Auth and Actor-context Integration](specs/auth/12-embedded-auth-actor-context-integration.md) | [DDD](ddd/auth/12-embedded-auth-actor-context-integration.md) | Done |
+| `auth-13` | [Client Session Expiry Coordination](specs/auth/13-client-session-expiry-coordination.md) | [DDD](ddd/auth/13-client-session-expiry-coordination.md) | Done |
 
 ## Reference Core
 
@@ -103,6 +104,8 @@ domain or application behavior.
 | --- | --- | --- | --- |
 | `frontend-01` | [Frontend Login Result Shell](specs/frontend/01-login-result-shell.md) | [DDD](ddd/frontend/01-login-result-shell.md) | React Done / Vue and Angular Planned |
 | `frontend-02` | [Client Failure Observability](specs/frontend/02-client-failure-observability.md) | [DDD](ddd/frontend/02-client-failure-observability.md) | React Done / Vue and Angular Planned |
+| `frontend-03` | [React Consumer Login Composition and Branding](specs/frontend/03-react-consumer-login-composition-and-branding.md) | [DDD](ddd/frontend/03-react-consumer-login-composition-and-branding.md) | Done |
+| `frontend-04` | [React Fixture Protected Session Lifecycle](specs/frontend/04-react-fixture-protected-session-lifecycle.md) | [DDD](ddd/frontend/04-react-fixture-protected-session-lifecycle.md) | Done |
 
 ## Deployment
 

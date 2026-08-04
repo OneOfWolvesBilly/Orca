@@ -29,7 +29,8 @@ This ordering keeps future work clear:
 
 - organization slices are completed and should not be reopened unless a new
   workflow gap explicitly changes organization behavior
-- auth may continue with `auth-10+` slices
+- auth is implemented through `auth-13` and may continue only from another
+  workflow gap that passes slice intake
 - logging, audit, exception handling, cache, API documentation, frontend shell,
   and deployment support are support capabilities, not organization or auth
   domain behavior
@@ -177,6 +178,7 @@ Existing slices:
 - `auth-09`
 - `auth-10`
 - `auth-11`
+- `auth-13`
 
 Embedded integration slice:
 
@@ -191,6 +193,7 @@ Existing capabilities:
 - session-backed actor context for protected commands
 - login failure audit and opaque troubleshooting reference
 - logout and session revocation
+- auth-owned client session expiry coordination value
 
 Embedded integration capabilities:
 
@@ -217,6 +220,8 @@ Sequencing notes:
 - External login should come after internal auth/session semantics are stable.
 - `auth-12` must reuse auth-08, auth-09, and auth-11 behavior without exposing
   session persistence or introducing product authorization rules.
+- `auth-13` exposes the existing session expiry only as a client coordination
+  upper bound and does not change session validity.
 - The fixture must remain product-neutral and must not rely on Orca internal
   infrastructure packages.
 
@@ -332,7 +337,6 @@ Implemented foundation:
 
 Missing capabilities / possible future slices:
 
-- frontend client failure reporting
 - structured application logging
 - correlation / request id propagation
 - diagnostic retention and cleanup
@@ -429,7 +433,11 @@ Existing slices:
 
 - `frontend-01` React frontend login result shell
 - `frontend-02` React client failure observability
+- `frontend-03` React consumer login composition and branding
+- `frontend-04` React fixture protected session lifecycle
 - `reference-core-02` client diagnostics foundation
+- `auth-12` embedded protected actor-context integration
+- `auth-13` client session expiry coordination
 
 Existing capabilities:
 
@@ -440,6 +448,10 @@ Existing capabilities:
 - framework-local client error catalog and unified error presentation
 - safe client failure classification and diagnostic submission
 - optional `clientFailureReferenceId` presentation after persistence
+- supported React package-root login composition
+- bounded consumer branding with mandatory Orca attribution
+- memory-only product-neutral protected fixture session lifecycle
+- explicit protected fixture command and logout presentation
 
 Planned framework ports:
 
@@ -448,7 +460,7 @@ Planned framework ports:
 
 Missing capabilities / possible future slices:
 
-- protected route/session state
+- protected product route and refresh-time session restoration
 - organization command console
 - non-login error display beyond the login shell
 - Vue and Angular frontend-02 ports

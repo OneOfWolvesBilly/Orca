@@ -1,6 +1,6 @@
 # Frontend 04 - React Fixture Protected Session Lifecycle
 
-Status: Approved amendment.
+Status: Approved amendment / Implemented.
 
 ## Slice Intake
 
