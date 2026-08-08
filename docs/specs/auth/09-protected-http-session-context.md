@@ -68,6 +68,12 @@ POST /api/group-invitations/{invitationId}/revoke
 
 This slice does not add, remove, or rename protected command endpoints.
 
+This fixed list remains the existing Orca organization POST mapping from
+auth-04. It is not the extension contract for embedded consumers. Auth-12 owns
+consumer-declared `@OrcaProtectedCommand` handlers and their supported HTTP
+method matrix; those declarations reuse this slice's auth-owned session
+resolution without being added to the fixed organization list.
+
 ## Scenarios
 
 ### Scenario: Protected command establishes current user context from a valid session
@@ -158,6 +164,8 @@ This slice does not add, remove, or rename protected command endpoints.
 - Session rejection responses MUST NOT reveal which session condition failed.
 - Protected command context MUST NOT be established from `X-User-Id`.
 - This slice MUST NOT add, remove, or change protected command endpoints.
+- Embedded consumer protected declarations MUST follow auth-12 and MUST NOT be
+  silently excluded because they are absent from the auth-04 fixed path list.
 - This slice MUST NOT change login endpoint behavior.
 - This slice MUST NOT create sessions.
 - This slice MUST NOT renew sessions or extend session lifetime.

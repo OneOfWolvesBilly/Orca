@@ -36,7 +36,7 @@ No domain or application model additions are required.
 - `CurrentUserContextInterceptor`
   - establishes request-scoped current user context for protected HTTP requests
 - `CurrentUserContextResolver`
-  - maps presented `X-User-Id` values into the existing auth use case
+  - resolves the presented `ORCA_SESSION` through the auth-09 session boundary
 - `CurrentUserContextArgumentResolver`
   - supplies the established context to downstream web adapters
 
@@ -49,12 +49,17 @@ No domain or application model additions are required.
   - `POST /api/group-invitations/{invitationId}/reject`
   - `POST /api/group-invitations/{invitationId}/revoke`
 
+This fixed mapping remains the existing Orca organization mapping only. Auth-12
+owns embedded consumer declarations through `@OrcaProtectedCommand`; consumer
+routes are not registered in this list. Auth-09 supersedes the earlier demo
+`X-User-Id` transport for all protected commands.
+
 ---
 
 ## Rule Placement
 
 ### Auth application/domain rules
-- Unchanged from Spec 01 and Spec 02.
+- Unchanged from Spec 01 and the active auth-09 session integration.
 - Exactly one non-blank authenticated user id is required when current user
   context is established.
 

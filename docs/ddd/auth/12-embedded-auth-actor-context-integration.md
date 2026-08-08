@@ -1,6 +1,6 @@
 # DDD Derivation - 12 Embedded Auth and Actor-context Integration
 
-Status: Approved / Implemented.
+Status: Approved / repair closeout.
 
 This note is **derived from**
 `docs/specs/auth/12-embedded-auth-actor-context-integration.md`.
@@ -86,12 +86,22 @@ the spec.
 ### Public integration adapter rules
 
 - Detect protected consumer commands through the supported declaration.
+- Validate all protected handler mappings during application startup.
+- Fail startup when a protected declaration exists without embedded auth
+  enablement.
+- Accept only explicitly mapped `POST`, `PUT`, `PATCH`, and `DELETE` protected
+  handlers.
+- Fail startup for protected `GET`, `HEAD`, `OPTIONS`, unspecified, mixed, or
+  otherwise unsupported method mappings.
 - Resolve authentication before invoking the consumer handler.
 - Reject multiple `ORCA_SESSION` cookies instead of selecting one.
 - Store internal request context only inside Orca web integration.
 - Supply only `AuthenticatedActor` to consumer code.
 - Make missing embedded integration fail visibly rather than silently executing
   a protected command without authentication.
+- Ignore actor-shaped query, path, header, or body values as authentication
+  sources; map `AuthenticatedActor` only from Orca's established internal
+  request context.
 
 ### Consumer fixture rules
 
@@ -128,6 +138,13 @@ Recommended internal integration placement:
 io.github.oneofwolvesbilly.orca.auth.infrastructure.spring
 io.github.oneofwolvesbilly.orca.auth.web
 ```
+
+The startup validator belongs to Spring integration. It inspects registered
+MVC handler mappings after they are known and before the application becomes
+available. A small auto-configuration discovery hook may load that validator
+for dependency consumers so missing `@EnableOrcaEmbeddedAuth` can be detected;
+the hook must not install login, logout, persistence, session resolution, or
+actor argument handling by itself.
 
 Recommended consumer fixture module:
 
@@ -172,6 +189,26 @@ The HTTP adapter must collect all cookies named `ORCA_SESSION`.
 This rule belongs in the web adapter because cookie multiplicity is HTTP input,
 not an `AuthenticatedSession` invariant.
 
+## Method and Startup Validation Design
+
+The fail-closed boundary has two separate Spring adapter responsibilities:
+
+1. startup validation inspects every method/type-level
+   `@OrcaProtectedCommand` mapping and rejects missing enablement or a method
+   set outside `POST`, `PUT`, `PATCH`, and `DELETE`;
+2. the request interceptor processes every supported protected method and
+   establishes internal current-user context before MVC argument resolution or
+   controller invocation.
+
+An empty Spring request-method condition is unsupported because it would allow
+read-like or unexpected methods. A mixed method condition is unsupported when
+any member is outside the allowed set. Non-handler requests and handlers
+without the protected marker remain unaffected.
+
+`auth-04` / `auth-09` retain ownership of the existing Orca organization POST
+mapping. Their controllers may use the same marker as an implementation
+alignment, but consumer routes are not added to that fixed path list.
+
 ## Test Layer Placement
 
 Public contract unit tests validate:
@@ -183,10 +220,16 @@ Public contract unit tests validate:
 Auth web tests validate:
 
 - a declared protected command resolves one actor before handler execution
+- protected `POST`, `PUT`, `PATCH`, and `DELETE` all traverse actor resolution
+- protected `GET`, `HEAD`, `OPTIONS`, unspecified, mixed, and unsupported
+  method mappings fail startup
+- a protected declaration without enablement fails startup in a consumer host
 - missing, blank, malformed, unknown, expired, invalid, and revoked sessions
   remain unauthenticated
 - multiple `ORCA_SESSION` cookies are rejected without selecting one
 - `X-User-Id` remains ineffective
+- attacker-controlled actor-shaped input remains ineffective
+- every rejection has a handler execution count of zero
 - unprotected handlers are not forced through actor resolution
 
 Consumer contract tests validate:
@@ -198,6 +241,9 @@ Consumer contract tests validate:
 - logout revokes the session
 - the same fixture command is rejected after logout
 - invalid session requests never invoke fixture behavior
+- missing embedded enablement prevents application startup
+- session failure-set inputs and attacker-controlled actor input never invoke
+  fixture behavior
 
 Regression tests validate:
 
@@ -234,3 +280,5 @@ store those values in fixture behavior.
 - Non-Spring integration.
 - Separately deployed Orca service.
 - Production artifact publication.
+- Credential encoding changes.
+- Broad package or cross-context architecture refactoring.

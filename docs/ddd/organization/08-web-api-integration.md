@@ -48,25 +48,28 @@ The web adapter MUST NOT:
 
 ## Authenticated User Adapter
 
-For this slice, authenticated user id resolution is modeled as a web adapter concern.
+Auth-09 supersedes the original organization-08 demo header transport.
 
-Implementation policy:
-- Resolve the actor from the `X-User-Id` HTTP header.
-- Reject missing or blank header values before invoking a use case.
-- Pass the resolved user id into existing application commands.
+Current implementation policy:
+- consume the request-scoped `CurrentUserContext` already established from
+  `ORCA_SESSION` and auth-owned server-side session state;
+- reject a request without establishable context before invoking a use case;
+- pass the resolved user id into existing application commands;
+- never use `X-User-Id` as the protected command actor source.
 
-This is a demo integration mechanism.
-It is not a production authentication or authorization design.
+The five routes remain the fixed auth-04/auth-09 organization POST mapping.
+Auth-12 owns consumer-declared protected handlers and does not add consumer
+routes to this list.
 
 ## Endpoint to Use Case Mapping
 
 | Endpoint | Use case | Actor source |
 | --- | --- | --- |
-| `POST /api/groups` | `CreateGroupUseCase` | `X-User-Id` as creator |
-| `POST /api/groups/{groupId}/invitations` | `InviteMemberUseCase` | `X-User-Id` as inviter |
-| `POST /api/group-invitations/{invitationId}/accept` | `AcceptInvitationUseCase` | `X-User-Id` as invitee actor |
-| `POST /api/group-invitations/{invitationId}/reject` | `RejectInvitationUseCase` | `X-User-Id` as invitee actor |
-| `POST /api/group-invitations/{invitationId}/revoke` | `RevokeInvitationUseCase` | `X-User-Id` as revoking actor |
+| `POST /api/groups` | `CreateGroupUseCase` | auth-09 request context as creator |
+| `POST /api/groups/{groupId}/invitations` | `InviteMemberUseCase` | auth-09 request context as inviter |
+| `POST /api/group-invitations/{invitationId}/accept` | `AcceptInvitationUseCase` | auth-09 request context as invitee actor |
+| `POST /api/group-invitations/{invitationId}/reject` | `RejectInvitationUseCase` | auth-09 request context as invitee actor |
+| `POST /api/group-invitations/{invitationId}/revoke` | `RevokeInvitationUseCase` | auth-09 request context as revoking actor |
 
 ## Rule Classification
 
@@ -89,7 +92,7 @@ Application use cases continue to coordinate:
 Rules introduced by this slice are transport-boundary rules only:
 - HTTP methods and paths
 - JSON request/response shape
-- authenticated user id extraction from `X-User-Id`
+- authenticated user id consumption from auth-09 request context
 - request mapping into application commands
 - HTTP error mapping
 
@@ -99,7 +102,7 @@ These are not domain rules.
 
 Recommended HTTP mapping:
 
-- Missing or blank `X-User-Id` → `401 Unauthorized`
+- Missing or unestablishable auth-09 request context -> `401 Unauthorized`
 - Malformed JSON or missing required body → `400 Bad Request`
 - Blank required body field or path variable → `400 Bad Request`
 - Unknown group id or invitation id → `404 Not Found`
@@ -130,10 +133,10 @@ the wrapping MUST not change behavior.
 This slice is validated with web/integration tests.
 
 Recommended tests:
-- create group endpoint resolves `X-User-Id` and returns `groupId`
-- invite endpoint maps path/body/header to `InviteMemberUseCase` and returns `invitationId`
-- accept/reject/revoke endpoints resolve invitation id and actor header
-- missing `X-User-Id` is rejected before use case execution
+- create group endpoint consumes auth-09 request context and returns `groupId`
+- invite endpoint maps path/body/context to `InviteMemberUseCase` and returns `invitationId`
+- accept/reject/revoke endpoints resolve invitation id and the established actor
+- missing auth-09 context is rejected before use case execution
 - non-POST access is not part of the command contract
 - representative application/domain failures are mapped to stable HTTP errors
 

@@ -127,6 +127,11 @@ The protected command path list remains the list from Spec 04:
 
 No endpoint is added, removed, or renamed.
 
+This list remains the fixed organization mapping from auth-04. Auth-12 owns
+the public embedded declaration contract and supported protected-method matrix.
+Consumer routes reuse the same session-resolution and request-context behavior
+without entering this fixed list.
+
 ---
 
 ## Test Layer Placement

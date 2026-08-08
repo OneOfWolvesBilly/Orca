@@ -1,6 +1,33 @@
 # Spec 12 - Embedded Auth and Actor-context Integration
 
-Status: Approved / Implemented.
+Status: Approved / repair closeout.
+
+## Repair Intake and Single Visible Outcome
+
+Planning path: `continue current capability`.
+
+This repair completes `auth-12`; it does not create `auth-14`.
+
+Single actor-visible outcome:
+
+- when a same-process Spring consumer declares `@OrcaProtectedCommand`, Orca
+  establishes exactly one authenticated actor before the handler executes;
+- if embedded auth enablement or the declared HTTP method is invalid, the
+  application fails startup;
+- no protected declaration is silently ignored or allowed to execute without
+  authenticated actor context.
+
+Overlapping planning dispositions:
+
+- `ORCA-REPAIR-01`: included in this repair;
+- `ORCA-DOC-01`: included only for the protected-method contract and the
+  supersession relationship among `auth-04`, `auth-09`, organization-08, and
+  this public embedded declaration contract;
+- `ORCA-ARCH-01`, `ORCA-DELIVERY-01`, and `ORCA-SECURITY-01`: deferred and
+  remain outside this slice.
+
+The accepted startup and method decisions close gaps in the already-approved
+public boundary. They do not add a new workflow or actor outcome.
 
 ## Slice Intake
 
@@ -100,6 +127,22 @@ domain and must not become a new bounded context.
 Reference-core remains authoritative for the stable API error contract. The
 fixture does not redefine unauthenticated error semantics.
 
+## Dependency Ownership
+
+| Required mechanism | Owner | Authoritative predecessor | Allowed boundary | Completion evidence |
+| --- | --- | --- | --- | --- |
+| authenticated actor invariants | auth | `auth-01` | established internal current-user context | auth domain and unit tests |
+| request-scoped actor access | auth | `auth-03` | Orca request argument resolution | auth web tests |
+| login and opaque session creation | auth | `auth-08` | `POST /api/auth/login` and `ORCA_SESSION` | login web integration tests |
+| protected session resolution | auth | `auth-09` | auth-owned session-resolution application boundary | session application/web tests |
+| logout and revocation | auth | `auth-11` | `POST /api/auth/logout` | logout web integration tests |
+| embedded declaration and actor value | auth | `auth-12` | `@EnableOrcaEmbeddedAuth`, `@OrcaProtectedCommand`, and `AuthenticatedActor` | public API, web, and consumer contract tests |
+| stable unauthenticated response | reference-core | `reference-core-01` | `401 UNAUTHENTICATED` API error contract | reference-core web tests |
+
+Every predecessor is implemented on the current repository baseline. No
+consumer may bypass these boundaries by reading auth persistence, parsing a
+cookie, or importing an internal interceptor or resolver.
+
 ## Contract Terms
 
 - Embedded Auth Boundary
@@ -148,6 +191,42 @@ The actor id must be non-blank. The public actor boundary must not expose:
 
 Consumers must not be required to import Orca internal infrastructure packages
 to use the supported boundary.
+
+## Relationship to Existing Orca Protected Paths
+
+`auth-04` and `auth-09` remain authoritative for the existing five
+organization `POST` routes. Their fixed mapping records which existing Orca
+organization commands require auth; it is not the public extension mechanism
+for embedded consumers.
+
+`auth-12` is authoritative for consumer-owned declarations. A consumer uses
+`@OrcaProtectedCommand` and does not add its route to the `auth-04` / `auth-09`
+path list. Both forms use the same auth-owned session resolution and
+request-scoped actor establishment. Organization-08 continues to define its
+five command routes and organization behavior, while `auth-09` supersedes its
+original demo `X-User-Id` actor transport.
+
+No document may treat `X-User-Id`, the fixed organization path list, or the
+absence of `POST` as permission to bypass an `@OrcaProtectedCommand`
+declaration.
+
+## Startup Validation and Protected Method Matrix
+
+Startup validation inspects every Spring handler declaration marked directly
+or at controller type level with `@OrcaProtectedCommand`.
+
+| Declaration state | Startup result | Request-time result |
+| --- | --- | --- |
+| no protected declaration | startup succeeds without requiring embedded auth | no behavior added by this slice |
+| protected declaration and embedded auth enabled | startup succeeds only for `POST`, `PUT`, `PATCH`, or `DELETE` | actor context is established before handler execution |
+| protected declaration without `@EnableOrcaEmbeddedAuth` | startup fails with an explicit integration error | handler is unavailable |
+| protected `GET`, `HEAD`, or `OPTIONS` declaration | startup fails with an explicit unsupported-method error | handler is unavailable |
+| protected declaration with no explicit method or any other method | startup fails closed as unsupported | handler is unavailable |
+
+Method validation applies to every mapped method on the declaration. A mapping
+that contains both supported and unsupported methods fails startup. Framework
+fallback handling for `HEAD` or `OPTIONS` does not turn those methods into
+protected commands.
 
 ## Minimal Consumer Fixture Contract
 
@@ -261,10 +340,93 @@ product meaning.
 - The command is rejected as unauthenticated under `auth-09` and `auth-11`.
 - The fixture operation does not execute.
 
+### Scenario: Missing embedded enablement fails startup
+
+**Given**
+
+- A Spring consumer has at least one `@OrcaProtectedCommand` declaration.
+- The consumer has not enabled Orca through `@EnableOrcaEmbeddedAuth`.
+
+**When**
+
+- Spring validates handler mappings during application startup.
+
+**Then**
+
+- Application startup fails with an explicit Orca integration error.
+- The error identifies missing embedded auth enablement without exposing
+  session, credential, or actor data.
+- No protected handler becomes available for request execution.
+
+### Scenario: Supported protected command methods establish an actor
+
+**Given**
+
+- Embedded auth is enabled.
+- A protected handler is explicitly mapped to `POST`, `PUT`, `PATCH`, or
+  `DELETE`.
+- The request presents exactly one establishable `ORCA_SESSION` cookie.
+
+**When**
+
+- The request invokes that handler.
+
+**Then**
+
+- Orca resolves and stores authenticated actor context before the handler.
+- The handler receives the session-resolved actor rather than any
+  attacker-controlled request parameter.
+- The handler executes exactly once.
+
+### Scenario: Read-like or unspecified protected methods fail startup
+
+**Given**
+
+- A handler is marked `@OrcaProtectedCommand`.
+- Its mapping includes `GET`, `HEAD`, or `OPTIONS`, has no explicit HTTP
+  method, or includes another unsupported method.
+
+**When**
+
+- Spring validates handler mappings during application startup.
+
+**Then**
+
+- Application startup fails with an explicit unsupported-method integration
+  error.
+- No request can reach the declared handler.
+
+### Scenario: Rejected command cannot be forced to execute with actor input
+
+**Given**
+
+- A caller supplies an actor-like query, path, header, or body parameter.
+- The request has no establishable session or has an ambiguous session.
+
+**When**
+
+- The caller invokes a protected command.
+
+**Then**
+
+- Orca ignores attacker-controlled actor input as an authentication source.
+- The request is rejected as `401 UNAUTHENTICATED`.
+- The protected handler and downstream operation execute zero times.
+
 ## Acceptance Criteria
 
 - Orca MUST expose one explicit supported public entry point for embedded auth
   integration.
+- Any `@OrcaProtectedCommand` declaration without
+  `@EnableOrcaEmbeddedAuth` MUST fail application startup.
+- Protected `POST`, `PUT`, `PATCH`, and `DELETE` handlers MUST establish
+  authenticated actor context before handler execution.
+- Protected `GET`, `HEAD`, and `OPTIONS` declarations MUST fail application
+  startup.
+- A protected mapping with no explicit method or any unsupported method MUST
+  fail application startup.
+- A protected declaration MUST NOT be silently ignored or execute
+  unauthenticated.
 - A consumer MUST be able to declare a protected command without importing or
   modifying an Orca internal protected-path list.
 - The protected boundary MUST resolve actor context before consumer handler
@@ -281,6 +443,8 @@ product meaning.
 - Orca MUST NOT select a first or last cookie when multiple `ORCA_SESSION`
   cookies are present.
 - `X-User-Id` MUST NOT establish protected consumer actor context.
+- Attacker-controlled actor query, path, header, or body input MUST NOT replace
+  or create the authenticated actor.
 - Rejected requests MUST NOT execute the consumer command.
 - The fixture MUST consume Orca through a normal build dependency.
 - A consumer contract test MUST prove login, actor resolution, logout, and
@@ -304,7 +468,11 @@ product meaning.
 ## Error Cases
 
 - Embedded auth is not enabled for a declared protected command -> application
-  integration must fail visibly rather than execute unauthenticated behavior.
+  startup failure.
+- Protected `GET`, `HEAD`, or `OPTIONS` declaration -> application startup
+  failure.
+- Protected declaration without an explicit method or with another unsupported
+  method -> application startup failure.
 - Missing `ORCA_SESSION` cookie -> `401 UNAUTHENTICATED`.
 - Blank session value -> `401 UNAUTHENTICATED`.
 - Malformed or unacceptable session value -> `401 UNAUTHENTICATED`.
@@ -314,8 +482,64 @@ product meaning.
 - Revoked session -> `401 UNAUTHENTICATED`.
 - More than one `ORCA_SESSION` cookie -> `401 UNAUTHENTICATED`.
 - Only `X-User-Id` is presented -> `401 UNAUTHENTICATED`.
+- Attacker-controlled actor input is presented without an establishable
+  session -> `401 UNAUTHENTICATED`.
 - Non-empty fixture request body -> `400 VALIDATION_ERROR` before fixture
   operation execution.
+
+Every startup failure occurs before the protected handler can accept traffic.
+Every request-time rejection occurs before handler execution and uses an
+execution count of zero as verification evidence.
+
+## Public Boundary Failure Set
+
+- Absent / null:
+  - absent enablement with a protected declaration fails startup;
+  - absent cookie and absent actor context reject the request;
+  - null or absent public actor id is rejected by `AuthenticatedActor`.
+- Blank:
+  - blank session input is unauthenticated;
+  - blank public actor id is rejected.
+- Malformed / untyped / unexpected:
+  - malformed or otherwise unacceptable session input is unauthenticated;
+  - a mapping without an explicit supported method, an unsupported method, or
+    an unexpected actor-shaped request value fails closed.
+- Duplicate / ambiguous:
+  - multiple `ORCA_SESSION` cookies are unauthenticated and none is selected.
+- Stale / invalid:
+  - expired, revoked, unknown, or otherwise invalid auth-owned session state is
+    unauthenticated.
+- Unauthorized:
+  - this slice establishes authentication only; product authorization remains
+    outside this boundary and cannot be inferred from actor input.
+
+## Verification Mapping
+
+| Normative outcome | Verification |
+| --- | --- |
+| missing enablement fails startup | Minimal Consumer Fixture startup contract test |
+| protected `GET`, `HEAD`, and `OPTIONS` fail startup | auth startup-validation tests |
+| protected `POST`, `PUT`, `PATCH`, and `DELETE` establish actor first | auth web boundary tests with handler execution counts |
+| missing, blank, malformed, unknown, expired, invalid, revoked, and multiple sessions reject identically | auth unit/web tests and Minimal Consumer Fixture contract tests |
+| `X-User-Id` and attacker-controlled actor input cannot establish or replace actor | auth web and consumer contract tests |
+| every rejected request executes the handler zero times | web and consumer mock execution-count assertions |
+| login, logout, and post-logout rejection remain unchanged | existing and expanded Minimal Consumer Fixture contract test |
+| existing organization POST commands keep their mapped boundary | organization/auth web regression tests and Maven reactor verification |
+| public actor contains one non-blank id only | `AuthenticatedActorTest` and argument-resolver tests |
+
+No normative outcome requires a manual-only verification exception.
+
+## Affected and Superseded Documents
+
+- `auth-04` continues to enumerate existing Orca organization protected POST
+  routes and explicitly defers consumer declarations to `auth-12`.
+- `auth-09` continues to own session-backed context for those routes and is the
+  active replacement for organization-08's original demo `X-User-Id`
+  transport.
+- organization-08 continues to own its five POST endpoints and command mapping;
+  its current actor transport is the context established by `auth-09`.
+- this spec is the sole authority for embedded consumer protected declaration,
+  startup validation, and the supported protected-method matrix.
 
 ## Sensitive Data Boundary
 
@@ -337,6 +561,11 @@ those values part of the public actor contract or response.
 
 ## Non-Goals
 
+- Creating `auth-14` or another behavior slice.
+- Changing the existing organization command paths or organization behavior.
+- Replacing `auth-04` / `auth-09` fixed Orca path ownership with a consumer
+  route registry.
+- Broad package moves or cross-context architecture refactoring.
 - Session renewal or sliding expiration.
 - Refresh tokens, access tokens, remember-me, or cross-product session sharing.
 - OAuth, SSO, OIDC, MFA, hosted login, or redirect/callback behavior.
@@ -349,4 +578,5 @@ those values part of the public actor contract or response.
 - Structured logging or correlation.
 - Separately deployed Orca service.
 - Production artifact publication or repository selection.
+- Credential encoding or migration behavior.
 - New database schema or Flyway migration.

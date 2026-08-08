@@ -38,6 +38,12 @@ POST /api/group-invitations/{invitationId}/revoke
 These endpoints are derived from
 `docs/specs/organization/08-web-api-integration.md`.
 
+This fixed list owns only the existing Orca organization command mapping. Auth
+Spec 09 supersedes the original demo identity transport for these routes with
+`ORCA_SESSION` session resolution. Auth Spec 12 separately owns the public
+`@OrcaProtectedCommand` declaration used by embedded consumers; consumer routes
+are not added to this list.
+
 ## Scenario
 
 ### Scenario: Protected command endpoints pass through the auth request boundary
@@ -78,6 +84,10 @@ These endpoints are derived from
   auth solely because current user context is absent.
 - The protected command mapping MUST be derived only from currently authoritative
   HTTP command specs.
+- This fixed mapping MUST NOT be treated as the allowlist for embedded consumer
+  declarations governed by auth-12.
+- The actor transport for these existing routes MUST follow auth-09 rather than
+  the earlier demo `X-User-Id` transport.
 - This slice MUST NOT add or change downstream organization behavior.
 - This slice MUST NOT introduce a security framework or a new authentication
   mechanism.
@@ -86,8 +96,9 @@ These endpoints are derived from
 
 - No new auth domain invariants are introduced.
 - The current user context invariants from Spec 01 remain the source of truth.
-- The HTTP establishment rules from Spec 02 remain the source of truth for how
-  current user context is created from request identities.
+- Auth Spec 09 is the active source of truth for establishing protected command
+  current user context from auth-owned session state; Spec 02 remains only the
+  superseded demo transport definition.
 - The request-scoped access rules from Spec 03 remain the source of truth for how
   downstream web adapters consume the established context.
 

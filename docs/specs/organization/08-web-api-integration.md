@@ -33,7 +33,9 @@ This slice introduces no new domain behavior, no new invariants, and no new invi
 
 - Authenticated User  
   The user identity resolved by the web adapter for the current request.
-  For this demo integration slice, the authenticated user id is supplied through an HTTP header.
+  Auth Spec 09 supersedes this slice's original demo header transport: current
+  behavior receives the actor from auth-owned `ORCA_SESSION` resolution and
+  request-scoped current user context.
 
 ## HTTP Contract
 
@@ -150,28 +152,25 @@ Response body:
 
 ## Authenticated User Resolution
 
-For this demo slice, the web adapter resolves the current user id from:
+The original organization-08 demo adapter read `X-User-Id`. Auth Spec 09 is the
+active authority and supersedes that transport for every endpoint in this
+spec. The web adapter now receives the actor from the request-scoped current
+user context established from `ORCA_SESSION` and auth-owned server-side session
+state before the organization use case executes.
 
-```text
-X-User-Id: user-id
-```
-
-The resolved value is passed to the application layer as the actor/creator/inviter user id.
-
-This header is an adapter mechanism only.
-It does not introduce a security model or domain rule.
-
-Auth Spec 09 supersedes this demo transport for protected HTTP command
-requests. After Spec 09, protected command current user context is resolved from
-the `ORCA_SESSION` cookie and auth-owned server-side session state instead of
-`X-User-Id`.
+The five routes remain the fixed Orca protected POST mapping owned by auth-04
+and auth-09. Auth-12's public `@OrcaProtectedCommand` contract allows embedded
+consumers to declare their own protected `POST`, `PUT`, `PATCH`, or `DELETE`
+handlers without changing this organization route list. It does not change the
+methods or behavior of these organization endpoints.
 
 ## Scenarios
 
 ### Scenario: HTTP client creates a group
 
 **Given**
-- The request contains `X-User-Id`.
+- Auth has established one request-scoped current user context from an
+  establishable `ORCA_SESSION`.
 - The request body contains a group name and optional description.
 
 **When**
@@ -188,7 +187,8 @@ the `ORCA_SESSION` cookie and auth-owned server-side session state instead of
 ### Scenario: HTTP client invites a member
 
 **Given**
-- The request contains `X-User-Id`.
+- Auth has established one request-scoped current user context from an
+  establishable `ORCA_SESSION`.
 - The path contains `groupId`.
 - The request body contains `inviteeUserId` and `intendedRole`.
 
@@ -206,7 +206,8 @@ the `ORCA_SESSION` cookie and auth-owned server-side session state instead of
 ### Scenario: HTTP client accepts an invitation
 
 **Given**
-- The request contains `X-User-Id`.
+- Auth has established one request-scoped current user context from an
+  establishable `ORCA_SESSION`.
 - The path contains `invitationId`.
 
 **When**
@@ -223,7 +224,8 @@ the `ORCA_SESSION` cookie and auth-owned server-side session state instead of
 ### Scenario: HTTP client rejects an invitation
 
 **Given**
-- The request contains `X-User-Id`.
+- Auth has established one request-scoped current user context from an
+  establishable `ORCA_SESSION`.
 - The path contains `invitationId`.
 
 **When**
@@ -240,7 +242,8 @@ the `ORCA_SESSION` cookie and auth-owned server-side session state instead of
 ### Scenario: HTTP client revokes an invitation
 
 **Given**
-- The request contains `X-User-Id`.
+- Auth has established one request-scoped current user context from an
+  establishable `ORCA_SESSION`.
 - The path contains `invitationId`.
 
 **When**
@@ -269,7 +272,11 @@ the `ORCA_SESSION` cookie and auth-owned server-side session state instead of
 
 ## Error Cases
 
-- Missing or blank `X-User-Id` → unauthenticated request rejected.
+- Missing, blank, malformed, unknown, expired, invalid, revoked, or ambiguous
+  `ORCA_SESSION` input -> unauthenticated request rejected under auth-09 before
+  organization use-case execution.
+- `X-User-Id` without an establishable session -> unauthenticated request
+  rejected.
 - Missing or malformed request body → validation error.
 - Blank required path variable or body field → validation error.
 - Unknown group id → not found or rejected according to the application error.
