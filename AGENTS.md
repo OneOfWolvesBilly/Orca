@@ -48,11 +48,22 @@ If a hypothesis is unavoidable, print:
 
 ## Draft planning gate
 - `docs/drafts/slice-planning-handoff.md` is the single local,
-  non-authoritative planning handoff for unresolved slice candidates.
+  non-authoritative planning handoff for unresolved repair and slice
+  candidates.
 - Do not create additional draft files unless the user explicitly requests a
   separate draft.
+- Before creating or replacing the handoff because it appears missing, inspect
+  every registered Git worktree for the same relative path, including untracked
+  copies. If another copy exists, compare and reconcile it before editing or
+  staging; do not assume an untracked file is absent from the project history.
 - Before planning a new session or selecting the next behavior slice, read the
-  planning handoff when it exists.
+  `Active Items` section of the planning handoff when it exists.
+- `Completed History` entries are one-line strikethrough tombstones only. Do
+  not treat them as draft-candidate planning input or recreate their removed
+  details. When a tombstone says `promoted`, inspect its target authoritative
+  spec through the current-capability check and continue the recorded next
+  required layer. Reopen the draft item only when the user explicitly asks or
+  repository evidence proves the candidate disposition was wrong.
 - Reading the draft does not authorize implementation and does not make draft
   content authoritative. Revalidate every candidate against README.md,
   docs/document-map.md, docs/constraints.md, docs/product/*, and docs/specs/*.
@@ -64,10 +75,59 @@ If a hypothesis is unavoidable, print:
   passes the slice intake gate.
 - At the start of next-session planning, report which path applies and why:
   `continue current capability`, `select draft candidate`, or `stop`.
+- From slice planning through SDD completion, perform two handoff checkpoints:
+  1. Intake checkpoint: identify every active item that overlaps the proposed
+     slice and ask the user to decide `include now`, `predecessor required`,
+     `defer with reason`, or `stop` before writing the spec.
+  2. SDD closeout checkpoint: before calling the spec complete, reconcile every
+     selected item against the spec acceptance criteria, error cases,
+     non-goals, verification requirements, and affected/superseded documents.
+- An unrelated active item must not be silently added to the current slice.
+  Leave it active with a short reason when the one-slice boundary excludes it.
+- An active item is a problem record, not automatically one behavior slice.
+  Before selection, prove that it has one actor-visible, client-visible, or
+  operator-visible outcome. Split a problem cluster when independent decisions
+  or outcomes would otherwise enter the same slice.
+- Every active item must record the commit where it was observed, concrete
+  repository evidence, candidate shape, and target spec or `TBD`. Record the
+  intake disposition and target spec before writing SDD.
 - If draft content conflicts with authoritative sources, follow the
   authoritative sources and correct the draft before relying on it again.
-- Remove completed or promoted candidate details from the draft. The resulting
-  spec and derived DDD note replace the draft as the maintained project record.
+- Only after the SDD closeout checkpoint passes and the item is incorporated
+  into a completed authoritative spec, remove its detailed active entry and add
+  one one-line strikethrough tombstone under `Completed History` containing the
+  item id, title, disposition, target spec, next required layer, and date.
+  `promoted` closes only the draft candidate; it does not mean tests or
+  implementation are complete. The authoritative spec and derived DDD note
+  replace the removed details as the maintained project record.
+
+## Dependency ownership gate
+- Dependency ownership is a required slice-intake check, not a new bounded
+  context, service, or implementation layer.
+- For every mechanism the candidate needs, record:
+  - the owning bounded context or approved support scope;
+  - the authoritative predecessor that defines the behavior;
+  - the public port, API, or contract the slice is allowed to consume;
+  - whether the required predecessor is implemented and complete.
+- If a required mechanism has no authoritative owner or public boundary, stop
+  the candidate and select or discover the predecessor slice. A downstream
+  adapter must not infer, copy, or redefine the missing rule from current
+  implementation details.
+- Non-goals prevent scope expansion but do not satisfy dependency ownership.
+
+## Spec failure-set gate
+- Derive negative tests from authoritative acceptance criteria and error cases,
+  not only from values accepted by the implementation language or type system.
+- For every external or public boundary, identify applicable absent, null,
+  blank, malformed, duplicate, unsupported, untyped, stale, unauthorized, and
+  unexpected inputs before SDD closeout.
+- TypeScript types are compile-time guidance, not runtime validation for a
+  public package boundary. When JavaScript or untyped consumers can reach the
+  boundary, tests must include malformed runtime values authorized by the spec
+  failure set.
+- Each normative failure outcome must map to an automated test, a reproducible
+  manual proof, or an explicit reason that it cannot be verified in the current
+  slice.
 
 ## Orca workflow
 - One session = one behavior slice.
@@ -119,6 +179,13 @@ Use English for code and code comments.
 A slice is not done unless:
 - spec is aligned
 - derived DDD note is aligned
+- affected and superseded active documents are aligned
+- selected active planning items have a recorded disposition
+- each promoted tombstone points to its completed authoritative spec and the
+  next required layer, or records that every required layer is complete
+- every normative success and failure outcome has a test, reproducible manual
+  proof, or explicit verification exception
+- dependency ownership and allowed public boundaries are explicit
 - relevant tests exist
 - tests pass
 - no forbidden layer jump happened
