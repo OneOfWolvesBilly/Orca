@@ -24,6 +24,16 @@ Before creating a new spec, answer:
 9. Which authoritative docs prove predecessor slices already exist?
 10. Does the prompt background conflict with repo state?
 11. Are any business rules being guessed instead of discovered?
+12. Which bounded context or approved support scope owns each required
+    dependency?
+13. Which authoritative predecessor defines each dependency, and what evidence
+    proves that predecessor is implemented and complete?
+14. Which public port, API, or contract may the candidate consume?
+15. What absent, null, blank, malformed, duplicate, unsupported, untyped,
+    stale, unauthorized, or unexpected inputs apply at each public boundary?
+16. How will every normative success and failure outcome be verified?
+17. Does the candidate contain exactly one actor-visible, client-visible, or
+    operator-visible outcome, or must the problem record be split first?
 
 If any required answer is missing, the slice should not enter SDD.
 
@@ -121,6 +131,8 @@ Stop before SDD when:
 - no workflow gap can be named
 - the proposed slice contradicts authoritative repo docs
 - predecessor slices do not exist
+- a required dependency has no authoritative owner or allowed public boundary
+- predecessor implementation or completion cannot be proven
 - the prompt says a slice exists but the repo does not show it
 - the work is only a technical demonstration with no workflow traceability
 - sensitive data would be logged, cached, exposed, or returned without an
@@ -143,8 +155,18 @@ Successful outcome:
 Failure flows:
 Existing supported slices:
 Planned predecessor slices:
+Dependency owners:
+Authoritative dependency predecessors:
+Allowed public boundaries:
+Predecessor completion evidence:
 Unknowns:
 Non-goals:
+Runtime/public failure set:
+Verification mapping:
+Overlapping active handoff items:
+Handoff disposition:
+Candidate shape: single behavior / split required
+Target spec:
 Decision: enter SDD / stop
 ```
 
