@@ -11,6 +11,8 @@ import io.github.oneofwolvesbilly.orca.auth.support.FakeAuthenticatedSessionRepo
 import io.github.oneofwolvesbilly.orca.auth.support.FakeRegisteredUserIdentityRepository;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.method.HandlerMethod;
@@ -50,10 +52,12 @@ class CurrentUserContextInterceptorTest {
                     Clock.fixed(NOW, ZoneOffset.UTC)
             )));
 
-    @Test
-    void pre_handle_establishes_and_stores_current_user_context_when_session_cookie_is_presented() throws Exception {
+    @ParameterizedTest
+    @ValueSource(strings = {"POST", "PUT", "PATCH", "DELETE"})
+    void protected_command_methods_establish_and_store_current_user_context_before_execution(String method)
+            throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setMethod("POST");
+        request.setMethod(method);
         request.setCookies(new Cookie(PasswordLoginController.SESSION_COOKIE_NAME, SESSION_ID.value()));
 
         assertTrue(interceptor.preHandle(request, new MockHttpServletResponse(), protectedHandler()));
@@ -64,10 +68,11 @@ class CurrentUserContextInterceptorTest {
         assertEquals("user-1", context.authenticatedUserId().value());
     }
 
-    @Test
-    void pre_handle_rejects_when_no_session_cookie_is_presented() {
+    @ParameterizedTest
+    @ValueSource(strings = {"POST", "PUT", "PATCH", "DELETE"})
+    void protected_command_methods_reject_before_execution_when_no_session_cookie_is_presented(String method) {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setMethod("POST");
+        request.setMethod(method);
 
         assertThrows(UnauthenticatedHttpRequestException.class, () ->
                 interceptor.preHandle(request, new MockHttpServletResponse(), protectedHandler())
@@ -105,15 +110,6 @@ class CurrentUserContextInterceptorTest {
         assertThrows(UnauthenticatedHttpRequestException.class, () ->
                 interceptor.preHandle(request, new MockHttpServletResponse(), protectedHandler())
         );
-    }
-
-    @Test
-    void pre_handle_does_not_require_current_user_context_for_non_post_requests() throws Exception {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setMethod("GET");
-
-        assertTrue(interceptor.preHandle(request, new MockHttpServletResponse(), protectedHandler()));
-        assertNull(request.getAttribute(CurrentUserContextRequestAttribute.ATTRIBUTE_NAME));
     }
 
     @Test

@@ -41,6 +41,11 @@ import java.util.List;
 class AuthConfiguration {
 
     @Bean
+    EmbeddedAuthBoundaryEnabled embeddedAuthBoundaryEnabled() {
+        return new EmbeddedAuthBoundaryEnabled();
+    }
+
+    @Bean
     RegisteredUserIdentityRepository registeredUserIdentityRepository(DataSource dataSource) {
         return new JdbcRegisteredUserIdentityRepository(dataSource);
     }

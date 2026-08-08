@@ -12,9 +12,12 @@ import org.springframework.web.method.HandlerMethod;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /** Establishes request-scoped current user context for protected HTTP requests. */
 public final class CurrentUserContextInterceptor implements HandlerInterceptor {
+
+    private static final Set<String> PROTECTED_COMMAND_METHODS = Set.of("POST", "PUT", "PATCH", "DELETE");
 
     private final CurrentUserContextResolver currentUserContextResolver;
 
@@ -24,8 +27,11 @@ public final class CurrentUserContextInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        if (!"POST".equals(request.getMethod()) || !isProtected(handler)) {
+        if (!isProtected(handler)) {
             return true;
+        }
+        if (!PROTECTED_COMMAND_METHODS.contains(request.getMethod())) {
+            throw new IllegalStateException("Unsupported protected command method: " + request.getMethod());
         }
         var context = currentUserContextResolver.resolve(sessionIdFrom(request));
         CurrentUserContextRequestAttribute.store(request, context);

@@ -1,13 +1,23 @@
 package io.github.oneofwolvesbilly.orcafixture;
 
+import io.github.oneofwolvesbilly.orca.auth.api.AuthenticatedActor;
+import io.github.oneofwolvesbilly.orca.auth.api.OrcaProtectedCommand;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -15,19 +25,22 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.sql.Timestamp;
 import java.util.HexFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(
         classes = MinimalConsumerFixtureApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
 @ActiveProfiles("test")
+@Import(EmbeddedAuthConsumerContractTest.RecordingFixtureConfiguration.class)
 class EmbeddedAuthConsumerContractTest {
 
     @LocalServerPort
@@ -36,8 +49,8 @@ class EmbeddedAuthConsumerContractTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @MockitoBean
-    private FixtureActorCommand fixtureActorCommand;
+    @Autowired
+    private RecordingFixtureActorCommand fixtureActorCommand;
 
     private final HttpClient client = HttpClient.newBuilder()
             .followRedirects(HttpClient.Redirect.NEVER)
@@ -45,7 +58,7 @@ class EmbeddedAuthConsumerContractTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        reset(fixtureActorCommand);
+        fixtureActorCommand.reset();
         jdbcTemplate.update("DELETE FROM auth_login_failure_audits");
         jdbcTemplate.update("DELETE FROM auth_authenticated_sessions");
         jdbcTemplate.update("DELETE FROM auth_login_credentials");
@@ -59,6 +72,8 @@ class EmbeddedAuthConsumerContractTest {
                 sha256("correct-password"),
                 "user-1"
         );
+        createSession("expired-session", "2000-01-01 00:00:00", null);
+        createSession("revoked-session", "2999-01-01 00:00:00", "2026-08-08 00:00:00");
     }
 
     @Test
@@ -87,12 +102,12 @@ class EmbeddedAuthConsumerContractTest {
 
         assertEquals(204, protectedCommand.statusCode());
         assertEquals("", protectedCommand.body());
-        verify(fixtureActorCommand).handle("user-1");
+        fixtureActorCommand.assertActors("user-1");
 
         HttpResponse<String> logout = post("/api/auth/logout", "{}", sessionCookie);
         assertEquals(204, logout.statusCode());
 
-        reset(fixtureActorCommand);
+        fixtureActorCommand.reset();
         HttpResponse<String> afterLogout = post(
                 "/api/fixture/actor-context-check",
                 "{}",
@@ -100,29 +115,61 @@ class EmbeddedAuthConsumerContractTest {
         );
 
         assertUnauthenticated(afterLogout);
-        verify(fixtureActorCommand, never()).handle("user-1");
+        fixtureActorCommand.assertNoExecutions();
     }
 
     @Test
-    void missing_or_multiple_sessions_and_demo_header_never_execute_fixture() throws Exception {
-        HttpResponse<String> missing = post("/api/fixture/actor-context-check", "{}", null);
-        assertUnauthenticated(missing);
-
-        HttpResponse<String> demoHeader = postWithHeaders(
-                "/api/fixture/actor-context-check",
-                "{}",
-                "X-User-Id", "user-1"
+    void complete_session_failure_set_and_demo_header_never_execute_fixture() throws Exception {
+        List<HttpResponse<String>> responses = List.of(
+                post("/api/fixture/actor-context-check", "{}", null),
+                postWithHeaders("/api/fixture/actor-context-check", "{}", "Cookie", "ORCA_SESSION="),
+                postWithHeaders("/api/fixture/actor-context-check", "{}", "Cookie", "ORCA_SESSION=%%%malformed%%%"),
+                postWithHeaders("/api/fixture/actor-context-check", "{}", "Cookie", "ORCA_SESSION=unknown-session"),
+                postWithHeaders("/api/fixture/actor-context-check", "{}", "Cookie", "ORCA_SESSION=expired-session"),
+                postWithHeaders("/api/fixture/actor-context-check", "{}", "Cookie", "ORCA_SESSION=invalid-session-state"),
+                postWithHeaders("/api/fixture/actor-context-check", "{}", "Cookie", "ORCA_SESSION=revoked-session"),
+                postWithHeaders(
+                        "/api/fixture/actor-context-check",
+                        "{}",
+                        "Cookie", "ORCA_SESSION=first; ORCA_SESSION=second"
+                ),
+                postWithHeaders("/api/fixture/actor-context-check", "{}", "X-User-Id", "user-1"),
+                post("/api/fixture/actor-context-check?actorId=attacker-controlled", "{}", null)
         );
-        assertUnauthenticated(demoHeader);
 
-        HttpResponse<String> multipleCookies = postWithHeaders(
-                "/api/fixture/actor-context-check",
+        for (HttpResponse<String> response : responses) {
+            assertUnauthenticated(response);
+            assertEquals(responses.getFirst().body(), response.body());
+        }
+        fixtureActorCommand.assertNoExecutions();
+    }
+
+    @Test
+    void attacker_controlled_actor_parameter_cannot_replace_session_actor() throws Exception {
+        String sessionCookie = loginCookie();
+
+        HttpResponse<String> response = post(
+                "/api/fixture/actor-context-check?actorId=attacker-controlled",
                 "{}",
-                "Cookie", "ORCA_SESSION=first; ORCA_SESSION=second"
+                sessionCookie
         );
-        assertUnauthenticated(multipleCookies);
 
-        verify(fixtureActorCommand, never()).handle("user-1");
+        assertEquals(204, response.statusCode());
+        fixtureActorCommand.assertActors("user-1");
+    }
+
+    @Test
+    void protected_declaration_without_embedded_enablement_fails_application_startup() {
+        SpringApplication application = new SpringApplication(MissingEnablementApplication.class);
+        application.setDefaultProperties(Map.of(
+                "server.port", "0",
+                "spring.main.banner-mode", "off"
+        ));
+        application.setLogStartupInfo(false);
+
+        Exception failure = org.junit.jupiter.api.Assertions.assertThrows(Exception.class, application::run);
+
+        assertTrue(rootCauseMessage(failure).contains("@EnableOrcaEmbeddedAuth"));
     }
 
     @Test
@@ -138,7 +185,7 @@ class EmbeddedAuthConsumerContractTest {
         assertEquals(400, response.statusCode());
         assertFalse(response.body().contains("user-1"));
         assertFalse(response.body().contains(sessionCookie));
-        verify(fixtureActorCommand, never()).handle("user-1");
+        fixtureActorCommand.assertNoExecutions();
     }
 
     private String loginCookie() throws Exception {
@@ -150,6 +197,21 @@ class EmbeddedAuthConsumerContractTest {
                 """, null);
         assertEquals(204, response.statusCode());
         return response.headers().firstValue("Set-Cookie").orElseThrow().split(";", 2)[0];
+    }
+
+    private void createSession(String sessionId, String expiresAt, String revokedAt) {
+        jdbcTemplate.update(
+                """
+                INSERT INTO auth_authenticated_sessions
+                    (session_id, user_id, created_at, expires_at, revoked_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                sessionId,
+                "user-1",
+                Timestamp.valueOf("1999-01-01 00:00:00"),
+                Timestamp.valueOf(expiresAt),
+                revokedAt == null ? null : Timestamp.valueOf(revokedAt)
+        );
     }
 
     private HttpResponse<String> post(String path, String body, String cookie) throws Exception {
@@ -180,6 +242,7 @@ class EmbeddedAuthConsumerContractTest {
 
     private static void assertUnauthenticated(HttpResponse<String> response) {
         assertEquals(401, response.statusCode());
+        assertTrue(response.body().contains("UNAUTHENTICATED"));
         assertFalse(response.body().contains("ORCA_SESSION"));
         assertFalse(response.body().contains("user-1"));
         assertFalse(response.body().contains("revoked"));
@@ -189,5 +252,60 @@ class EmbeddedAuthConsumerContractTest {
     private static String sha256(String value) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         return HexFormat.of().formatHex(digest.digest(value.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    private static String rootCauseMessage(Throwable failure) {
+        Throwable cause = failure;
+        while (cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+        return cause.getMessage() == null ? "" : cause.getMessage();
+    }
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class RecordingFixtureConfiguration {
+
+        @Bean
+        @Primary
+        RecordingFixtureActorCommand recordingFixtureActorCommand() {
+            return new RecordingFixtureActorCommand();
+        }
+    }
+
+    private static final class RecordingFixtureActorCommand implements FixtureActorCommand {
+
+        private final List<String> actorIds = new ArrayList<>();
+
+        @Override
+        public void handle(String actorId) {
+            actorIds.add(actorId);
+        }
+
+        void reset() {
+            actorIds.clear();
+        }
+
+        void assertActors(String... expectedActorIds) {
+            assertEquals(List.of(expectedActorIds), actorIds);
+        }
+
+        void assertNoExecutions() {
+            assertTrue(actorIds.isEmpty(), "fixture handler execution count must be zero");
+        }
+    }
+
+    @SpringBootConfiguration
+    @EnableAutoConfiguration
+    @Import(MissingEnablementController.class)
+    static class MissingEnablementApplication {
+    }
+
+    @RestController
+    static class MissingEnablementController {
+
+        @PostMapping("/api/missing-enablement")
+        @OrcaProtectedCommand
+        void protectedCommand(AuthenticatedActor actor) {
+        }
     }
 }
