@@ -38,8 +38,12 @@ class EmbeddedProtectedCommandStartupValidatorTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = RequestMethod.class, names = {"GET", "HEAD", "OPTIONS"})
-    void read_like_protected_methods_fail_startup(RequestMethod method) {
+    @EnumSource(
+            value = RequestMethod.class,
+            mode = EnumSource.Mode.EXCLUDE,
+            names = {"POST", "PUT", "PATCH", "DELETE"}
+    )
+    void unsupported_protected_methods_fail_startup(RequestMethod method) {
         var validator = validator(true, mapping(method, "protectedCommand"));
 
         var failure = assertThrows(

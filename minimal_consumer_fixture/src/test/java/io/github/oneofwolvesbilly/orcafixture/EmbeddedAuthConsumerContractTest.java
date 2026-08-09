@@ -4,6 +4,8 @@ import io.github.oneofwolvesbilly.orca.auth.api.AuthenticatedActor;
 import io.github.oneofwolvesbilly.orca.auth.api.OrcaProtectedCommand;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
@@ -14,9 +16,13 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
@@ -40,7 +46,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
 @ActiveProfiles("test")
-@Import(EmbeddedAuthConsumerContractTest.RecordingFixtureConfiguration.class)
+@Import({
+        EmbeddedAuthConsumerContractTest.RecordingFixtureConfiguration.class,
+        EmbeddedAuthConsumerContractTest.SupportedMethodController.class
+})
 class EmbeddedAuthConsumerContractTest {
 
     @LocalServerPort
@@ -119,14 +128,13 @@ class EmbeddedAuthConsumerContractTest {
     }
 
     @Test
-    void complete_session_failure_set_and_demo_header_never_execute_fixture() throws Exception {
+    void session_failure_set_and_demo_header_never_execute_fixture() throws Exception {
         List<HttpResponse<String>> responses = List.of(
                 post("/api/fixture/actor-context-check", "{}", null),
                 postWithHeaders("/api/fixture/actor-context-check", "{}", "Cookie", "ORCA_SESSION="),
                 postWithHeaders("/api/fixture/actor-context-check", "{}", "Cookie", "ORCA_SESSION=%%%malformed%%%"),
                 postWithHeaders("/api/fixture/actor-context-check", "{}", "Cookie", "ORCA_SESSION=unknown-session"),
                 postWithHeaders("/api/fixture/actor-context-check", "{}", "Cookie", "ORCA_SESSION=expired-session"),
-                postWithHeaders("/api/fixture/actor-context-check", "{}", "Cookie", "ORCA_SESSION=invalid-session-state"),
                 postWithHeaders("/api/fixture/actor-context-check", "{}", "Cookie", "ORCA_SESSION=revoked-session"),
                 postWithHeaders(
                         "/api/fixture/actor-context-check",
@@ -141,6 +149,36 @@ class EmbeddedAuthConsumerContractTest {
             assertUnauthenticated(response);
             assertEquals(responses.getFirst().body(), response.body());
         }
+        fixtureActorCommand.assertNoExecutions();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = RequestMethod.class, names = {"POST", "PUT", "PATCH", "DELETE"})
+    void every_supported_method_establishes_the_session_actor_before_handler_execution(RequestMethod method)
+            throws Exception {
+        String sessionCookie = loginCookie();
+
+        HttpResponse<String> response = send(
+                method,
+                "/api/fixture/supported-method-check",
+                sessionCookie
+        );
+
+        assertEquals(204, response.statusCode());
+        fixtureActorCommand.assertActors("user-1");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = RequestMethod.class, names = {"POST", "PUT", "PATCH", "DELETE"})
+    void every_supported_method_rejects_before_handler_execution_without_a_session(RequestMethod method)
+            throws Exception {
+        HttpResponse<String> response = send(
+                method,
+                "/api/fixture/supported-method-check",
+                null
+        );
+
+        assertUnauthenticated(response);
         fixtureActorCommand.assertNoExecutions();
     }
 
@@ -159,6 +197,53 @@ class EmbeddedAuthConsumerContractTest {
     }
 
     @Test
+    void attacker_controlled_actor_path_cannot_create_or_replace_session_actor() throws Exception {
+        HttpResponse<String> withoutSession = post(
+                "/api/fixture/path-actor/attacker-controlled",
+                "{}",
+                null
+        );
+
+        assertUnauthenticated(withoutSession);
+        fixtureActorCommand.assertNoExecutions();
+
+        String sessionCookie = loginCookie();
+        HttpResponse<String> withSession = post(
+                "/api/fixture/path-actor/attacker-controlled",
+                "{}",
+                sessionCookie
+        );
+
+        assertEquals(204, withSession.statusCode());
+        fixtureActorCommand.assertActors("user-1");
+    }
+
+    @Test
+    void attacker_controlled_actor_header_cannot_create_or_replace_session_actor() throws Exception {
+        HttpResponse<String> withoutSession = postWithHeaders(
+                "/api/fixture/actor-context-check",
+                "{}",
+                "X-Actor-Id",
+                "attacker-controlled"
+        );
+
+        assertUnauthenticated(withoutSession);
+        fixtureActorCommand.assertNoExecutions();
+
+        String sessionCookie = loginCookie();
+        HttpResponse<String> withSession = postWithCookieAndHeader(
+                "/api/fixture/actor-context-check",
+                "{}",
+                sessionCookie,
+                "X-Actor-Id",
+                "attacker-controlled"
+        );
+
+        assertEquals(204, withSession.statusCode());
+        fixtureActorCommand.assertActors("user-1");
+    }
+
+    @Test
     void protected_declaration_without_embedded_enablement_fails_application_startup() {
         SpringApplication application = new SpringApplication(MissingEnablementApplication.class);
         application.setDefaultProperties(Map.of(
@@ -173,18 +258,27 @@ class EmbeddedAuthConsumerContractTest {
     }
 
     @Test
-    void non_empty_fixture_body_is_rejected_before_fixture_execution() throws Exception {
+    void attacker_controlled_actor_body_cannot_create_or_replace_session_actor() throws Exception {
+        HttpResponse<String> withoutSession = post(
+                "/api/fixture/actor-context-check",
+                "{\"actorId\":\"attacker-controlled\"}",
+                null
+        );
+
+        assertUnauthenticated(withoutSession);
+        fixtureActorCommand.assertNoExecutions();
+
         String sessionCookie = loginCookie();
 
-        HttpResponse<String> response = post(
+        HttpResponse<String> withSession = post(
                 "/api/fixture/actor-context-check",
-                "{\"unexpected\":\"value\"}",
+                "{\"actorId\":\"attacker-controlled\"}",
                 sessionCookie
         );
 
-        assertEquals(400, response.statusCode());
-        assertFalse(response.body().contains("user-1"));
-        assertFalse(response.body().contains(sessionCookie));
+        assertEquals(400, withSession.statusCode());
+        assertFalse(withSession.body().contains("user-1"));
+        assertFalse(withSession.body().contains(sessionCookie));
         fixtureActorCommand.assertNoExecutions();
     }
 
@@ -232,6 +326,33 @@ class EmbeddedAuthConsumerContractTest {
                 request(path, body).header(headerName, headerValue).build(),
                 HttpResponse.BodyHandlers.ofString()
         );
+    }
+
+    private HttpResponse<String> postWithCookieAndHeader(
+            String path,
+            String body,
+            String cookie,
+            String headerName,
+            String headerValue
+    ) throws Exception {
+        return client.send(
+                request(path, body)
+                        .header("Cookie", cookie)
+                        .header(headerName, headerValue)
+                        .build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+    }
+
+    private HttpResponse<String> send(RequestMethod method, String path, String cookie) throws Exception {
+        HttpRequest.Builder request = HttpRequest.newBuilder(
+                        URI.create("http://localhost:%d%s".formatted(port, path))
+                )
+                .method(method.name(), HttpRequest.BodyPublishers.noBody());
+        if (cookie != null) {
+            request.header("Cookie", cookie);
+        }
+        return client.send(request.build(), HttpResponse.BodyHandlers.ofString());
     }
 
     private HttpRequest.Builder request(String path, String body) {
@@ -291,6 +412,33 @@ class EmbeddedAuthConsumerContractTest {
 
         void assertNoExecutions() {
             assertTrue(actorIds.isEmpty(), "fixture handler execution count must be zero");
+        }
+    }
+
+    @RestController
+    static class SupportedMethodController {
+
+        private final RecordingFixtureActorCommand fixtureActorCommand;
+
+        SupportedMethodController(RecordingFixtureActorCommand fixtureActorCommand) {
+            this.fixtureActorCommand = fixtureActorCommand;
+        }
+
+        @RequestMapping(
+                path = "/api/fixture/supported-method-check",
+                method = {RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE}
+        )
+        @OrcaProtectedCommand
+        ResponseEntity<Void> supportedMethod(AuthenticatedActor actor) {
+            fixtureActorCommand.handle(actor.actorId());
+            return ResponseEntity.noContent().build();
+        }
+
+        @PostMapping("/api/fixture/path-actor/{actorId}")
+        @OrcaProtectedCommand
+        ResponseEntity<Void> pathActor(AuthenticatedActor actor, @PathVariable String actorId) {
+            fixtureActorCommand.handle(actor.actorId());
+            return ResponseEntity.noContent().build();
         }
     }
 

@@ -1,6 +1,6 @@
 # Spec 12 - Embedded Auth and Actor-context Integration
 
-Status: Approved / repair closeout.
+Status: Approved / Implemented.
 
 ## Repair Intake and Single Visible Outcome
 
@@ -518,16 +518,33 @@ execution count of zero as verification evidence.
 | Normative outcome | Verification |
 | --- | --- |
 | missing enablement fails startup | Minimal Consumer Fixture startup contract test |
-| protected `GET`, `HEAD`, and `OPTIONS` fail startup | auth startup-validation tests |
-| protected `POST`, `PUT`, `PATCH`, and `DELETE` establish actor first | auth web boundary tests with handler execution counts |
-| missing, blank, malformed, unknown, expired, invalid, revoked, and multiple sessions reject identically | auth unit/web tests and Minimal Consumer Fixture contract tests |
-| `X-User-Id` and attacker-controlled actor input cannot establish or replace actor | auth web and consumer contract tests |
-| every rejected request executes the handler zero times | web and consumer mock execution-count assertions |
+| protected `GET`, `HEAD`, `OPTIONS`, `TRACE`, unspecified, and mixed mappings fail startup | auth startup-validation tests covering every Spring `RequestMethod` outside the supported set |
+| protected `POST`, `PUT`, `PATCH`, and `DELETE` establish actor first | auth interceptor tests plus Minimal Consumer Fixture recording-handler contract tests for every supported method |
+| missing, blank, malformed, unknown, expired, revoked, and multiple sessions reject identically | auth unit/web tests and Minimal Consumer Fixture contract tests |
+| invalid session ownership cannot establish context | `ResolveCurrentUserContextFromSessionUseCaseTest` unregistered-session-owner test; fixture persistence prevents this invalid foreign-key state |
+| query, path, header, and actor-shaped body input cannot establish or replace actor | Minimal Consumer Fixture contract tests with and without an establishable session |
+| every rejected request executes the handler zero times | Minimal Consumer Fixture recording-handler assertions, including every supported method |
 | login, logout, and post-logout rejection remain unchanged | existing and expanded Minimal Consumer Fixture contract test |
 | existing organization POST commands keep their mapped boundary | organization/auth web regression tests and Maven reactor verification |
 | public actor contains one non-blank id only | `AuthenticatedActorTest` and argument-resolver tests |
 
 No normative outcome requires a manual-only verification exception.
+
+Completion evidence:
+
+- `EmbeddedProtectedCommandStartupValidatorTest` covers the complete Spring
+  request-method enum, unspecified mappings, mixed mappings, type-level
+  declarations, and missing enablement.
+- `CurrentUserContextInterceptorTest` proves actor context establishment for
+  every supported method at the interceptor boundary.
+- `EmbeddedAuthConsumerContractTest` proves actual handler execution counts for
+  every supported method and proves query, path, header, and actor-shaped body
+  input cannot create or replace the session actor.
+- `ResolveCurrentUserContextFromSessionUseCaseTest` proves an otherwise active
+  session with an invalid, unregistered owner is unauthenticated; the fixture's
+  foreign-key constraint intentionally prevents constructing that persistence
+  state.
+- The Minimal Consumer Fixture tests and Maven reactor verification pass.
 
 ## Affected and Superseded Documents
 

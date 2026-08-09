@@ -1,6 +1,6 @@
 # DDD Derivation - 12 Embedded Auth and Actor-context Integration
 
-Status: Approved / repair closeout.
+Status: Approved / Implemented.
 
 This note is **derived from**
 `docs/specs/auth/12-embedded-auth-actor-context-integration.md`.
@@ -221,8 +221,8 @@ Auth web tests validate:
 
 - a declared protected command resolves one actor before handler execution
 - protected `POST`, `PUT`, `PATCH`, and `DELETE` all traverse actor resolution
-- protected `GET`, `HEAD`, `OPTIONS`, unspecified, mixed, and unsupported
-  method mappings fail startup
+- protected `GET`, `HEAD`, `OPTIONS`, `TRACE`, unspecified, mixed, and
+  unsupported method mappings fail startup
 - a protected declaration without enablement fails startup in a consumer host
 - missing, blank, malformed, unknown, expired, invalid, and revoked sessions
   remain unauthenticated
@@ -244,6 +244,15 @@ Consumer contract tests validate:
 - missing embedded enablement prevents application startup
 - session failure-set inputs and attacker-controlled actor input never invoke
   fixture behavior
+- protected `POST`, `PUT`, `PATCH`, and `DELETE` execute the recording handler
+  exactly once with the session actor and execute it zero times when rejected
+- query, path, header, and actor-shaped body input cannot create or replace the
+  session actor
+
+The auth application unit test owns the invalid-session-owner proof because
+the fixture persistence foreign key prevents constructing a session for an
+unregistered user. This is automated evidence, not a manual verification
+exception.
 
 Regression tests validate:
 
