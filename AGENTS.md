@@ -153,6 +153,29 @@ Use smaller red / green / refactor commits only when the user explicitly request
 
 Do not collapse an entire behavior slice into one commit unless the user explicitly asks for a single commit.
 
+## Pre-commit document-alignment gate
+
+- After TDD and verification finish, and before staging or committing, inspect
+  every repository-owned status, index, map, and lifecycle record affected by
+  the slice. At minimum, check:
+  - `docs/document-map.md`;
+  - `docs/product/workflow-map.md`;
+  - `docs/product/capability-map.md`;
+  - the authoritative spec verification mapping and affected/superseded
+    documents;
+  - the derived DDD status;
+  - the private planning handoff disposition.
+- Before executing an authorized commit, explicitly report:
+  - which mapping or lifecycle documents were modified;
+  - which were checked and did not require modification, with the reason;
+  - whether the spec and DDD use the repository's completed status marker;
+  - whether the private handoff is aligned and remains ignored/untracked.
+- Do not stage or commit while any required mapping, status marker,
+  verification mapping, supersession record, or handoff disposition is stale.
+- Do not merge or push a commit produced by the slice until this gate passes.
+  Existing local-main and remote authorization rules still apply separately;
+  passing this gate does not grant merge or push authority.
+
 ## Current repo direction
 - Existing authoritative behavior lives in docs/specs/.
 - Existing backend bounded context currently implemented is organization.
