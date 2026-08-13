@@ -1,5 +1,7 @@
 # DDD Notes 06 — Application Integration (Organization Invitation Lifecycle Orchestration)
 
+Status: Approved / Implemented.
+
 ## Bounded Context
 
 - organization
@@ -100,3 +102,41 @@ Responsibilities (application layer):
 4) Persist updated Group as one atomic operation.
 
 No new behavior is allowed beyond Spec 02–05.
+
+## Typed Application Failure Boundary
+
+Organization owns one narrow application failure contract for expected command
+failures. It carries a typed category rather than requiring downstream adapters
+to inspect exception messages:
+
+- `NOT_FOUND` for an unknown group or invitation;
+- `FORBIDDEN` for the existing GroupAdmin or invitee identity mismatch rules;
+- `APPLICATION_REJECTED` for unknown invitee, generated id collision,
+  duplicate/existing-member rejection, and terminal invitation state.
+
+The application service translates repository lookup outcomes and existing
+`DomainError` identities into this boundary. Domain exceptions remain internal
+to organization; their messages remain diagnostic text and are not a public
+classification contract. Invalid value-object or command construction remains
+input validation, while an unexpected dependency/programming exception passes
+through unchanged.
+
+Allowed consumer:
+
+- the reference-core HTTP adapter may depend on the application failure type
+  and category only.
+
+Forbidden consumer behavior:
+
+- importing `DomainError` into reference-core;
+- parsing a failure message or prefix;
+- loading repositories or re-evaluating Group rules at the HTTP boundary.
+
+## Test Layer Placement for the Repair
+
+- Application tests assert each category for generated-id collision, unknown
+  invitee, lookup absence, permission mismatch, duplicate/terminal state, and
+  unexpected dependency failure.
+- Domain tests remain authoritative for the unchanged business rules and state
+  transitions.
+- Web tests assert only stable HTTP translation and transport short-circuiting.

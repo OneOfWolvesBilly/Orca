@@ -1,5 +1,7 @@
 # DDD Derivation - 01 Stable API Error Contract
 
+Status: Approved / Implemented.
+
 This note is **derived from**
 `docs/specs/reference-core/01-stable-api-error-contract.md`.
 It does not introduce new behavior.
@@ -112,17 +114,20 @@ Context-specific exception categories may be mapped at this shared boundary,
 but the boundary must not interpret exception messages as business rules or
 return those messages directly.
 
-### Existing compatibility debt
+### Typed organization dependency
 
-Unknown-group failures currently arrive at the web boundary as
-`IllegalArgumentException` and are distinguished from other illegal arguments
-by the existing `"Group not found"` message prefix. The implemented global
-handler preserves that classifier only to retain the existing `404` endpoint
-semantics without changing organization application behavior in this slice.
+Organization-06 owns the typed application failure meaning for existing
+organization commands. The shared HTTP boundary may import that application
+failure type and category, then translate it to the stable HTTP contract:
 
-The exception message is never returned to the client. Replacing this legacy
-classifier with a typed organization application failure requires separate
-specification and is not derived from `reference-core-01`.
+- `NOT_FOUND` -> `404 NOT_FOUND`;
+- `FORBIDDEN` -> `403 FORBIDDEN`;
+- `APPLICATION_REJECTED` -> `400 APPLICATION_REJECTED`.
+
+The boundary must not import `organization.domain.DomainError`, inspect an
+exception message or prefix, query organization state, or reproduce an
+organization rule. Invalid transport values remain `400 VALIDATION_ERROR`, and
+unexpected exceptions remain safe `500 INTERNAL_ERROR`.
 
 ## Why General AOP Is Not The HTTP Error Boundary
 
@@ -192,6 +197,9 @@ Required contract coverage:
 - unexpected exception returns safe `500 INTERNAL_ERROR`
 - every response body status equals its HTTP status
 - no internal exception message or stack trace is returned
+- organization classification is unchanged when exception message wording
+  changes or is absent
+- transport validation rejects before organization use-case execution
 
 Auth domain/application tests and organization domain/application tests remain
 unchanged unless a defect is discovered. This slice must not require new domain
@@ -213,6 +221,10 @@ domain or application layers.
 
 The implementation must not change auth or organization use-case decisions.
 
+The organization dependency is deliberately one-way and narrow:
+reference-core web translation may consume the public organization application
+failure contract; organization must not depend on reference-core HTTP types.
+
 ## Unknown / To Be Discovered
 
 - localization
@@ -232,3 +244,4 @@ The implementation must not change auth or organization use-case decisions.
 - New auth or organization business rules.
 - Persistence or schema changes.
 - Full error taxonomy or field-level validation detail.
+- Shared cross-context business failure taxonomy or broad package refactoring.

@@ -1,5 +1,7 @@
 # DDD Note 08 — Organization Web API Integration
 
+Status: Approved / Implemented.
+
 This note is derived from `docs/specs/organization/08-web-api-integration.md`.
 It does not introduce new behavior.
 
@@ -100,7 +102,7 @@ These are not domain rules.
 
 ## Error Mapping Policy
 
-Recommended HTTP mapping:
+Required HTTP mapping derived from organization-08 and reference-core-01:
 
 - Missing or unestablishable auth-09 request context -> `401 Unauthorized`
 - Malformed JSON or missing required body → `400 Bad Request`
@@ -109,8 +111,20 @@ Recommended HTTP mapping:
 - Actor fails Spec 02–05 permission/identity checks → `403 Forbidden`
 - Other domain/application validation failures → `400 Bad Request`
 
-The mapping layer may inspect exception categories or messages only to choose HTTP status.
-It MUST NOT re-evaluate domain rules.
+The controller validates transport input before use-case execution. The shared
+HTTP exception boundary consumes only the organization-06 typed application
+failure category. It must not inspect exception messages, import
+`organization.domain.DomainError`, or re-evaluate domain rules.
+
+Stable category mapping:
+
+- invalid transport input -> `400 VALIDATION_ERROR`;
+- typed `NOT_FOUND` -> `404 NOT_FOUND`;
+- typed `FORBIDDEN` -> `403 FORBIDDEN`;
+- typed `APPLICATION_REJECTED` -> `400 APPLICATION_REJECTED`;
+- unexpected exception -> `500 INTERNAL_ERROR`.
+
+No existing organization failure maps to `409 CONFLICT`.
 
 ## Spring Wiring Boundary
 
@@ -139,6 +153,12 @@ Recommended tests:
 - missing auth-09 context is rejected before use case execution
 - non-POST access is not part of the command contract
 - representative application/domain failures are mapped to stable HTTP errors
+- blank group and invitation ids, malformed/missing bodies, and missing/blank
+  required fields execute the targeted use case zero times
+- unknown group/invitation, unknown invitee, all permission mismatches,
+  duplicate pending invitation, every terminal invitation state, generated id
+  collision, and unexpected failures cover the authoritative matrix
+- changing an internal exception message does not alter classification
 
 Domain tests remain unchanged.
 Application tests remain unchanged except where wiring defects are discovered.
@@ -153,3 +173,5 @@ Persistence tests remain unchanged except where web integration requires minimal
 - Frontend implementation.
 - OpenAPI generation or API versioning.
 - Changing any Spec 01–07 behavior.
+- Message-based classification, a shared business error taxonomy, `409`
+  reclassification, or broad cross-context package refactoring.

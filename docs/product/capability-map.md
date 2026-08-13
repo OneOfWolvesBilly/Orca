@@ -286,6 +286,8 @@ Existing capabilities:
 - authoritative stable API error response shape and safety boundary
 - global HTTP exception boundary for current auth, organization, and framework
   failure categories
+- organization-owned typed application failure meaning translated by
+  reference-core without exception-message classification
 
 Missing capabilities / possible future slices:
 

@@ -411,11 +411,16 @@ Main success flow:
 4. The client handles the failure by stable status and coarse error code without
    parsing exception messages.
 5. Sensitive and internal failure details remain server-side.
+6. Existing organization command failures carry organization-owned typed
+   application meaning to the reference-core HTTP translator; reference-core
+   does not inspect organization domain errors or exception messages.
 
 Currently supported slices:
 
 - `reference-core-01` specifies and implements the stable API error contract.
 - Existing web specs define endpoint-level error expectations.
+- `organization-06` and `organization-08` define the typed organization
+  failure boundary and exact HTTP classification matrix for existing commands.
 
 Known gaps:
 

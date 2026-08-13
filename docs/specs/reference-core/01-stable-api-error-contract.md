@@ -1,5 +1,7 @@
 # Spec 01 - Stable API Error Contract
 
+Status: Approved / Implemented.
+
 ## Goal
 
 Provide one stable and safe error response contract for Orca HTTP APIs so API
@@ -45,6 +47,11 @@ It owns the stable client-visible API error contract and HTTP error
 normalization behavior. It does not own or redefine auth or organization
 failure rules. Auth and organization specs remain authoritative for deciding
 whether an operation succeeds or fails.
+
+For organization commands, reference-core consumes only the typed application
+failure meaning owned by `organization-06`. It MUST NOT import organization
+domain error identity, inspect exception messages, use message prefixes, or
+re-evaluate an organization rule.
 
 ## Contract Terms
 
@@ -138,6 +145,18 @@ No existing organization rejection is reclassified as `409 Conflict` by this
 slice. `CONFLICT` is reserved for a future or existing endpoint behavior only
 after an authoritative spec explicitly requires conflict semantics.
 
+For existing organization commands, the stable translation is:
+
+| Organization/transport meaning | HTTP status | Error code |
+| --- | --- | --- |
+| invalid transport input | `400` | `VALIDATION_ERROR` |
+| unknown group or invitation | `404` | `NOT_FOUND` |
+| existing permission mismatch | `403` | `FORBIDDEN` |
+| unknown invitee | `400` | `APPLICATION_REJECTED` |
+| duplicate pending invitation or other terminal-state rejection | `400` | `APPLICATION_REJECTED` |
+| generated group-id collision | `400` | `APPLICATION_REJECTED` |
+| unexpected failure | `500` | `INTERNAL_ERROR` |
+
 ## Scenarios
 
 ### Scenario: API client receives a stable validation error
@@ -215,6 +234,24 @@ after an authoritative spec explicitly requires conflict semantics.
 - The response does not directly expose the thrown exception message.
 - The web boundary does not re-evaluate or change the underlying rule.
 
+### Scenario: Typed organization failure is translated without message parsing
+
+**Given**
+- An existing organization command reports one typed application failure
+  meaning defined by organization-06.
+
+**When**
+- The reference-core HTTP boundary translates the failure.
+
+**Then**
+- `NOT_FOUND` becomes `404 NOT_FOUND`.
+- `FORBIDDEN` becomes `403 FORBIDDEN`.
+- `APPLICATION_REJECTED` becomes `400 APPLICATION_REJECTED`.
+- Changing the exception message or omitting a message does not change the
+  classification.
+- Reference-core does not inspect organization domain error identity or
+  reconstruct the failed organization rule.
+
 ### Scenario: Rejected login preserves opaque troubleshooting reference
 
 **Given**
@@ -279,6 +316,12 @@ after an authoritative spec explicitly requires conflict semantics.
 - This slice MUST NOT change organization domain or application behavior.
 - This slice MUST NOT change auth credential verification, session creation,
   protected session context, or login failure audit behavior.
+- Organization failure classification MUST use the organization-owned typed
+  application boundary.
+- Organization classification MUST NOT use exception message text, prefix, or
+  wording, and MUST NOT depend on direct organization domain error imports.
+- Invalid transport input MUST be rejected before organization use-case
+  execution.
 
 ## Sensitive Data Boundary
 
@@ -312,6 +355,8 @@ Client-visible API error responses MUST NOT expose:
 - Unsupported HTTP method for an existing API route ->
   `405 METHOD_NOT_ALLOWED`.
 - Unexpected server failure -> `500 INTERNAL_ERROR`.
+- A changed or absent internal exception message -> the same classification as
+  the typed failure meaning.
 
 ## Invariants
 
@@ -322,6 +367,46 @@ Client-visible API error responses MUST NOT expose:
 - Login rejection remains indistinguishable across all auth-10 failure
   conditions.
 - Unexpected failures are safe by default.
+- Bounded contexts own failure meaning; reference-core owns only stable HTTP
+  translation.
+
+## Dependency Ownership and Allowed Public Boundaries
+
+- Organization-06 owns the typed meaning for expected organization command
+  failures; organization-01 through organization-05 own the underlying rules.
+- Organization-08 owns transport validation and command invocation.
+- Auth owns login and protected-session failure meaning through its existing
+  public exceptions and contracts.
+- Reference-core owns `ApiErrorResponse` and the status/code/safe-message
+  translation table.
+- Allowed organization dependency: the organization application failure type
+  and its category only.
+- Forbidden dependencies: organization domain error enums, repository state,
+  aggregate inspection, exception message parsing, or duplicated business
+  decisions.
+
+## Verification Mapping
+
+| Normative outcome | Verification |
+| --- | --- |
+| malformed/missing body and missing/blank fields are `400 VALIDATION_ERROR` | organization and reference-core web integration tests |
+| typed organization `NOT_FOUND`, `FORBIDDEN`, and `APPLICATION_REJECTED` translate exactly | reference-core handler tests plus organization web integration tests |
+| message wording is irrelevant | handler test creates equal typed categories with alternate messages |
+| transport rejection executes no organization use case | organization controller boundary tests |
+| unexpected exception is safe `500 INTERNAL_ERROR` | `StableApiErrorContractIntegrationTest` |
+| no organization failure becomes `409 CONFLICT` | application/web classification matrix tests |
+
+## Affected and Superseded Documents
+
+- `organization-06` now defines the typed application failure meaning.
+- `organization-08` now defines the exact public HTTP failure matrix and
+  transport failure set.
+- The matching reference-core and organization DDD notes derive the new
+  dependency boundary.
+- This amendment supersedes the legacy message-prefix classifier documented by
+  the previous reference-core-01 DDD compatibility note. It does not supersede
+  any auth, organization domain, persistence, route, or success-response
+  behavior.
 
 ## Unknown / To Be Discovered
 
@@ -352,3 +437,4 @@ Client-visible API error responses MUST NOT expose:
 - Frontend implementation.
 - Returning field-level validation details.
 - Exposing internal exception details for troubleshooting.
+- A shared cross-context business error taxonomy or broad package refactor.

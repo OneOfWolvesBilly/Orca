@@ -1,5 +1,7 @@
 # Spec 08 — Organization Web API Integration
 
+Status: Approved / Implemented.
+
 ## Goal
 
 Expose the existing organization behaviors from Spec 01–07 through HTTP endpoints
@@ -13,6 +15,10 @@ This slice defines the web adapter contract for:
 - revoking an invitation
 
 This slice introduces no new domain behavior, no new invariants, and no new invitation status.
+
+The adapter consumes the typed organization application failure boundary from
+Spec 06. It does not infer failure meaning from exception type alone, exception
+message text, message prefix, or message wording.
 
 ## Domain Terms
 
@@ -268,6 +274,26 @@ methods or behavior of these organization endpoints.
   - invite member returns `invitationId`
   - accept/reject/revoke return the resulting terminal status
 - The web adapter MUST map validation, authorization, not-found, and domain/application rejections to HTTP error responses consistently.
+- The web adapter MUST validate path variables and request bodies before an
+  organization use case executes. A transport rejection MUST result in zero
+  executions of the targeted use case.
+- The web adapter MUST expose organization failure meaning only through the
+  typed Spec 06 application boundary and MUST NOT inspect organization domain
+  error enums or exception messages.
+- Reference-core HTTP translation MUST use this matrix:
+
+  | Failure source | HTTP status | Stable code |
+  | --- | --- | --- |
+  | invalid transport input | `400` | `VALIDATION_ERROR` |
+  | unknown group or invitation | `404` | `NOT_FOUND` |
+  | existing permission mismatch | `403` | `FORBIDDEN` |
+  | unknown invitee | `400` | `APPLICATION_REJECTED` |
+  | duplicate pending invitation or terminal-state rejection | `400` | `APPLICATION_REJECTED` |
+  | generated group-id collision | `400` | `APPLICATION_REJECTED` |
+  | unexpected failure | `500` | `INTERNAL_ERROR` |
+
+- No existing organization failure defined by Spec 01–07 maps to
+  `409 CONFLICT`.
 - HTTP integration MUST NOT change persistence behavior from Spec 07.
 
 ## Error Cases
@@ -278,11 +304,67 @@ methods or behavior of these organization endpoints.
 - `X-User-Id` without an establishable session -> unauthenticated request
   rejected.
 - Missing or malformed request body → validation error.
-- Blank required path variable or body field → validation error.
-- Unknown group id → not found or rejected according to the application error.
-- Unknown invitation id → not found or rejected according to the application error.
-- Actor is not allowed by existing Spec 02–05 rules → rejected.
-- Domain/application validation failure from Spec 01–06 → rejected.
+- Missing or blank required body field → `400 VALIDATION_ERROR` before use-case
+  execution.
+- Blank group id or invitation id → `400 VALIDATION_ERROR` before use-case
+  execution.
+- Unknown group id → `404 NOT_FOUND`.
+- Unknown invitation id for accept, reject, or revoke → `404 NOT_FOUND`.
+- Non-GroupAdmin inviter or revoker, wrong acceptor, or wrong rejector →
+  `403 FORBIDDEN`.
+- Unknown invitee → `400 APPLICATION_REJECTED`.
+- Duplicate pending invitation, existing-member rejection, or an already
+  accepted, rejected, or revoked invitation → `400 APPLICATION_REJECTED`.
+- Generated group-id collision → `400 APPLICATION_REJECTED`.
+- Unexpected exception → `500 INTERNAL_ERROR`.
+- Changing internal exception message wording MUST NOT change any
+  classification above.
+
+## Dependency Ownership and Allowed Public Boundary
+
+- Organization Spec 01–06 owns command behavior and typed failure meaning.
+- Auth-09 owns authenticated current-user resolution before organization
+  command execution.
+- Reference-core-01 owns the stable HTTP response shape and translation of the
+  typed category to status/code/safe message.
+- The organization web adapter may construct organization value objects and
+  commands, invoke organization use cases, and allow the typed Spec 06 failure
+  to reach reference-core translation.
+- Reference-core MUST NOT decide whether an organization rule was violated,
+  import organization domain error identity, or parse exception messages.
+
+## Public HTTP Failure Set
+
+- Request body: absent, malformed, empty object, missing required field, null
+  required field, blank required field, unsupported enum value, and unexpected
+  field input where framework binding rejects it.
+- Path input: absent route, blank group id, and blank invitation id.
+- Application outcome: unknown group, unknown invitation, unknown invitee,
+  duplicate pending invitation, existing member, terminal invitation state,
+  generated id collision, unauthorized actor, and unexpected failure.
+- Authentication failure remains owned by auth-09 and occurs before
+  organization use-case execution.
+
+## Verification Mapping
+
+| Normative outcome | Verification |
+| --- | --- |
+| blank group/invitation id and invalid body are validation; use-case count is zero | organization controller boundary tests for create/invite/accept/reject/revoke |
+| unknown group/invitation is `404 NOT_FOUND` | organization web integration tests |
+| all four permission mismatches are `403 FORBIDDEN` | organization web integration tests |
+| unknown invitee, duplicate pending, each terminal state, and id collision are `400 APPLICATION_REJECTED` | application and organization web integration tests |
+| message wording cannot affect classification | typed failure translation test with alternate message |
+| unexpected exception is safe `500 INTERNAL_ERROR` | reference-core stable error integration test |
+| stable response body remains reference-core-owned | reference-core error contract tests |
+
+## Affected and Superseded Documents
+
+- This amendment depends on the typed boundary added to `organization-06` and
+  aligns the HTTP translation in `reference-core-01`.
+- It supersedes the previous ambiguous "not found or rejected according to the
+  application error" wording and any message-based implementation classifier.
+- Auth-09 actor establishment, Spec 01–07 behavior, routes, persistence, and
+  response success payloads remain unchanged.
 
 ## Invariants
 
@@ -300,3 +382,5 @@ methods or behavior of these organization endpoints.
 - Query/list/read APIs for groups, members, or invitations.
 - Frontend UI.
 - API versioning strategy, OpenAPI generation, pagination, or filtering.
+- New organization business behavior, error detail payloads, `409 Conflict`,
+  logging, correlation, audit, or broad package refactoring.
