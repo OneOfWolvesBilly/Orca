@@ -30,7 +30,7 @@ public final class CreateGroupUseCase {
 
         GroupId groupId = Objects.requireNonNull(idGenerator.nextId(), "groupId");
         if (groupRepository.findById(groupId).isPresent()) {
-            throw new IllegalArgumentException("Group id already exists: " + groupId.value());
+            throw OrganizationFailures.rejected("Group id already exists: " + groupId.value());
         }
 
         GroupDescription description = command.description() == null

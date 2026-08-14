@@ -2,8 +2,7 @@ package io.github.oneofwolvesbilly.orca.referencecore.web;
 
 import io.github.oneofwolvesbilly.orca.auth.application.LoginRejectedException;
 import io.github.oneofwolvesbilly.orca.auth.web.UnauthenticatedHttpRequestException;
-import io.github.oneofwolvesbilly.orca.organization.domain.DomainError;
-import io.github.oneofwolvesbilly.orca.organization.domain.DomainException;
+import io.github.oneofwolvesbilly.orca.organization.application.OrganizationApplicationFailure;
 import io.github.oneofwolvesbilly.orca.referencecore.application.ClientDiagnosticForbiddenException;
 import io.github.oneofwolvesbilly.orca.referencecore.application.ClientDiagnosticNotFoundException;
 import org.springframework.http.HttpHeaders;
@@ -45,22 +44,18 @@ final class GlobalApiExceptionHandler extends ResponseEntityExceptionHandler {
         return error(HttpStatus.NOT_FOUND, "NOT_FOUND", "Requested resource was not found");
     }
 
-    @ExceptionHandler(DomainException.class)
-    ResponseEntity<ApiErrorResponse> domain(DomainException ex) {
-        if (isForbidden(ex.error())) {
-            return error(HttpStatus.FORBIDDEN, "FORBIDDEN", "Operation is forbidden");
-        }
-        if (ex.error() == DomainError.INVITATION_NOT_FOUND) {
-            return error(HttpStatus.NOT_FOUND, "NOT_FOUND", "Requested resource was not found");
-        }
-        return error(HttpStatus.BAD_REQUEST, "APPLICATION_REJECTED", "Request was rejected");
+    @ExceptionHandler(OrganizationApplicationFailure.class)
+    ResponseEntity<ApiErrorResponse> organizationFailure(OrganizationApplicationFailure ex) {
+        return switch (ex.category()) {
+            case NOT_FOUND -> error(HttpStatus.NOT_FOUND, "NOT_FOUND", "Requested resource was not found");
+            case FORBIDDEN -> error(HttpStatus.FORBIDDEN, "FORBIDDEN", "Operation is forbidden");
+            case APPLICATION_REJECTED ->
+                    error(HttpStatus.BAD_REQUEST, "APPLICATION_REJECTED", "Request was rejected");
+        };
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    ResponseEntity<ApiErrorResponse> illegalArgument(IllegalArgumentException ex) {
-        if (ex.getMessage() != null && ex.getMessage().startsWith("Group not found")) {
-            return error(HttpStatus.NOT_FOUND, "NOT_FOUND", "Requested resource was not found");
-        }
+    ResponseEntity<ApiErrorResponse> illegalArgument() {
         return error(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Request validation failed");
     }
 
@@ -97,12 +92,6 @@ final class GlobalApiExceptionHandler extends ResponseEntityExceptionHandler {
             WebRequest request
     ) {
         return frameworkError(headers, HttpStatus.NOT_FOUND, "NOT_FOUND", "Requested resource was not found");
-    }
-
-    private static boolean isForbidden(DomainError error) {
-        return error == DomainError.INVITER_NOT_GROUP_ADMIN
-                || error == DomainError.INVITATION_ACCEPTOR_MISMATCH
-                || error == DomainError.INVITATION_REJECTOR_MISMATCH;
     }
 
     private static ResponseEntity<ApiErrorResponse> error(HttpStatus status, String code, String message) {

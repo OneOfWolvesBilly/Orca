@@ -2,6 +2,7 @@ package io.github.oneofwolvesbilly.orca.organization.application;
 
 import io.github.oneofwolvesbilly.orca.organization.domain.Group;
 import io.github.oneofwolvesbilly.orca.organization.domain.GroupInvitation;
+import io.github.oneofwolvesbilly.orca.organization.domain.DomainException;
 
 import java.util.Objects;
 
@@ -20,17 +21,22 @@ public final class InviteMemberUseCase {
         Objects.requireNonNull(command, "command");
 
         if (!registeredUserDirectory.exists(command.inviteeUserId())) {
-            throw new IllegalArgumentException("Invitee user does not exist: " + command.inviteeUserId().value());
+            throw OrganizationFailures.rejected("Invitee user does not exist: " + command.inviteeUserId().value());
         }
 
         Group group = groupRepository.findById(command.groupId())
-                .orElseThrow(() -> new IllegalArgumentException("Group not found: " + command.groupId().value()));
+                .orElseThrow(() -> OrganizationFailures.notFound("Group was not found: " + command.groupId().value()));
 
-        GroupInvitation invitation = group.inviteMember(
-                command.inviterUserId(),
-                command.inviteeUserId(),
-                command.intendedRole()
-        );
+        GroupInvitation invitation;
+        try {
+            invitation = group.inviteMember(
+                    command.inviterUserId(),
+                    command.inviteeUserId(),
+                    command.intendedRole()
+            );
+        } catch (DomainException failure) {
+            throw OrganizationFailures.from(failure);
+        }
 
         // Persist the aggregate and its invitation lookup as one repository operation.
         groupRepository.save(group);

@@ -65,9 +65,10 @@ class RevokeInvitationUseCaseTest {
 
         var revokeUseCase = new RevokeInvitationUseCase(repo);
 
-        assertThrows(IllegalArgumentException.class, () ->
+        var failure = assertThrows(OrganizationApplicationFailure.class, () ->
                 revokeUseCase.handle(new RevokeInvitationCommand(adminId, GroupInvitationId.of("missing-invitation")))
         );
+        assertEquals(OrganizationFailureCategory.NOT_FOUND, failure.category());
 
         Group after = repo.findById(groupId).orElseThrow();
         assertEquals(savesBeforeFailure, repo.savedGroups().size());
@@ -105,9 +106,10 @@ class RevokeInvitationUseCaseTest {
 
         var revokeUseCase = new RevokeInvitationUseCase(repo);
 
-        assertThrows(RuntimeException.class, () ->
+        var failure = assertThrows(OrganizationApplicationFailure.class, () ->
                 revokeUseCase.handle(new RevokeInvitationCommand(firstInviteeId, secondInvite.invitationId()))
         );
+        assertEquals(OrganizationFailureCategory.FORBIDDEN, failure.category());
 
         Group after = repo.findById(groupId).orElseThrow();
         assertEquals(savesBeforeFailure, repo.savedGroups().size());
@@ -140,9 +142,10 @@ class RevokeInvitationUseCaseTest {
         int savesBeforeFailure = repo.savedGroups().size();
         int membersBeforeFailure = before.members().size();
 
-        assertThrows(RuntimeException.class, () ->
+        var failure = assertThrows(OrganizationApplicationFailure.class, () ->
                 revokeUseCase.handle(new RevokeInvitationCommand(adminId, inviteResult.invitationId()))
         );
+        assertEquals(OrganizationFailureCategory.APPLICATION_REJECTED, failure.category());
 
         Group after = repo.findById(groupId).orElseThrow();
         assertEquals(savesBeforeFailure, repo.savedGroups().size());

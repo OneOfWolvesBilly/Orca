@@ -1,6 +1,7 @@
 package io.github.oneofwolvesbilly.orca.organization.application;
 
 import io.github.oneofwolvesbilly.orca.organization.domain.Group;
+import io.github.oneofwolvesbilly.orca.organization.domain.DomainException;
 
 import java.util.Objects;
 
@@ -17,11 +18,15 @@ public final class AcceptInvitationUseCase {
         Objects.requireNonNull(command, "command");
 
         Group group = groupRepository.findByInvitationId(command.invitationId())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Group not found for invitationId=" + command.invitationId().value()
+                .orElseThrow(() -> OrganizationFailures.notFound(
+                        "Invitation lookup did not resolve a group: " + command.invitationId().value()
                 ));
 
-        group.acceptInvitation(command.invitationId(), command.actorUserId());
+        try {
+            group.acceptInvitation(command.invitationId(), command.actorUserId());
+        } catch (DomainException failure) {
+            throw OrganizationFailures.from(failure);
+        }
 
         groupRepository.save(group);
     }

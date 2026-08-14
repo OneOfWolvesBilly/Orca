@@ -51,9 +51,10 @@ class InviteMemberUseCaseTest {
 
         var useCase = new InviteMemberUseCase(repo, users);
 
-        assertThrows(IllegalArgumentException.class, () ->
+        var failure = assertThrows(OrganizationApplicationFailure.class, () ->
                 useCase.handle(new InviteMemberCommand(groupId, adminId, inviteeId, GroupRole.MEMBER))
         );
+        assertEquals(OrganizationFailureCategory.NOT_FOUND, failure.category());
 
         assertTrue(repo.savedGroups().isEmpty());
         assertTrue(repo.indexedInvitations().isEmpty());
@@ -83,9 +84,10 @@ class InviteMemberUseCaseTest {
 
         var useCase = new InviteMemberUseCase(repo, users);
 
-        assertThrows(RuntimeException.class, () ->
+        var failure = assertThrows(OrganizationApplicationFailure.class, () ->
                 useCase.handle(new InviteMemberCommand(groupId, nonAdminInviterId, inviteeId, GroupRole.MEMBER))
         );
+        assertEquals(OrganizationFailureCategory.FORBIDDEN, failure.category());
 
         assertFailureDidNotPersistIndexOrChangeGroup(
                 repo,
@@ -121,9 +123,10 @@ class InviteMemberUseCaseTest {
         int membersBeforeFailure = before.members().size();
         boolean hadPendingBeforeFailure = before.hasPendingInvitationFor(inviteeId);
 
-        assertThrows(RuntimeException.class, () ->
+        var failure = assertThrows(OrganizationApplicationFailure.class, () ->
                 useCase.handle(new InviteMemberCommand(groupId, adminId, inviteeId, GroupRole.MEMBER))
         );
+        assertEquals(OrganizationFailureCategory.APPLICATION_REJECTED, failure.category());
 
         assertFailureDidNotPersistIndexOrChangeGroup(
                 repo,
@@ -157,9 +160,10 @@ class InviteMemberUseCaseTest {
 
         var useCase = new InviteMemberUseCase(repo, users);
 
-        assertThrows(RuntimeException.class, () ->
+        var failure = assertThrows(OrganizationApplicationFailure.class, () ->
                 useCase.handle(new InviteMemberCommand(groupId, adminId, adminId, GroupRole.MEMBER))
         );
+        assertEquals(OrganizationFailureCategory.APPLICATION_REJECTED, failure.category());
 
         assertFailureDidNotPersistIndexOrChangeGroup(
                 repo,
@@ -192,9 +196,10 @@ class InviteMemberUseCaseTest {
         int membersBeforeFailure = before.members().size();
         boolean hadPendingBeforeFailure = before.hasPendingInvitationFor(inviteeId);
 
-        assertThrows(IllegalArgumentException.class, () ->
+        var failure = assertThrows(OrganizationApplicationFailure.class, () ->
                 useCase.handle(new InviteMemberCommand(groupId, adminId, inviteeId, GroupRole.MEMBER))
         );
+        assertEquals(OrganizationFailureCategory.APPLICATION_REJECTED, failure.category());
 
         assertFailureDidNotPersistIndexOrChangeGroup(
                 repo,
@@ -205,6 +210,24 @@ class InviteMemberUseCaseTest {
                 membersBeforeFailure,
                 hadPendingBeforeFailure
         );
+    }
+
+    @Test
+    void unexpected_dependency_failure_is_not_reclassified() {
+        var repo = new InMemoryGroupRepository();
+        RegisteredUserDirectory failingDirectory = userId -> {
+            throw new IllegalStateException("directory unavailable");
+        };
+        var useCase = new InviteMemberUseCase(repo, failingDirectory);
+
+        var failure = assertThrows(IllegalStateException.class, () -> useCase.handle(new InviteMemberCommand(
+                GroupId.of("g-1"),
+                UserId.of("admin"),
+                UserId.of("invitee"),
+                GroupRole.MEMBER
+        )));
+
+        assertEquals("directory unavailable", failure.getMessage());
     }
 
     private static void assertFailureDidNotPersistIndexOrChangeGroup(

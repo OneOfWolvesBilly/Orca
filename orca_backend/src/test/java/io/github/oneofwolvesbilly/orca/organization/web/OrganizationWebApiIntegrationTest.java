@@ -434,7 +434,42 @@ class OrganizationWebApiIntegrationTest {
                 "APPLICATION_REJECTED",
                 "Request was rejected"
         );
+        assertError(inviteUnknownUserResponse, 400, "APPLICATION_REJECTED", "Request was rejected");
+        assertError(acceptAlreadyAcceptedResponse, 400, "APPLICATION_REJECTED", "Request was rejected");
         assertFalse(duplicatePendingInvitationRetryResponse.body().contains("Pending invitation already exists"));
+    }
+
+    @Test
+    void command_endpoints_map_every_terminal_invitation_retry_to_application_rejected() throws Exception {
+        String acceptGroup = createGroup("admin");
+        String rejectGroup = createGroup("admin");
+        String revokeGroup = createGroup("admin");
+        String accepted = inviteMember(acceptGroup, "admin", "user-1");
+        String rejected = inviteMember(rejectGroup, "admin", "user-1");
+        String revoked = inviteMember(revokeGroup, "admin", "user-1");
+
+        assertEquals(200, post("/api/group-invitations/%s/accept".formatted(accepted), "user-1", "{}").statusCode());
+        assertEquals(200, post("/api/group-invitations/%s/reject".formatted(rejected), "user-1", "{}").statusCode());
+        assertEquals(200, post("/api/group-invitations/%s/revoke".formatted(revoked), "admin", "{}").statusCode());
+
+        assertError(
+                post("/api/group-invitations/%s/accept".formatted(accepted), "user-1", "{}"),
+                400,
+                "APPLICATION_REJECTED",
+                "Request was rejected"
+        );
+        assertError(
+                post("/api/group-invitations/%s/reject".formatted(rejected), "user-1", "{}"),
+                400,
+                "APPLICATION_REJECTED",
+                "Request was rejected"
+        );
+        assertError(
+                post("/api/group-invitations/%s/revoke".formatted(revoked), "admin", "{}"),
+                400,
+                "APPLICATION_REJECTED",
+                "Request was rejected"
+        );
     }
 
     private String createGroup(String actorUserId) throws Exception {

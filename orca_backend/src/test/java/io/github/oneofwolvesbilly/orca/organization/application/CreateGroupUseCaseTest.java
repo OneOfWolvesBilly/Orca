@@ -56,9 +56,10 @@ class CreateGroupUseCaseTest {
         int savesBeforeFailure = repo.savedGroups().size();
         int membersBeforeFailure = existingGroup.members().size();
 
-        assertThrows(IllegalArgumentException.class, () ->
+        var failure = assertThrows(OrganizationApplicationFailure.class, () ->
                 useCase.handle(new CreateGroupCommand(UserId.of("u-2"), "Team X", "hello"))
         );
+        assertEquals(OrganizationFailureCategory.APPLICATION_REJECTED, failure.category());
 
         Group after = repo.findById(groupId).orElseThrow();
         assertEquals(savesBeforeFailure, repo.savedGroups().size());

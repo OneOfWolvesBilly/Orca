@@ -55,6 +55,7 @@ final class OrganizationCommandController {
             CurrentUserContext currentUserContext,
             @RequestBody CreateGroupRequest request
     ) {
+        requiredRequest(request);
         UserId actor = authenticatedUser(currentUserContext);
         var result = createGroupUseCase.handle(new CreateGroupCommand(
                 actor,
@@ -71,6 +72,7 @@ final class OrganizationCommandController {
             @PathVariable String groupId,
             @RequestBody InviteMemberRequest request
     ) {
+        requiredRequest(request);
         UserId actor = authenticatedUser(currentUserContext);
         var result = inviteMemberUseCase.handle(new InviteMemberCommand(
                 GroupId.of(groupId),
@@ -88,6 +90,7 @@ final class OrganizationCommandController {
             @PathVariable String invitationId,
             @RequestBody InvitationActionRequest request
     ) {
+        requiredRequest(request);
         acceptInvitationUseCase.handle(new AcceptInvitationCommand(
                 authenticatedUser(currentUserContext),
                 GroupInvitationId.of(invitationId)
@@ -102,6 +105,7 @@ final class OrganizationCommandController {
             @PathVariable String invitationId,
             @RequestBody InvitationActionRequest request
     ) {
+        requiredRequest(request);
         rejectInvitationUseCase.handle(new RejectInvitationCommand(
                 authenticatedUser(currentUserContext),
                 GroupInvitationId.of(invitationId)
@@ -116,6 +120,7 @@ final class OrganizationCommandController {
             @PathVariable String invitationId,
             @RequestBody InvitationActionRequest request
     ) {
+        requiredRequest(request);
         revokeInvitationUseCase.handle(new RevokeInvitationCommand(
                 authenticatedUser(currentUserContext),
                 GroupInvitationId.of(invitationId)
@@ -128,7 +133,7 @@ final class OrganizationCommandController {
     }
 
     private static String requiredField(String value, String fieldName) {
-        if (value == null) {
+        if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(fieldName + " is required");
         }
         return value;
@@ -139,6 +144,12 @@ final class OrganizationCommandController {
             throw new IllegalArgumentException("intendedRole is required");
         }
         return role;
+    }
+
+    private static void requiredRequest(Object request) {
+        if (request == null) {
+            throw new IllegalArgumentException("request body is required");
+        }
     }
 
     record CreateGroupRequest(String name, String description) {
