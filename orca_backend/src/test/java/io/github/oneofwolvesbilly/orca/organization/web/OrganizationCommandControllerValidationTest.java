@@ -11,6 +11,7 @@ import io.github.oneofwolvesbilly.orca.organization.application.GroupRepository;
 import io.github.oneofwolvesbilly.orca.organization.domain.Group;
 import io.github.oneofwolvesbilly.orca.organization.domain.GroupId;
 import io.github.oneofwolvesbilly.orca.organization.domain.GroupInvitationId;
+import io.github.oneofwolvesbilly.orca.referencecore.web.RequestValidationException;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
@@ -48,8 +49,8 @@ class OrganizationCommandControllerValidationTest {
 
     @Test
     void rejects_missing_or_blank_create_fields_before_use_case_execution() {
-        assertThrows(IllegalArgumentException.class, () -> controller.createGroup(actor, null));
-        assertThrows(IllegalArgumentException.class, () -> controller.createGroup(
+        assertThrows(RequestValidationException.class, () -> controller.createGroup(actor, null));
+        assertThrows(RequestValidationException.class, () -> controller.createGroup(
                 actor,
                 new OrganizationCommandController.CreateGroupRequest("   ", null)
         ));
@@ -65,9 +66,9 @@ class OrganizationCommandControllerValidationTest {
                 io.github.oneofwolvesbilly.orca.organization.domain.GroupRole.MEMBER
         );
 
-        assertThrows(IllegalArgumentException.class, () -> controller.inviteMember(actor, "   ", valid));
-        assertThrows(IllegalArgumentException.class, () -> controller.inviteMember(actor, "group", null));
-        assertThrows(IllegalArgumentException.class, () -> controller.inviteMember(
+        assertThrows(RequestValidationException.class, () -> controller.inviteMember(actor, "   ", valid));
+        assertThrows(RequestValidationException.class, () -> controller.inviteMember(actor, "group", null));
+        assertThrows(RequestValidationException.class, () -> controller.inviteMember(
                 actor,
                 "group",
                 new OrganizationCommandController.InviteMemberRequest(
@@ -84,9 +85,9 @@ class OrganizationCommandControllerValidationTest {
     void rejects_blank_invitation_id_for_every_action_before_use_case_execution() {
         var request = new OrganizationCommandController.InvitationActionRequest();
 
-        assertThrows(IllegalArgumentException.class, () -> controller.acceptInvitation(actor, "   ", request));
-        assertThrows(IllegalArgumentException.class, () -> controller.rejectInvitation(actor, "   ", request));
-        assertThrows(IllegalArgumentException.class, () -> controller.revokeInvitation(actor, "   ", request));
+        assertThrows(RequestValidationException.class, () -> controller.acceptInvitation(actor, "   ", request));
+        assertThrows(RequestValidationException.class, () -> controller.rejectInvitation(actor, "   ", request));
+        assertThrows(RequestValidationException.class, () -> controller.revokeInvitation(actor, "   ", request));
 
         assertEquals(0, repository.executionCount);
     }

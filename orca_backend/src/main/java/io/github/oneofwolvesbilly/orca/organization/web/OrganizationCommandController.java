@@ -17,6 +17,7 @@ import io.github.oneofwolvesbilly.orca.organization.domain.GroupInvitationId;
 import io.github.oneofwolvesbilly.orca.organization.domain.GroupRole;
 import io.github.oneofwolvesbilly.orca.organization.domain.InvitationStatus;
 import io.github.oneofwolvesbilly.orca.organization.domain.UserId;
+import io.github.oneofwolvesbilly.orca.referencecore.web.RequestValidationException;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -75,9 +76,9 @@ final class OrganizationCommandController {
         requiredRequest(request);
         UserId actor = authenticatedUser(currentUserContext);
         var result = inviteMemberUseCase.handle(new InviteMemberCommand(
-                GroupId.of(groupId),
+                requiredGroupId(groupId),
                 actor,
-                UserId.of(requiredField(request.inviteeUserId(), "inviteeUserId")),
+                requiredUserId(request.inviteeUserId(), "inviteeUserId"),
                 requiredRole(request.intendedRole())
         ));
         return new InviteMemberResponse(result.invitationId().value());
@@ -93,7 +94,7 @@ final class OrganizationCommandController {
         requiredRequest(request);
         acceptInvitationUseCase.handle(new AcceptInvitationCommand(
                 authenticatedUser(currentUserContext),
-                GroupInvitationId.of(invitationId)
+                requiredInvitationId(invitationId)
         ));
         return new InvitationStatusResponse(InvitationStatus.ACCEPTED.name());
     }
@@ -108,7 +109,7 @@ final class OrganizationCommandController {
         requiredRequest(request);
         rejectInvitationUseCase.handle(new RejectInvitationCommand(
                 authenticatedUser(currentUserContext),
-                GroupInvitationId.of(invitationId)
+                requiredInvitationId(invitationId)
         ));
         return new InvitationStatusResponse(InvitationStatus.REJECTED.name());
     }
@@ -123,7 +124,7 @@ final class OrganizationCommandController {
         requiredRequest(request);
         revokeInvitationUseCase.handle(new RevokeInvitationCommand(
                 authenticatedUser(currentUserContext),
-                GroupInvitationId.of(invitationId)
+                requiredInvitationId(invitationId)
         ));
         return new InvitationStatusResponse(InvitationStatus.REVOKED.name());
     }
@@ -134,21 +135,33 @@ final class OrganizationCommandController {
 
     private static String requiredField(String value, String fieldName) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException(fieldName + " is required");
+            throw new RequestValidationException(fieldName + " is required");
         }
         return value;
     }
 
+    private static GroupId requiredGroupId(String value) {
+        return GroupId.of(requiredField(value, "groupId"));
+    }
+
+    private static GroupInvitationId requiredInvitationId(String value) {
+        return GroupInvitationId.of(requiredField(value, "invitationId"));
+    }
+
+    private static UserId requiredUserId(String value, String fieldName) {
+        return UserId.of(requiredField(value, fieldName));
+    }
+
     private static GroupRole requiredRole(GroupRole role) {
         if (role == null) {
-            throw new IllegalArgumentException("intendedRole is required");
+            throw new RequestValidationException("intendedRole is required");
         }
         return role;
     }
 
     private static void requiredRequest(Object request) {
         if (request == null) {
-            throw new IllegalArgumentException("request body is required");
+            throw new RequestValidationException("request body is required");
         }
     }
 

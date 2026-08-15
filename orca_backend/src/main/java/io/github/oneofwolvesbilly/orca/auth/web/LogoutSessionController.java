@@ -2,6 +2,7 @@ package io.github.oneofwolvesbilly.orca.auth.web;
 
 import io.github.oneofwolvesbilly.orca.auth.application.LogoutSessionCommand;
 import io.github.oneofwolvesbilly.orca.auth.application.LogoutSessionUseCase;
+import io.github.oneofwolvesbilly.orca.referencecore.web.RequestValidationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,7 +29,7 @@ final class LogoutSessionController {
             @RequestBody Map<String, Object> request
     ) {
         if (!request.isEmpty()) {
-            throw new IllegalArgumentException("logout request body must be empty");
+            throw new RequestValidationException("logout request body must be empty");
         }
         logoutSessionUseCase.handle(new LogoutSessionCommand(sessionId));
         return ResponseEntity.noContent().build();

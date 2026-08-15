@@ -1,5 +1,6 @@
 package io.github.oneofwolvesbilly.orcafixture;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import io.github.oneofwolvesbilly.orca.auth.api.AuthenticatedActor;
 import io.github.oneofwolvesbilly.orca.auth.api.OrcaProtectedCommand;
 import org.springframework.http.ResponseEntity;
@@ -8,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
 import java.util.Objects;
 
 @RestController
@@ -25,12 +25,17 @@ final class FixtureActorContextController {
     @OrcaProtectedCommand
     ResponseEntity<Void> check(
             AuthenticatedActor authenticatedActor,
-            @RequestBody Map<String, Object> request
+            @RequestBody EmptyRequest request
     ) {
-        if (!request.isEmpty()) {
-            throw new IllegalArgumentException("fixture request body must be empty");
-        }
         fixtureActorCommand.handle(authenticatedActor.actorId());
         return ResponseEntity.noContent().build();
+    }
+
+    record EmptyRequest() {
+
+        @JsonAnySetter
+        void rejectUnknownField(String name, Object value) {
+            throw new IllegalArgumentException("fixture request body must be empty");
+        }
     }
 }

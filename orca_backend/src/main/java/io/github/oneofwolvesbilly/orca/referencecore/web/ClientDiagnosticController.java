@@ -77,7 +77,7 @@ final class ClientDiagnosticController {
     ) {
         @JsonAnySetter
         void rejectUnknownField(String name, Object value) {
-            throw new IllegalArgumentException("Unknown diagnostic field");
+            throw new RequestValidationException("Unknown diagnostic field");
         }
     }
 
@@ -87,7 +87,7 @@ final class ClientDiagnosticController {
     record ClientDiagnosticLookupRequest(String clientFailureReferenceId) {
         @JsonAnySetter
         void rejectUnknownField(String name, Object value) {
-            throw new IllegalArgumentException("Unknown lookup field");
+            throw new RequestValidationException("Unknown lookup field");
         }
     }
 

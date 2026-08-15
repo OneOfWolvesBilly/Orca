@@ -5,6 +5,7 @@ import io.github.oneofwolvesbilly.orca.auth.web.UnauthenticatedHttpRequestExcept
 import io.github.oneofwolvesbilly.orca.organization.application.OrganizationApplicationFailure;
 import io.github.oneofwolvesbilly.orca.referencecore.application.ClientDiagnosticForbiddenException;
 import io.github.oneofwolvesbilly.orca.referencecore.application.ClientDiagnosticNotFoundException;
+import io.github.oneofwolvesbilly.orca.referencecore.application.ClientDiagnosticValidationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -54,8 +55,8 @@ final class GlobalApiExceptionHandler extends ResponseEntityExceptionHandler {
         };
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    ResponseEntity<ApiErrorResponse> illegalArgument() {
+    @ExceptionHandler({RequestValidationException.class, ClientDiagnosticValidationException.class})
+    ResponseEntity<ApiErrorResponse> validation() {
         return error(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Request validation failed");
     }
 

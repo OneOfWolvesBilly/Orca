@@ -91,6 +91,16 @@ class StableApiErrorContractIntegrationTest {
         assertFalse(response.body().contains("stackTrace"));
     }
 
+    @Test
+    void unexpected_illegal_argument_exception_uses_safe_internal_error() throws Exception {
+        HttpResponse<String> response = get("/api/test/unexpected-illegal-argument-error");
+
+        assertError(response, 500, "INTERNAL_ERROR", "An unexpected server error occurred");
+        assertFalse(response.body().contains("sensitive-illegal-argument-detail"));
+        assertFalse(response.body().contains("IllegalArgumentException"));
+        assertFalse(response.body().contains("stackTrace"));
+    }
+
     private HttpResponse<String> get(String path) throws Exception {
         HttpRequest request = HttpRequest.newBuilder(uri(path)).GET().build();
         return client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -125,6 +135,11 @@ class StableApiErrorContractIntegrationTest {
         @GetMapping("/api/test/unexpected-error")
         void unexpectedError() {
             throw new IllegalStateException("sensitive-internal-detail");
+        }
+
+        @GetMapping("/api/test/unexpected-illegal-argument-error")
+        void unexpectedIllegalArgumentError() {
+            throw new IllegalArgumentException("sensitive-illegal-argument-detail");
         }
     }
 }

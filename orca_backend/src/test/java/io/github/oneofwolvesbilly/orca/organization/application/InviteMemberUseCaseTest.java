@@ -230,6 +230,24 @@ class InviteMemberUseCaseTest {
         assertEquals("directory unavailable", failure.getMessage());
     }
 
+    @Test
+    void unexpected_illegal_argument_dependency_failure_is_not_reclassified() {
+        var repo = new InMemoryGroupRepository();
+        RegisteredUserDirectory failingDirectory = userId -> {
+            throw new IllegalArgumentException("directory contract violation");
+        };
+        var useCase = new InviteMemberUseCase(repo, failingDirectory);
+
+        var failure = assertThrows(IllegalArgumentException.class, () -> useCase.handle(new InviteMemberCommand(
+                GroupId.of("g-1"),
+                UserId.of("admin"),
+                UserId.of("invitee"),
+                GroupRole.MEMBER
+        )));
+
+        assertEquals("directory contract violation", failure.getMessage());
+    }
+
     private static void assertFailureDidNotPersistIndexOrChangeGroup(
             InMemoryGroupRepository repo,
             GroupId groupId,

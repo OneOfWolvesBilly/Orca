@@ -119,6 +119,35 @@ class ClientDiagnosticWebIntegrationTest {
     }
 
     @Test
+    void ingestion_rejects_invalid_response_status_combinations() throws Exception {
+        HttpResponse<String> invalidStatus = post("/api/client-diagnostics", """
+                {
+                  "category": "MALFORMED_RESPONSE",
+                  "operation": "PASSWORD_LOGIN",
+                  "clientApplication": "REACT",
+                  "responseStatus": 99
+                }
+                """, null);
+        HttpResponse<String> transportWithStatus = post("/api/client-diagnostics", """
+                {
+                  "category": "TRANSPORT_FAILURE",
+                  "operation": "PASSWORD_LOGIN",
+                  "clientApplication": "REACT",
+                  "responseStatus": 500
+                }
+                """, null);
+
+        assertEquals(400, invalidStatus.statusCode());
+        assertEquals(400, transportWithStatus.statusCode());
+        assertStableError(invalidStatus, "VALIDATION_ERROR");
+        assertStableError(transportWithStatus, "VALIDATION_ERROR");
+        assertEquals(0, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM reference_core_client_diagnostics",
+                Integer.class
+        ));
+    }
+
+    @Test
     void lookup_requires_session_and_it_admin_role() throws Exception {
         String referenceId = createDiagnostic();
 
