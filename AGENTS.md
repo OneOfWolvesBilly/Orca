@@ -15,15 +15,16 @@ part of the repository's intended branch structure.
   and rerun the required tests.
 - Deliver only by fast-forwarding local `main`. The integration operation must
   be equivalent to `git merge --ff-only <temporary-branch>`.
-- After successful delivery, delete the temporary branch and remove the
-  temporary worktree.
+- After successful delivery, delete the temporary branch. Do not manually
+  remove any Codex App-managed worktree; its cleanup must follow the retention
+  period configured by the user.
 - Leave local `main` ready for user review.
 - Never push unless the user explicitly requests a push.
 
 When the user says `merge to main`, `land on main`, or `deliver to main`, this
 does not authorize a merge commit. It means: rebase the temporary branch onto
 the current local `main`, test, fast-forward local `main`, delete the temporary
-branch, and remove the temporary worktree.
+branch, and leave the app-managed worktree under Codex App retention control.
 
 Never:
 
@@ -38,6 +39,8 @@ Never:
 - force-push local `main`;
 - push local `main` without explicit user authorization;
 - modify this workflow without explicit user authorization;
+- manually remove the current chat worktree or any Codex App-managed worktree;
+- bypass or shorten the user's configured worktree retention period;
 - delete, modify, rebase, or clean a worktree or branch that the user marked
   frozen, protected, retained, or comparison-only.
 
@@ -55,7 +58,8 @@ Before reporting completion, verify all of the following:
 - local `main` contains the delivered commits;
 - no merge commit was introduced by the delivery;
 - the temporary branch was deleted;
-- the temporary worktree was removed;
+- the current chat and other app-managed worktrees remain available under the
+  user's configured retention policy;
 - no temporary branch was pushed;
 - local `main` was not pushed unless explicitly requested.
 
