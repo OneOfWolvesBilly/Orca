@@ -1,5 +1,64 @@
 # Orca agent instructions
 
+## Git delivery workflow
+
+The Git history owned by the user must remain linear. Codex worktrees and
+their branches are temporary implementation environments only; they are not
+part of the repository's intended branch structure.
+
+- The user's local `main` is the delivery branch.
+- `origin/main` is only the remote synchronization reference.
+- Start every implementation task from the current local `main`.
+- When using a worktree, create a temporary branch from local `main` and do all
+  implementation and commits in that temporary worktree branch.
+- Before delivery, rebase the temporary branch onto the current local `main`
+  and rerun the required tests.
+- Deliver only by fast-forwarding local `main`. The integration operation must
+  be equivalent to `git merge --ff-only <temporary-branch>`.
+- After successful delivery, delete the temporary branch and remove the
+  temporary worktree.
+- Leave local `main` ready for user review.
+- Never push unless the user explicitly requests a push.
+
+When the user says `merge to main`, `land on main`, or `deliver to main`, this
+does not authorize a merge commit. It means: rebase the temporary branch onto
+the current local `main`, test, fast-forward local `main`, delete the temporary
+branch, and remove the temporary worktree.
+
+Never:
+
+- use `git merge --no-ff` for worktree delivery;
+- create a merge commit when delivering worktree changes;
+- use a normal merge when fast-forward is impossible;
+- create or preserve permanent Codex feature-branch topology;
+- push a temporary worktree branch;
+- merge `origin/main` into the temporary branch;
+- replace the required rebase with a merge;
+- rebase, reset, or otherwise rewrite the user's local `main`;
+- force-push local `main`;
+- push local `main` without explicit user authorization;
+- modify this workflow without explicit user authorization;
+- delete, modify, rebase, or clean a worktree or branch that the user marked
+  frozen, protected, retained, or comparison-only.
+
+If fast-forward delivery is impossible, stop delivery, rebase the temporary
+branch onto the current local `main`, resolve conflicts only when safe, rerun
+the required tests, and retry the fast-forward. If delivery still cannot be
+completed without changing history or workflow, stop and report the condition
+to the user. Do not invent another Git strategy.
+
+Do not rewrite existing merge commits that predate this rule merely to make
+history linear. This policy governs future work.
+
+Before reporting completion, verify all of the following:
+
+- local `main` contains the delivered commits;
+- no merge commit was introduced by the delivery;
+- the temporary branch was deleted;
+- the temporary worktree was removed;
+- no temporary branch was pushed;
+- local `main` was not pushed unless explicitly requested.
+
 ## Read this first
 Use ONLY the following files as authoritative sources, in this order:
 1. README.md
