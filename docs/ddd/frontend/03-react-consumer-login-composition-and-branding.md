@@ -218,6 +218,38 @@ the public composition.
 This two-layer placement keeps filesystem and bundler inspection out of a React
 rendering component while still making the integration contract testable.
 
+### Public runtime normalization
+
+The exported React component is a public JavaScript runtime boundary even when
+its declarations provide a narrower TypeScript shape. It normalizes the
+optional customer-logo value before rendering and never calls string methods
+until both supported fields have passed primitive-string checks.
+
+The normalization result has only two internal presentation states:
+
+```text
+valid customer logo -> trimmed bundled source and trimmed alternative text
+anything else       -> neutral fallback
+```
+
+The validator therefore:
+
+- accepts only a non-null, non-array object as the logo container;
+- accepts only primitive strings for `bundledAssetSource` and
+  `alternativeText`;
+- trims those values only after their runtime type checks;
+- rejects blank alternative text and blank or unsupported source forms;
+- rejects schemes, protocol-relative sources, inline data, SVG, and formats
+  outside PNG/WebP;
+- ignores unexpected properties because they are not part of the supported
+  projection and cannot become extension controls;
+- returns the fallback state instead of throwing for every malformed value in
+  the authoritative failure set.
+
+This is boundary validation of presentation input, not a domain invariant and
+not a new customer-branding model. Build-time origin and file-size proof remain
+at the consumer contract layer.
+
 ## Logo Fallback Model
 
 The fallback is a fixed package-owned presentation element.
@@ -318,6 +350,10 @@ must not retain a second private login composition after extraction.
 - Expose only the approved package-root component and branding type.
 - Own the complete reusable React login composition.
 - Normalize branding into customer-logo or neutral-fallback presentation.
+- Validate untyped runtime customer-logo input before reading or trimming its
+  supported string fields.
+- Project valid input into a new internal value containing only trimmed source
+  and alternative text; do not spread unexpected properties into render state.
 - Render fixed attribution and copyright outside consumer-controlled input.
 - Provide no session lifecycle or product behavior.
 
@@ -371,6 +407,12 @@ Validate:
 - absent logo renders the neutral fallback;
 - missing, blank, or whitespace-only alt prevents customer-logo rendering;
 - invalid render source selects the fallback;
+- malformed public runtime values cover absent, `null`, non-object, array,
+  malformed-object, non-string, blank, remote, protocol-relative, inline-data,
+  SVG, unsupported-format, and unexpected-property cases without throwing;
+- table-driven tests cross the exported component boundary with values that do
+  not rely on TypeScript assignability;
+- valid bundled PNG and WebP sources remain positive regression cases;
 - customer logo is bounded without stretching, clipping, or overflow;
 - exact attribution text, link, target, and relationship protection;
 - exact copyright text;
@@ -440,7 +482,8 @@ test changes are derived. Existing backend contracts are consumed unchanged.
 When implementation is authorized, the recommended frontend TDD sequence is:
 
 1. package export and subpath contract tests;
-2. branding, logo fallback, attribution, and accessibility component tests;
+2. branding, public runtime failure-set, logo fallback, attribution, and
+   accessibility component tests;
 3. existing login and client-diagnostic regression tests against
    `OrcaLogin`;
 4. independent fixture dependency and source-boundary contract tests;

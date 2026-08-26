@@ -218,6 +218,37 @@ The supported contract does not accept:
 - a logo larger than 256 KiB;
 - a customer logo without valid alternative text.
 
+## Public Runtime Branding Boundary
+
+`OrcaLoginBranding` is compile-time guidance for TypeScript consumers. The
+public `OrcaLogin` component remains a JavaScript runtime boundary and MUST
+validate customer-logo input before reading or trimming its fields.
+
+At runtime:
+
+- an absent `customerLogo` MUST select the neutral fallback;
+- a `null`, non-object, array, or malformed `customerLogo` value MUST select
+  the neutral fallback;
+- `alternativeText` and `bundledAssetSource` MUST each be primitive strings
+  before either value is trimmed;
+- an absent, `null`, non-string, blank, or whitespace-only
+  `alternativeText` MUST select the neutral fallback;
+- an absent, `null`, non-string, blank, or unsupported
+  `bundledAssetSource` MUST select the neutral fallback;
+- remote URLs, protocol-relative URLs, inline data, SVG, and unsupported image
+  formats MUST select the neutral fallback;
+- unexpected object properties MUST be inert and MUST NOT enable unsupported
+  behavior, replace fixed presentation, or change whether otherwise valid
+  supported fields conform;
+- no invalid customer-logo value covered by this failure set may cause render
+  to throw.
+
+Valid bundled PNG and WebP sources with valid alternative text continue to
+render as the customer logo. Build-time asset origin and the 256 KiB source
+limit remain verified by the consumer build and contract boundary because the
+rendering component cannot prove those properties from a browser-visible
+source string alone.
+
 Logo conformance must be verifiable through the consumer build and contract
 test boundary. A nonconforming logo must not become the rendered customer logo.
 
@@ -325,8 +356,9 @@ provide an attribution-disable or copyright-override option.
 
 **Given**
 
-- The consumer supplies a customer logo.
-- The logo alternative text is missing, blank, or whitespace only.
+- A JavaScript or other untyped consumer supplies a customer logo value.
+- The logo object is malformed, or its alternative text is missing, `null`,
+  non-string, blank, or whitespace only.
 
 **When**
 
@@ -337,6 +369,42 @@ provide an attribution-disable or copyright-override option.
 - The customer logo is not rendered.
 - The generic neutral fallback is displayed.
 - No inaccessible or broken customer-logo image is displayed.
+- Rendering does not throw.
+
+### Scenario: Customer logo source is invalid at runtime
+
+**Given**
+
+- A JavaScript or other untyped consumer supplies a customer logo value.
+- Its bundled source is missing, `null`, non-string, blank, remote,
+  protocol-relative, inline data, SVG, or another unsupported format.
+
+**When**
+
+- `OrcaLogin` renders.
+
+**Then**
+
+- The customer logo is not rendered.
+- The generic neutral fallback is displayed.
+- Rendering does not throw.
+
+### Scenario: Customer logo contains unexpected properties
+
+**Given**
+
+- A JavaScript or other untyped consumer supplies unexpected properties with
+  otherwise valid bundled PNG or WebP source and alternative text.
+
+**When**
+
+- `OrcaLogin` renders.
+
+**Then**
+
+- Selection depends only on the supported source and alternative-text fields.
+- Unexpected properties do not replace attribution, fallback, copyright, or
+  other fixed presentation behavior.
 
 ### Scenario: Consumer branding changes
 
@@ -433,6 +501,12 @@ provide an attribution-disable or copyright-override option.
   256 KiB.
 - A customer logo MUST have trimmed, non-blank consumer-provided alternative
   text.
+- The public component MUST treat TypeScript declarations as compile-time
+  guidance and validate customer-logo values at runtime before property use.
+- A `null`, non-object, array, or malformed customer-logo value MUST select the
+  neutral fallback without throwing.
+- Absent, `null`, non-string, blank, or whitespace-only logo fields MUST select
+  the neutral fallback without throwing.
 - Missing or invalid logo alternative text MUST prevent the customer logo from
   rendering and MUST select the neutral fallback.
 - Missing customer logo MUST select the neutral fallback.
@@ -441,6 +515,10 @@ provide an attribution-disable or copyright-override option.
   stretch, clip, or overflow the login layout.
 - Remote URLs, runtime same-origin static-asset configuration, raw markup,
   inline image data, and SVG MUST NOT be supported logo inputs.
+- Protocol-relative URLs and unsupported image formats MUST select the neutral
+  fallback without throwing.
+- Unexpected customer-logo properties MUST be inert and MUST NOT provide an
+  extension point or change conformance of the supported fields.
 - Every supported composition MUST display exact `Powered by Orca` attribution.
 - The attribution MUST link to the Orca GitHub repository in a new browsing
   context with `noopener noreferrer` protection.
@@ -506,6 +584,12 @@ Public package tests must verify:
 - consumer branding changes presentation only;
 - mandatory attribution and copyright cannot be disabled through public input;
 - logo fallback and alternative-text behavior;
+- malformed JavaScript/runtime customer-logo values are supplied through the
+  public component boundary and select fallback without throwing;
+- absent, `null`, non-object, malformed, non-string, blank, remote,
+  protocol-relative, inline-data, SVG, unsupported-format, and unexpected
+  property cases from the public failure set;
+- valid bundled PNG and WebP sources continue to render;
 - logo layout limits and overflow protection;
 - raw session values remain absent from public types, state, and output.
 
@@ -529,6 +613,32 @@ Build verification must prove:
 - the independent React Minimal Consumer Fixture builds through the normal
   dependency;
 - no registry publication is required.
+
+## Verification Mapping
+
+| Normative outcome | Verification |
+| --- | --- |
+| absent logo selects neutral fallback | public `OrcaLogin` component contract test |
+| `null`, non-object, array, or malformed logo selects fallback without throwing | table-driven public runtime boundary tests using malformed JavaScript values |
+| absent, `null`, non-string, blank, or whitespace-only alternative text selects fallback | table-driven public runtime boundary tests |
+| absent, `null`, non-string, blank, remote, protocol-relative, inline-data, SVG, or unsupported source selects fallback | table-driven public runtime boundary tests |
+| unexpected properties are inert | public runtime boundary tests with valid and invalid supported fields plus extra properties |
+| valid bundled PNG and WebP continue to render | positive public component regression tests |
+| build-time origin and source size remain consumer-owned proofs | existing fixture asset and build contract tests |
+| login, session, error, diagnostic, attribution, and copyright behavior remains unchanged | existing frontend-01, frontend-02, frontend-03, and frontend-04 regression suites |
+
+## Affected and Superseded Documents
+
+- The matching `frontend-03` DDD note derives runtime normalization and test
+  placement from this amendment.
+- `docs/slice-map.md`, the product workflow map, and the capability map retain
+  their completed `frontend-03` status; this amendment closes a conformance
+  defect without creating another numbered behavior slice.
+- This amendment supersedes only the assumption that the TypeScript branding
+  shape is sufficient validation at the public runtime boundary.
+- `frontend-01`, `frontend-02`, `frontend-04`, auth, reference-core,
+  organization, deployment, login, session, error, diagnostic, attribution,
+  and copyright behavior remain unchanged.
 
 ## Non-Goals
 
