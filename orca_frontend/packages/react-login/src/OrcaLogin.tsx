@@ -55,7 +55,7 @@ export function OrcaLogin({ branding, onSessionEstablished }: OrcaLoginProps) {
             {customerLogo ? (
               <img
                 src={customerLogo.bundledAssetSource}
-                alt={customerLogo.alternativeText.trim()}
+                alt={customerLogo.alternativeText}
                 style={{ maxWidth: "64px", maxHeight: "64px", objectFit: "contain" }}
               />
             ) : (
@@ -88,20 +88,34 @@ export function OrcaLogin({ branding, onSessionEstablished }: OrcaLoginProps) {
   );
 }
 
-function validCustomerLogo(
-  logo: OrcaLoginBranding["customerLogo"],
-): NonNullable<OrcaLoginBranding["customerLogo"]> | null {
-  if (!logo || logo.alternativeText.trim().length === 0) {
+type ValidCustomerLogo = Readonly<{
+  bundledAssetSource: string;
+  alternativeText: string;
+}>;
+
+function validCustomerLogo(logo: unknown): ValidCustomerLogo | null {
+  if (typeof logo !== "object" || logo === null || Array.isArray(logo)) {
     return null;
   }
 
-  const source = logo.bundledAssetSource.trim();
+  const candidate = logo as Record<string, unknown>;
   if (
+    typeof candidate.alternativeText !== "string" ||
+    typeof candidate.bundledAssetSource !== "string"
+  ) {
+    return null;
+  }
+
+  const alternativeText = candidate.alternativeText.trim();
+  const source = candidate.bundledAssetSource.trim();
+  if (
+    alternativeText.length === 0 ||
+    source.length === 0 ||
     /^(?:[a-z][a-z\d+.-]*:|\/\/)/i.test(source) ||
     !/\.(?:png|webp)(?:\?.*)?$/i.test(source)
   ) {
     return null;
   }
 
-  return { ...logo, bundledAssetSource: source };
+  return { bundledAssetSource: source, alternativeText };
 }

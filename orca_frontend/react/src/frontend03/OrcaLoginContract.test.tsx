@@ -15,7 +15,7 @@ type OrcaLoginBranding = {
 };
 
 type PublicPackage = {
-  OrcaLogin: ComponentType<{ branding: OrcaLoginBranding }>;
+  OrcaLogin: ComponentType<{ branding: unknown }>;
 };
 
 const baseBranding: OrcaLoginBranding = {
@@ -62,14 +62,41 @@ describe("frontend-03 OrcaLogin contract", () => {
     expect(screen.getByText("Example Product")).toBeVisible();
   });
 
-  it.each(["", "   "])(
-    "uses the fallback when customer logo alt is %j",
-    async (alternativeText) => {
+  it.each([
+    ["null", null],
+    ["a string", "not-a-logo-object"],
+    ["a number", 42],
+    ["a boolean", true],
+    ["an array", []],
+    ["an empty object", {}],
+  ])(
+    "uses the fallback when the runtime customer logo is %s",
+    async (_description, customerLogo) => {
+      await renderPublicLogin({
+        ...baseBranding,
+        customerLogo,
+      });
+
+      expect(screen.queryByRole("img")).not.toBeInTheDocument();
+      expect(screen.getByTestId("orca-neutral-mark")).toBeVisible();
+    },
+  );
+
+  it.each([
+    ["absent", {}],
+    ["null", { alternativeText: null }],
+    ["a number", { alternativeText: 42 }],
+    ["an object", { alternativeText: {} }],
+    ["blank", { alternativeText: "" }],
+    ["whitespace only", { alternativeText: "   " }],
+  ])(
+    "uses the fallback when runtime alternative text is %s",
+    async (_description, alternativeTextInput) => {
       await renderPublicLogin({
         ...baseBranding,
         customerLogo: {
           bundledAssetSource: "/assets/example-product-logo.webp",
-          alternativeText,
+          ...alternativeTextInput,
         },
       });
 
@@ -79,23 +106,68 @@ describe("frontend-03 OrcaLogin contract", () => {
   );
 
   it.each([
-    "https://customer.example/logo.png",
-    "//customer.example/logo.png",
-    "ftp://customer.example/logo.png",
-    "data:image/png;base64,unsafe-inline-data",
-    "/assets/customer-logo.svg",
-  ])("does not render unsupported logo source %s", async (bundledAssetSource) => {
-    await renderPublicLogin({
-      ...baseBranding,
-      customerLogo: {
-        bundledAssetSource,
-        alternativeText: "Example Product logo",
-      },
-    });
+    ["absent", {}],
+    ["null", { bundledAssetSource: null }],
+    ["a number", { bundledAssetSource: 42 }],
+    ["an object", { bundledAssetSource: {} }],
+    ["blank", { bundledAssetSource: "" }],
+    ["whitespace only", { bundledAssetSource: "   " }],
+    [
+      "remote HTTPS",
+      { bundledAssetSource: "https://customer.example/logo.png" },
+    ],
+    ["protocol relative", { bundledAssetSource: "//customer.example/logo.png" }],
+    ["remote FTP", { bundledAssetSource: "ftp://customer.example/logo.png" }],
+    [
+      "inline data",
+      { bundledAssetSource: "data:image/png;base64,unsafe-inline-data" },
+    ],
+    ["SVG", { bundledAssetSource: "/assets/customer-logo.svg" }],
+    [
+      "an unsupported format",
+      { bundledAssetSource: "/assets/customer-logo.gif" },
+    ],
+  ])(
+    "uses the fallback when runtime bundled source is %s",
+    async (_description, bundledSourceInput) => {
+      await renderPublicLogin({
+        ...baseBranding,
+        customerLogo: {
+          alternativeText: "Example Product logo",
+          ...bundledSourceInput,
+        },
+      });
 
-    expect(screen.queryByRole("img")).not.toBeInTheDocument();
-    expect(screen.getByTestId("orca-neutral-mark")).toBeVisible();
-  });
+      expect(screen.queryByRole("img")).not.toBeInTheDocument();
+      expect(screen.getByTestId("orca-neutral-mark")).toBeVisible();
+    },
+  );
+
+  it.each([
+    ["PNG", "/assets/example-product-logo.png"],
+    ["WebP", "/assets/example-product-logo.webp"],
+  ])(
+    "continues to render a valid bundled %s logo",
+    async (_format, bundledAssetSource) => {
+      await renderPublicLogin({
+        ...baseBranding,
+        customerLogo: {
+          bundledAssetSource,
+          alternativeText: "  Example Product logo  ",
+          unexpectedProperty: "must remain inert",
+        },
+        hideAttribution: true,
+      });
+
+      expect(
+        screen.getByRole("img", { name: "Example Product logo" }),
+      ).toHaveAttribute("src", bundledAssetSource);
+      expect(
+        screen.getByRole("link", { name: "Powered by Orca" }),
+      ).toBeVisible();
+      expect(screen.getByText("© 2026 Chen Chih-hao")).toBeVisible();
+    },
+  );
 
   it("keeps customer logo inside the approved layout boundary", async () => {
     await renderPublicLogin({
@@ -143,7 +215,7 @@ describe("frontend-03 OrcaLogin contract", () => {
   });
 });
 
-async function renderPublicLogin(branding: OrcaLoginBranding) {
+async function renderPublicLogin(branding: unknown) {
   const publicPackage = (await import(
     /* @vite-ignore */ packageName
   )) as PublicPackage;
