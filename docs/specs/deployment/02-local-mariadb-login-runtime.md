@@ -1,6 +1,7 @@
 # Deployment 02 - Local MariaDB Login Runtime
 
-Status: Implemented / local manual verification ready.
+Status: Approved amendment / existing local runtime implemented / mode-aware
+verification implementation pending.
 
 ## Goal
 
@@ -17,6 +18,14 @@ assets, backend local-profile MariaDB configuration, Flyway-backed schema
 readiness, local-only login test data bootstrap, and manual login
 success/failure verification without printing secret values.
 
+This amendment selects the mode-aware login-runtime verification outcome from
+`ORCA-DEPLOY-01`. It corrects the verification contract so a supported
+`compose`, `container`, or `external` database mode is verified by the
+capabilities that mode requires rather than by the presence of one fixed
+three-container topology. Executable port-conflict preflight and loopback-only
+MariaDB host exposure remain separate active outcomes and are not changed by
+this amendment.
+
 `deployment` remains a delivery/runtime support scope, not a bounded context.
 
 ## Workflow Traceability
@@ -31,6 +40,11 @@ success/failure verification without printing secret values.
     manually.
   - Local runtime credentials and login test data must stay out of Git.
   - Flyway must remain the schema owner before manual testing.
+  - The current verification command requires the default frontend, backend,
+    and database containers even when the selected supported database mode or
+    a host-run component does not use those containers.
+  - A developer therefore cannot obtain a truthful login-runtime readiness
+    result for every supported local database mode.
 - Primary actor:
   - Developer or open-source contributor
 - Supporting actors:
@@ -271,6 +285,76 @@ behavior.
 
 ## Manual Verification Requirements
 
+### Verification Outcome
+
+The operator-visible outcome is one truthful local login-runtime readiness
+result for the currently selected database mode.
+
+Login-runtime readiness is capability-based. It requires:
+
+- the selected database access path to be available
+- the backend login HTTP boundary to be reachable at the configured local port
+- the required Flyway-created tables to exist
+- local-only login test state to exist
+- valid login verification to return HTTP `204` with an `ORCA_SESSION` cookie
+- invalid login verification to return HTTP `401 LOGIN_REJECTED` with an opaque
+  `loginFailureReferenceId` and no session cookie
+
+The verifier MUST NOT require a frontend runtime or fixed backend container to
+prove this outcome. This spec permits a direct API client for manual login
+verification, and the backend local profile may run on the host or in a
+container. Full aggregator or frontend reachability is a different runtime
+proof and MUST NOT be reported by the login-runtime verifier.
+
+### Supported Database Mode Matrix
+
+| Selected mode | Required database boundary | Docker required by database verification | Fixed containers forbidden as assumptions |
+| --- | --- | --- | --- |
+| `compose` | Orca-owned `orca-db` through the compose database adapter | yes | `orca-frontend`, `orca-backend` |
+| `container` | `ORCA_LOCAL_DB_CONTAINER` through the existing-container adapter | yes | `orca-db`, `orca-frontend`, `orca-backend` |
+| `external` | configured host and port through available MariaDB/MySQL client tooling | no | `orca-db`, `orca-frontend`, `orca-backend` |
+
+Docker availability or permission MUST be checked only when the selected
+database mode requires Docker. Backend readiness MUST be established through
+the configured HTTP boundary, not inferred from a container name.
+
+### Runtime Configuration Failure Set
+
+The verification boundary consumes runtime strings from the ignored local
+environment and from external command results. It MUST handle the following
+failure classes before reporting readiness:
+
+- absent: missing local environment file or required value
+- null: a literal null marker used where a structured mode or port is required
+- blank: empty or whitespace-only required value
+- malformed: invalid database mode, invalid or out-of-range port, a runtime
+  value that cannot be parsed or safely serialized for its structural role, or
+  an unparseable HTTP result
+- duplicate: more than one assignment for a verification-critical local
+  environment key is ambiguous and MUST be rejected before that file is
+  sourced; the verifier also MUST NOT infer readiness from multiple runtime
+  processes or containers with similar names
+- unsupported: database mode outside `compose`, `container`, and `external`
+- untyped: mode, port, URL component, status, and command output remain runtime
+  strings and MUST be validated before use
+- stale: configuration points to a stopped container, unreachable host, wrong
+  port, wrong database, incomplete schema, or different backend runtime
+- unauthorized: Docker access, database authentication, or local login
+  authentication is rejected
+- unexpected: a required command is unavailable, exits unexpectedly, or
+  returns output that cannot be safely classified
+
+Verification-critical local environment keys are the selected database mode,
+database host, database port, database name, database username, database
+password, conditional existing-container name, backend port, local login
+identifier, and local login password. Duplicate-key inspection MUST compare key
+names without printing their values.
+
+Every failure MUST stop verification with a non-zero result and a safe,
+actionable message. Standard output and standard error MUST NOT contain local
+passwords, password hashes, database administrator passwords, raw session
+cookie values, or secret environment values.
+
 The local runtime is not ready unless the following checks can be performed
 without exposing secret values:
 
@@ -285,6 +369,9 @@ without exposing secret values:
 - The failed login response body uses code `LOGIN_REJECTED`.
 - The failed login response body includes `loginFailureReferenceId`.
 - The failed login response does not include a session cookie.
+- The verifier reports only checks it actually performed and MUST NOT claim
+  that the frontend or all default containers are running when those checks are
+  outside the selected verification outcome.
 
 Verification commands must not print passwords, password hashes, database root
 passwords, session cookie values, or secret environment values.
@@ -389,6 +476,156 @@ passwords, session cookie values, or secret environment values.
   rejection.
 - No `ORCA_SESSION` cookie is issued.
 
+### Scenario: Compose database mode verifies required capabilities
+
+**Given**
+- `ORCA_LOCAL_DB_MODE=compose`.
+- The Orca-owned database container is available.
+- The backend local profile is reachable through its configured HTTP port,
+  whether the backend runs on the host or in a container.
+
+**When**
+- The developer verifies the local login runtime.
+
+**Then**
+- Verification uses the compose database adapter.
+- Verification does not require the frontend container.
+- Verification does not require a fixed backend container name.
+- Verification proves schema readiness and the existing login success and
+  failure contracts.
+
+### Scenario: Existing-container database mode verifies selected database
+
+**Given**
+- `ORCA_LOCAL_DB_MODE=container`.
+- `ORCA_LOCAL_DB_CONTAINER` names the available MariaDB container.
+- The backend local profile is reachable through its configured HTTP port.
+
+**When**
+- The developer verifies the local login runtime.
+
+**Then**
+- Verification uses the selected existing database container.
+- Verification does not require an Orca-owned `orca-db` container.
+- Verification does not require frontend or backend containers.
+- Verification proves schema readiness and the existing login success and
+  failure contracts.
+
+### Scenario: External database mode verifies without Docker dependency
+
+**Given**
+- `ORCA_LOCAL_DB_MODE=external`.
+- MariaDB is reachable through the configured host and port.
+- Supported MariaDB or MySQL client tooling is available on the host.
+- The backend local profile is reachable through its configured HTTP port.
+
+**When**
+- The developer verifies the local login runtime.
+
+**Then**
+- Verification uses the configured external database boundary.
+- Verification does not require Docker or any fixed container.
+- Verification proves schema readiness and the existing login success and
+  failure contracts.
+
+### Scenario: Stale or unsupported runtime state fails safely
+
+**Given**
+- A required runtime value is absent, null, blank, malformed, duplicated,
+  unsupported, or untyped; or
+- The selected runtime state is stale, unauthorized, or unexpectedly
+  unavailable.
+
+**When**
+- The developer verifies the local login runtime.
+
+**Then**
+- Verification exits with a non-zero result.
+- The message identifies the failed capability without claiming unrelated
+  component state.
+- The message does not expose passwords, hashes, secret environment values, or
+  raw session cookie values.
+
+## Acceptance Criteria
+
+- The login-runtime verifier MUST produce one truthful readiness result for the
+  selected `compose`, `container`, or `external` database mode.
+- The verifier MUST use the database access boundary selected by
+  `ORCA_LOCAL_DB_MODE`.
+- `compose` mode MUST require only the Orca-owned database container from the
+  fixed compose topology.
+- `container` mode MUST use `ORCA_LOCAL_DB_CONTAINER` and MUST NOT require
+  `orca-db`.
+- `external` mode MUST use the configured host/client boundary and MUST NOT
+  require Docker.
+- Every mode MUST verify backend reachability through the configured HTTP
+  boundary rather than through a fixed backend container name.
+- Login-runtime verification MUST NOT require frontend reachability.
+- Every mode MUST verify the required Flyway schema and existing auth and
+  reference-core login contracts.
+- The verifier MUST safely serialize non-blank local login values into the HTTP
+  request without imposing a deployment-owned credential policy.
+- Runtime/public failure classes identified by this amendment MUST fail with a
+  non-zero result before readiness is reported.
+- Duplicate assignments for verification-critical local environment keys MUST
+  be rejected before the local environment file is sourced.
+- Verification output MUST NOT expose passwords, password hashes, database
+  administrator passwords, secret environment values, or raw session cookie
+  values.
+- Verification MUST NOT claim that an unverified frontend, container, or full
+  aggregator topology is ready.
+- This amendment MUST NOT change auth, reference-core, frontend, organization,
+  credential encoding, port-conflict, or database-exposure behavior.
+
+## Error Cases
+
+- Missing local environment or required value -> reject before verification.
+- Literal null, blank, malformed, unsupported, or untyped mode/port value ->
+  reject before command execution.
+- Duplicate verification-critical local environment assignment -> reject
+  before sourcing the local environment file.
+- Docker unavailable or unauthorized in `compose` or `container` mode -> fail
+  the selected database capability without printing secrets.
+- Docker unavailable in `external` mode -> do not fail solely because Docker is
+  unavailable.
+- Selected compose or existing database container unavailable -> fail without
+  requiring unrelated containers.
+- External database client missing or database unreachable -> fail with a safe
+  mode-specific message.
+- Backend HTTP boundary unreachable or unparseable -> fail without inferring
+  container state.
+- Required Flyway table missing -> fail schema readiness.
+- Local test credential not accepted as the expected valid login -> fail login
+  readiness without exposing the credential.
+- Login success lacks HTTP `204` or `ORCA_SESSION` -> fail.
+- Login rejection lacks `401 LOGIN_REJECTED` or
+  `loginFailureReferenceId`, or includes a session cookie -> fail.
+- Verification command fails unexpectedly -> return non-zero with safe output.
+
+## Verification Mapping
+
+| Normative outcome | Verification |
+| --- | --- |
+| compose mode checks only its required database topology | automated shell contract test `verifies compose login runtime by required capabilities` |
+| existing-container mode uses the selected container | automated shell contract test `verifies selected existing database container mode` |
+| external mode has no Docker requirement | automated shell contract test `verifies external database mode without Docker` |
+| backend availability does not depend on a container name | automated shell contract test `verifies backend availability through HTTP` |
+| runtime failure-set values stop safely | table-driven shell boundary tests covering absent, null, blank, malformed, duplicate, unsupported, untyped, stale, unauthorized, and unexpected values |
+| successful and rejected login remain auth/reference-core owned | HTTP contract verification for `204` plus cookie and `401 LOGIN_REJECTED` plus reference without cookie |
+| sensitive values never appear in output | captured-output negative test `does not print runtime secrets or session values` |
+| all supported modes have executable evidence | reproducible manual proof for `compose`, `container`, and `external` modes |
+
+## Affected and Deferred Documents
+
+- The matching `deployment-02` DDD note derives capability-based verification
+  and shell-contract test placement from this amendment.
+- `docs/drafts/slice-planning-handoff.md` records that only the mode-aware
+  verification outcome is included now.
+- Executable port-conflict preflight and loopback-only MariaDB exposure remain
+  active under `ORCA-DEPLOY-01` and are not superseded.
+- Credential encoding ownership remains active under `ORCA-SECURITY-01` and is
+  not changed by this amendment.
+
 ## Non-Goals
 
 - Installing Docker, Java, Node.js, MariaDB, MySQL, or Kubernetes tooling.
@@ -403,3 +640,8 @@ passwords, session cookie values, or secret environment values.
 - Changing reference-core API error behavior.
 - Changing organization behavior.
 - Changing frontend business behavior.
+- Requiring frontend reachability for direct API login-runtime verification.
+- Defining full-aggregator readiness.
+- Implementing executable port-conflict preflight.
+- Changing MariaDB host binding or loopback-only exposure.
+- Changing credential encoding, hashing, or migration ownership.

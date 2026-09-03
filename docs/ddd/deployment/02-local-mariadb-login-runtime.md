@@ -1,10 +1,10 @@
 # DDD - Deployment 02 - Local MariaDB Login Runtime
 
-Status: Derived from
+Status: Derived from the approved mode-aware verification amendment in
 `docs/specs/deployment/02-local-mariadb-login-runtime.md`.
 
-Implementation status: local runtime assets implemented and local manual
-verification is available.
+Implementation status: existing local runtime assets implemented; mode-aware
+verification implementation pending.
 
 ## Purpose
 
@@ -12,6 +12,11 @@ This note derives the model boundary and rule placement for `deployment-02`.
 It explains how local MariaDB runtime support should be implemented without
 turning deployment into an owner of auth, organization, reference-core, or
 frontend behavior.
+
+The amendment alignment derives one operator-visible outcome: the developer
+receives a truthful login-runtime readiness result for the selected database
+mode. It does not combine executable port preflight, MariaDB host exposure, or
+credential encoding into this outcome.
 
 It must not introduce behavior beyond the deployment spec.
 
@@ -45,6 +50,12 @@ The useful support-scope terms are:
 - Unique Local Login Identifier
 - Flyway Schema Readiness
 - Manual Login Verification
+- Selected Database Mode
+- Database Access Capability
+- Backend HTTP Capability
+- Capability-based Verification
+- Mode-aware Verification Result
+- Safe Verification Failure
 - Stop Condition
 
 These terms may appear in deployment files, documentation, scripts, and static
@@ -74,6 +85,15 @@ Deployment owns rules about:
 - verifying that Flyway created the required schema
 - documenting how to manually verify login success and login failure
 - preserving browser cookie behavior when frontend routing is used later
+- selecting database checks from `ORCA_LOCAL_DB_MODE`
+- treating `compose`, `container`, and `external` as separate database access
+  capabilities
+- verifying backend availability through HTTP instead of a fixed container
+  name
+- keeping frontend and full-aggregator reachability outside login-runtime
+  readiness
+- rejecting invalid runtime/public inputs before reporting readiness
+- returning safe, mode-specific failures without exposing secrets
 
 These rules belong in deployment documentation and deployment assets.
 
@@ -134,12 +154,30 @@ The implementation uses:
   values are not staged
 - runtime verification commands for Docker, component compose files, the local
   aggregator compose, Flyway tables, and login success/failure behavior
+- automated shell contract tests with controlled command adapters for each
+  supported database mode
+- table-driven shell boundary tests for absent, null, blank, malformed,
+  duplicate, unsupported, untyped, stale, unauthorized, and unexpected runtime
+  inputs
+- captured-output negative tests proving that passwords, hashes, secret
+  environment values, and raw session values are not printed
+- reproducible manual proofs for `compose`, `container`, and `external`
 
 No domain test is required because no domain invariant is introduced.
 
 Backend integration tests may be added only if the implementation changes
 backend runtime configuration or persistence integration. Those tests must
 verify wiring, not redefine auth or reference-core behavior.
+
+The shell contract-test boundary should replace `docker`, `curl`, and database
+client commands through a controlled test `PATH`. Test names remain behavior
+oriented, including:
+
+- `verifies compose login runtime by required capabilities`
+- `verifies selected existing database container mode`
+- `verifies external database mode without Docker`
+- `verifies backend availability through HTTP`
+- `does not print runtime secrets or session values`
 
 ## Design Decisions
 
@@ -209,6 +247,34 @@ auth-owned public boundary for login. Deployment verifies that the runtime can
 exercise success and failure, while auth and reference-core remain authoritative
 for the response semantics.
 
+### Decision: Verify capabilities instead of one fixed topology
+
+The selected database mode determines only the database access adapter:
+
+- `compose` uses the Orca-owned database container
+- `container` uses `ORCA_LOCAL_DB_CONTAINER`
+- `external` uses configured host client tooling
+
+Backend readiness is proven through its configured HTTP boundary. The verifier
+does not need to know whether the backend runs on the host or in a container.
+Frontend reachability is not required because the deployment spec allows a
+direct API client for manual login verification.
+
+This keeps the operator result truthful: the login-runtime verifier reports
+database, schema, backend, and login capabilities only, and does not claim that
+the full aggregator or frontend is ready.
+
+### Decision: Keep residual deployment concerns separate
+
+Executable port-conflict preflight and loopback-only MariaDB host exposure are
+separate operator and security outcomes. They remain active in the private
+handoff and must not enter the mode-aware verification implementation or its
+completion claim.
+
+Credential encoding remains auth-owned predecessor work under
+`ORCA-SECURITY-01`. This amendment consumes existing local login state but does
+not authorize hashing or migration changes.
+
 ## Risk Notes
 
 - Committing a generated password hash would make local-only runtime data part
@@ -225,6 +291,18 @@ for the response semantics.
   cookie and stable error contract behavior that manual testing needs.
 - Printing session cookie values or passwords in verification output would
   violate the secret boundary.
+- Requiring all default containers would make supported existing-container,
+  external-database, and host-run component variants fail before their actual
+  capabilities are checked.
+- Treating Docker as universally required would reject a valid external
+  database verification path.
+- Inferring backend readiness from a container name would reject a valid
+  host-run backend and could accept a stale container that is not serving the
+  configured HTTP boundary.
+- Reporting frontend or full-aggregator readiness without checking it would
+  give the operator a false completion signal.
+- Combining port preflight, database exposure, or credential migration with
+  this amendment would cross the one-visible-outcome boundary.
 
 ## Non-Goals Confirmed
 
@@ -237,3 +315,8 @@ for the response semantics.
 - No production deployment baseline.
 - No Kubernetes runtime.
 - No installation or upgrade workflow.
+- No frontend reachability requirement for login-runtime verification.
+- No full-aggregator readiness claim.
+- No executable port-conflict preflight.
+- No MariaDB bind-address or loopback-exposure change.
+- No credential encoding, hashing, or migration change.

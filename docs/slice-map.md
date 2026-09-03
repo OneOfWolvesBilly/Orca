@@ -123,7 +123,7 @@ login readiness.
 | Slice | Spec | DDD | Status |
 | --- | --- | --- | --- |
 | `deployment-01` | [Local Runtime Build Plan](specs/deployment/01-secure-local-runtime-boundary.md) | [DDD](ddd/deployment/01-secure-local-runtime-boundary.md) | Approved support gate / no runtime assets |
-| `deployment-02` | [Local MariaDB Login Runtime](specs/deployment/02-local-mariadb-login-runtime.md) | [DDD](ddd/deployment/02-local-mariadb-login-runtime.md) | Implemented / local manual verification ready |
+| `deployment-02` | [Local MariaDB Login Runtime](specs/deployment/02-local-mariadb-login-runtime.md) | [DDD](ddd/deployment/02-local-mariadb-login-runtime.md) | Implemented baseline / mode-aware verification amendment approved / implementation pending |
 
 ## Planned Contexts
 
