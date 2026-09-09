@@ -1,10 +1,9 @@
 # DDD - Deployment 02 - Local MariaDB Login Runtime
 
-Status: Derived from the approved mode-aware verification amendment in
-`docs/specs/deployment/02-local-mariadb-login-runtime.md`.
+Status: Approved / Implemented.
 
-Implementation status: existing local runtime assets implemented; mode-aware
-verification implementation pending.
+This note is derived from the approved and implemented mode-aware verification
+contract in `docs/specs/deployment/02-local-mariadb-login-runtime.md`.
 
 ## Purpose
 
@@ -169,15 +168,22 @@ Backend integration tests may be added only if the implementation changes
 backend runtime configuration or persistence integration. Those tests must
 verify wiring, not redefine auth or reference-core behavior.
 
-The shell contract-test boundary should replace `docker`, `curl`, and database
-client commands through a controlled test `PATH`. Test names remain behavior
-oriented, including:
+The shell contract-test boundary replaces `docker`, `curl`, and database client
+commands through a controlled test `PATH`. Test names remain behavior oriented,
+including:
 
 - `verifies compose login runtime by required capabilities`
 - `verifies selected existing database container mode`
 - `verifies external database mode without Docker`
 - `verifies backend availability through HTTP`
-- `does not print runtime secrets or session values`
+- `safely serializes local login values`
+- focused failure tests for invalid runtime values, ambiguous container
+  identity, unavailable dependencies, missing schema, and invalid login
+  response contracts
+
+Every success and failure case applies the shared captured-output assertion so
+passwords, secret environment values, and raw session cookie values cannot
+appear in verifier output.
 
 ## Design Decisions
 

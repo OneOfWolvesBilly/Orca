@@ -1,7 +1,6 @@
 # Deployment 02 - Local MariaDB Login Runtime
 
-Status: Approved amendment / existing local runtime implemented / mode-aware
-verification implementation pending.
+Status: Approved / Implemented.
 
 ## Goal
 
@@ -610,10 +609,15 @@ passwords, session cookie values, or secret environment values.
 | existing-container mode uses the selected container | automated shell contract test `verifies selected existing database container mode` |
 | external mode has no Docker requirement | automated shell contract test `verifies external database mode without Docker` |
 | backend availability does not depend on a container name | automated shell contract test `verifies backend availability through HTTP` |
-| runtime failure-set values stop safely | table-driven shell boundary tests covering absent, null, blank, malformed, duplicate, unsupported, untyped, stale, unauthorized, and unexpected values |
-| successful and rejected login remain auth/reference-core owned | HTTP contract verification for `204` plus cookie and `401 LOGIN_REJECTED` plus reference without cookie |
-| sensitive values never appear in output | captured-output negative test `does not print runtime secrets or session values` |
-| all supported modes have executable evidence | reproducible manual proof for `compose`, `container`, and `external` modes |
+| runtime values are validated before external commands | automated shell contract tests `rejects untyped database port before command execution`, `rejects blank required runtime values before command execution`, `rejects unsupported database mode before command execution`, `rejects null database mode before command execution`, `rejects absent local environment before command execution`, and `rejects login values with control characters before command execution` |
+| duplicate or ambiguous runtime identity does not imply readiness | automated shell contract tests `rejects duplicate verification-critical environment keys before sourcing` and `rejects a similar database container name` |
+| stale, unauthorized, malformed, and unexpected boundaries fail safely | automated shell contract tests `fails safely when Docker access is unauthorized`, `fails when the selected external database is stale or unreachable`, `fails when the backend HTTP boundary is unexpectedly unavailable`, and `rejects an unparseable backend HTTP status` |
+| required Flyway schema is present | automated shell contract test `fails when a required Flyway table is missing`, plus the supported-mode success tests |
+| login request values are safely serialized | automated shell contract tests `safely serializes local login values` and `rejects login values with control characters before command execution` |
+| successful login preserves the auth-owned status and cookie contract | supported-mode success tests plus `fails when the valid local credential is rejected` and `fails when successful login omits the session cookie` |
+| rejected login preserves the auth/reference-core status, code, reference, and no-cookie contract | supported-mode success tests plus `fails when rejected login returns an unexpected status`, `fails when rejected login omits LOGIN_REJECTED`, `fails when rejected login omits the failure reference`, and `fails when rejected login includes a session cookie` |
+| sensitive values never appear in output | shared captured-output assertion applied to every success and failure case in `deploy/local/test/verify-login-runtime.test.sh` |
+| all supported modes have executable evidence | run `sh deploy/local/test/verify-login-runtime.test.sh` for isolated `compose`, `container`, and `external` contract evidence; run `deploy/local/bin/verify-login-runtime.sh` with the selected ignored local environment for reproducible runtime proof |
 
 ## Affected and Deferred Documents
 
