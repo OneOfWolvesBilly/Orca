@@ -124,6 +124,7 @@ login readiness.
 | --- | --- | --- | --- |
 | `deployment-01` | [Local Runtime Build Plan](specs/deployment/01-secure-local-runtime-boundary.md) | [DDD](ddd/deployment/01-secure-local-runtime-boundary.md) | Approved support gate / no runtime assets |
 | `deployment-02` | [Local MariaDB Login Runtime](specs/deployment/02-local-mariadb-login-runtime.md) | [DDD](ddd/deployment/02-local-mariadb-login-runtime.md) | Implemented |
+| `deployment-03` | [Versioned Backend Artifact Delivery](specs/deployment/03-versioned-backend-artifact-delivery.md) | [DDD](ddd/deployment/03-versioned-backend-artifact-delivery.md) | SDD and DDD Approved / TDD Pending |
 
 ## Planned Contexts
 

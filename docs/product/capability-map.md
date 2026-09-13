@@ -477,6 +477,46 @@ Sequencing notes:
 - Frontend slices should live under the bounded context whose behavior they
   expose unless cross-context shell behavior is explicitly specified.
 
+### Capability Group: Backend Artifact Delivery
+
+Related workflow:
+
+- Embedded Core Authentication Consumption
+
+Approved slice:
+
+- `deployment-03` versioned backend artifact delivery
+
+Existing predecessor capabilities:
+
+- `auth-12` public embedded-auth entry point, protected-command declaration,
+  and authenticated actor value
+- repository-local Maven reactor dependency and Minimal Consumer Fixture proof
+- `deployment-02` MariaDB and Flyway runtime proof
+
+Approved delivery capability:
+
+- Maven Central as the product-neutral public distribution boundary
+- stable `io.github.oneofwolvesbilly:orca` coordinate family
+- exact immutable release versions and version-specific compatibility evidence
+- independent consumer verification without copied source or internal imports
+
+Implementation gaps:
+
+- release-profile POM metadata, flattened consumer POM, sources, Javadoc,
+  checksums, and signatures
+- user-managed Central validation and separately authorized publication
+- clean-repository independent consumer and public retrieval evidence
+- compatibility and migration verification for every claimed combination
+
+Sequencing notes:
+
+- deployment owns delivery evidence but does not own packaged business rules.
+- TDD must precede release implementation.
+- Portal upload and immutable public publication require separate user
+  authorization and are not implied by implementation approval.
+- Frontend/npm delivery remains a separate outcome.
+
 ---
 
 ## Cross-Track Dependency Notes

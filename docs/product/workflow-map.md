@@ -161,7 +161,8 @@ Explicit unknowns:
 
 ## Workflow: Embedded Core Authentication Consumption
 
-Status: supported.
+Status: embedded behavior supported / public artifact delivery specified but
+not implemented.
 
 Primary actor:
 
@@ -213,9 +214,15 @@ Supported slice:
 
 - `auth-12` embedded auth and actor-context integration.
 
+Approved delivery support:
+
+- `deployment-03` versioned backend artifact delivery specifies Maven Central,
+  the stable `io.github.oneofwolvesbilly:orca` coordinate family, compatibility
+  evidence, and independent cross-project verification.
+
 Known gaps:
 
-- production artifact publication and delivery proof
+- deployment-03 TDD, implementation, publication, and public retrieval proof
 - later structured logging and correlation support
 
 Completed delivery support:
@@ -225,7 +232,8 @@ Completed delivery support:
 
 Explicit unknowns:
 
-- production artifact repository and publication coordinates
+- first unused public release version and the combinations that its release
+  verification matrix can support
 - non-Spring consumer integration
 - separately deployed Core integration
 - cross-product authentication, which is not part of the embedded MVP
