@@ -6,8 +6,13 @@
 
     <groupId>io.github.oneofwolvesbilly</groupId>
     <artifactId>orca-reactor</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>${revision}${changelist}</version>
     <packaging>pom</packaging>
+
+    <properties>
+        <revision>0.0.1</revision>
+        <changelist>-SNAPSHOT</changelist>
+    </properties>
 
     <modules>
         <module>orca_backend</module>

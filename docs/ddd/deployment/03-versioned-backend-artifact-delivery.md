@@ -1,6 +1,6 @@
 # DDD - Deployment 03 - Versioned Backend Artifact Delivery
 
-Status: Approved / TDD pending.
+Status: Approved / GitHub Packages implementation verified / publication proof pending.
 
 This note is derived from the approved contract in
 `docs/specs/deployment/03-versioned-backend-artifact-delivery.md`.
@@ -15,7 +15,7 @@ behavior.
 
 The single actor-visible outcome remains:
 
-- an application developer declares one exact Orca release from Maven Central
+- an application developer declares one exact Orca release from GitHub Packages
   and uses the approved embedded-auth API without an Orca checkout, copied
   source, copied JAR, or internal-package import.
 
@@ -43,15 +43,16 @@ transfer behavioral authority to deployment.
 
 - **Release Candidate**
   The binary JAR, flattened consumer POM, sources JAR, Javadoc/documentation
-  JAR, signatures, checksums, compatibility record, and provenance produced
-  from one source commit before public publication.
+  JAR, compatibility record, and provenance produced from one source commit
+  before publication.
 
-- **Central Bundle**
-  The Maven repository-layout bundle submitted to Central Publisher Portal.
+- **GitHub Package**
+  The versioned Maven component associated with the public Orca GitHub
+  repository and stored by GitHub Packages.
 
 - **User-managed Deployment**
-  A Portal deployment that may be uploaded and validated but cannot publish
-  automatically. Explicit human action remains required after validation.
+  An explicit Maven deploy invocation that activates the GitHub Packages
+  profile only after separate publication authorization.
 
 - **Compatibility Record**
   Version-specific resolved metadata naming the Java, Spring Boot, MariaDB,
@@ -65,9 +66,9 @@ transfer behavioral authority to deployment.
   A consumer build using a newly created isolated Maven local repository with
   no preinstalled Orca artifact.
 
-- **Public Retrieval Proof**
-  The post-publication clean repository proof whose Orca source is Maven
-  Central.
+- **Package Retrieval Proof**
+  The post-publication clean repository proof whose Orca source is GitHub
+  Packages and whose read credential remains outside consumer source.
 
 - **Release Evidence**
   Redacted machine-readable and human-readable output that binds source commit,
@@ -92,7 +93,7 @@ compatibilityRecord
 ```
 
 All files in the candidate must agree on the same GAV and originate from the
-same source commit and build invocation. Mixing files, metadata, signatures, or
+same source commit and build invocation. Mixing files, metadata, or
 compatibility evidence from different versions or commits invalidates the
 candidate.
 
@@ -102,21 +103,18 @@ The release states are:
 Development Snapshot
   -> Candidate Built
   -> Candidate Locally Verified
-  -> Portal Uploaded
-  -> Portal Validated
   -> Publication Authorized
+  -> GitHub Package Uploaded
   -> Published
-  -> Publicly Verified
+  -> Package Retrieval Verified
 ```
 
 Rules:
 
 - A failure stops progression and records the failed state.
-- `Portal Validated` is not `Published`.
-- Only explicit user authorization may move a validated deployment toward
-  publication.
+- Only explicit user authorization may upload the candidate to GitHub Packages.
 - `Published` is immutable; correction creates a new Release Version.
-- The actor-visible outcome is complete only at `Publicly Verified`.
+- The actor-visible outcome is complete only at `Package Retrieval Verified`.
 - A local bundle or staging proof must never be presented as public delivery.
 
 ## Component Placement
@@ -132,7 +130,7 @@ deploy/backend-artifact/
   bin/
     build-release-candidate.sh
     verify-release-candidate.sh
-    verify-public-release.sh
+    verify-github-package.sh
   consumer-fixture/
     pom.xml
     src/main/...
@@ -186,7 +184,7 @@ The version validator runs before packaging and rejects:
 - whitespace or characters outside the selected semantic-version grammar;
 - `SNAPSHOT`, a Maven range, `LATEST`, or `RELEASE`;
 - a version different from the generated POM or artifact filenames; and
-- a coordinate already visible in Maven Central.
+- a coordinate already visible in GitHub Packages.
 
 Because Orca currently uses Maven 3.9.12, the backend publishing module must
 generate a flattened consumer POM for install, staging, and deploy. The
@@ -207,29 +205,27 @@ owns:
 - flattening the consumer POM;
 - attaching sources;
 - attaching Javadoc or an allowed documentation JAR;
-- signing every required component;
-- building the Central repository-layout bundle; and
-- invoking the Central publishing extension only when the selected command
-  permits it.
+- defining the standard Maven deploy boundary; and
+- activating the GitHub Packages publication profile only when the selected
+  command permits it.
 
-All build and publishing plugin versions must be pinned. The Central extension
-is `org.sonatype.central:central-publishing-maven-plugin`; implementation must
-pin the then-current officially documented stable version and record the
-verification source when it is added.
+All build and publishing plugin versions must be pinned. Publication uses the
+standard Maven deploy plugin and repository-scoped GitHub Packages endpoint.
 
 The profile must configure:
 
 ```text
-publishingServerId=central
-autoPublish=false
-checksums=all
+serverId=github
+repositoryUrl=https://maven.pkg.github.com/OneOfWolvesBilly/Orca
+publicationProfile=backend-artifact-github-packages
 ```
 
-`autoPublish=false` is mandatory. No committed profile, script, CI job, or
-default property may turn validation success into automatic public
-publication.
+The publication profile must not activate by default. No committed profile,
+script, CI job, or default property may turn validation success into automatic
+publication. Its enforcer requires the release profile and rejects a snapshot
+project version before deploy can reach GitHub Packages.
 
-### Central-required metadata
+### GitHub package metadata
 
 The flattened consumer POM owns:
 
@@ -242,21 +238,25 @@ The flattened consumer POM owns:
 - exact GAV; and
 - correct compile/runtime/optional dependency scopes.
 
+The selected public license is Apache License 2.0. The root license text and
+the flattened POM metadata are one release component contract and must remain
+aligned.
+
 The release verifier must inspect the flattened POM rather than assuming the
 source POM is the consumer result.
 
 ### Secret boundary
 
-Central user-token credentials live under server id `central` in an external
-Maven `settings.xml`. Signing key material and passphrases also remain outside
-the repository.
+GitHub credentials live under server id `github` in an external Maven
+`settings.xml` or GitHub Actions secret boundary. Publication and read tokens
+must not be committed to the repository.
 
 Scripts may validate only presence and successful use. They must not echo,
 serialize, copy, archive, checksum, or include secrets in release evidence.
 
-Namespace verification, user-token creation, signing-key creation, Portal
-upload, and publication are external mutations. Each requires the relevant
-user authorization; DDD or implementation authorization alone is insufficient.
+Token creation, package upload, permission changes, and publication are external
+mutations. Each requires the relevant user authorization; DDD or implementation
+authorization alone is insufficient.
 
 ## Artifact Assembly Design
 
@@ -271,8 +271,7 @@ orca-<version>.jar
 orca-<version>.pom
 orca-<version>-sources.jar
 orca-<version>-javadoc.jar
-required .asc signatures
-required checksum files
+repository-generated integrity metadata
 ```
 
 The release verifier inspects the binary JAR and rejects:
@@ -349,7 +348,8 @@ both directories before cleanup and must never use a workspace root, `$HOME`,
 or unresolved broad path as a cleanup target.
 
 Pre-publication mode points the fixture at the candidate's generated Maven
-repository layout. Post-publication mode points it at Maven Central. Neither
+repository layout. Post-publication mode points it at GitHub Packages and uses
+external Maven settings for authentication. Neither
 mode may run `mvn install` on Orca or fall back to the developer's ordinary
 local Maven repository.
 
@@ -386,7 +386,7 @@ Deployment owns:
 - release-version input validation;
 - component assembly and metadata validation;
 - candidate state progression;
-- Central bundle creation and user-managed publication gates;
+- GitHub Packages profile activation and user-managed publication gates;
 - artifact-content and secret-leak inspection;
 - compatibility evidence assembly;
 - isolated consumer orchestration;
@@ -430,7 +430,7 @@ contains and executes those migrations through the public runtime boundary.
 Release orchestrator
   -> Maven release profile
   -> backend artifact assembly
-  -> Central bundle / Portal boundary
+  -> GitHub Packages Maven deploy boundary
 
 Independent Consumer Fixture
   -> Maven repository boundary
@@ -443,7 +443,7 @@ Packaged Orca implementation
   -> existing domain and infrastructure
 
 Orca domain
-  -> no deployment, release, Portal, fixture, or consumer dependency
+  -> no deployment, release, GitHub Packages, fixture, or consumer dependency
 ```
 
 No production source dependency may point from Orca into
@@ -458,24 +458,24 @@ Maven/build contract tests validate:
 
 - exact resolved release coordinates;
 - flattened consumer POM metadata and dependency scopes;
-- required component classifiers, signatures, and checksums;
+- required component classifiers and repository metadata;
 - ordinary classes-JAR packaging;
 - compatibility record completeness and consistency;
-- Central configuration keeps `autoPublish=false`; and
+- the GitHub Packages profile is inactive by default; and
 - snapshot/default development builds remain available without activating
   release publication.
 
-Shell contract tests use controlled Maven, GPG, archive, checksum, Docker, and
-Portal adapters where network or secret-bearing behavior must not run. Test
+Shell contract tests use controlled Maven, archive, checksum, Docker, and
+GitHub repository adapters where network or secret-bearing behavior must not run. Test
 names should remain behavior oriented, including:
 
 - `builds one immutable backend release candidate`
 - `rejects an invalid release version`
-- `keeps Central publication user managed`
-- `rejects incomplete Central metadata`
+- `keeps GitHub Packages publication user managed`
+- `rejects incomplete GitHub package metadata`
 - `rejects artifact content outside the backend boundary`
 - `verifies an isolated consumer from staged artifacts`
-- `verifies an isolated consumer from Maven Central`
+- `verifies an isolated consumer from GitHub Packages`
 - `rejects internal Orca imports in the consumer`
 - `rejects conflicting Orca dependency versions`
 - `rejects duplicate embedded providers`
@@ -494,15 +494,15 @@ must not replace those suites.
 | absent | version validator, component inventory, fixture configuration, dependency resolution | fail current candidate state |
 | null | public/runtime configuration test adapter | fail build or startup before protected behavior |
 | blank | version, metadata, compatibility, and runtime validators | fail without coercion |
-| malformed | POM, archive, signature, checksum, migration, and datasource validators | fail before validation/public claim |
-| duplicate | Maven convergence rule, archive scan, Spring startup validation, Central coordinate check | reject ambiguity or reuse |
+| malformed | POM, archive, checksum, migration, and datasource validators | fail before validation/public claim |
+| duplicate | Maven convergence rule, archive scan, Spring startup validation, GitHub coordinate check | reject ambiguity or reuse |
 | unsupported | compatibility matrix and runtime matrix | record unsupported; never claim passing support |
 | untyped | shell/environment/XML/YAML boundary validators | reject before invoking secret-bearing or runtime action |
 | stale | clean local repository, checksum comparison, source-commit check, migration matrix | fail provenance or compatibility proof |
-| unauthorized | external settings preflight and Portal response adapter | stop with redacted actionable failure |
+| unauthorized | external settings preflight and GitHub response adapter | stop with redacted actionable failure |
 | unexpected | command wrapper and candidate state controller | stop at named stage; preserve non-secret diagnostics |
 
-External outage and real Portal authorization behavior use reproducible,
+External outage and real GitHub authorization behavior use reproducible,
 redacted manual evidence. Controlled adapters test Orca's reaction without
 requiring publication during ordinary tests.
 
@@ -512,9 +512,8 @@ Implementation must expose separate commands or explicit modes for:
 
 1. build candidate without network publication;
 2. verify candidate through local staging;
-3. upload for Portal validation after external-mutation authorization;
-4. publish a validated deployment after a second explicit authorization; and
-5. verify anonymous Maven Central retrieval.
+3. publish to GitHub Packages after external-mutation authorization; and
+4. verify authenticated GitHub Packages retrieval with a clean local cache.
 
 One command must not silently cross these boundaries. In particular, ordinary
 `test`, `package`, `verify`, or repository-local `deploy` execution must never
@@ -529,12 +528,12 @@ that family avoids an unnecessary module extraction or artifact rename. Public
 API remains constrained by package contract rather than by pretending every
 packaged class is supported.
 
-### Decision: Use Maven Central
+### Decision: Use GitHub Packages
 
-Maven Central is the default public Maven source and permits ordinary consumers
-to resolve a release without repository-local installation or private
-credentials. A private repository would not prove the product-neutral public
-delivery outcome.
+GitHub Packages keeps source and artifact delivery on the user-selected GitHub
+boundary while preserving normal Maven coordinates and dependency resolution.
+GitHub requires a token for Maven package installation, so each consuming
+product owns its read credential outside source control.
 
 ### Decision: Use CI-friendly versions with a flattened consumer POM
 
@@ -544,9 +543,9 @@ requires the flattened POM so consumers receive resolved coordinates.
 
 ### Decision: Keep publication user managed
 
-Central bundle creation and validation are reversible review steps. Public
-publication is immutable, so `autoPublish=false` preserves a distinct human
-authorization boundary.
+Candidate construction and local validation are reversible review steps. The
+GitHub Packages profile is inactive by default, preserving a distinct human
+authorization boundary before Maven deploy performs an external mutation.
 
 ### Decision: Keep the independent fixture outside the reactor
 
@@ -574,7 +573,8 @@ can be reviewed without inferring versions from the current source tree.
 - Reusing a public GAV would violate repository immutability.
 - Publishing an unresolved CI-friendly POM would make the artifact unusable or
   misleading to consumers.
-- Activating `autoPublish` would collapse the required human gate.
+- Activating the GitHub Packages profile in ordinary builds would collapse the
+  required human gate.
 - Repackaging as a fat JAR could hide or break Maven dependency behavior.
 - Testing against the ordinary developer Maven cache could accidentally consume
   a locally installed Orca artifact.
@@ -584,9 +584,9 @@ can be reviewed without inferring versions from the current source tree.
   compatibility obligations and absorb `ORCA-ARCH-01`.
 - Hand-writing compatibility claims without running the matrix could advertise
   unsupported Java, Spring Boot, MariaDB, or migration combinations.
-- Logging Maven settings, token values, GPG arguments, datasource credentials,
+- Logging Maven settings, token values, datasource credentials,
   or session cookies could leak secrets.
-- Calling Portal validation or local staging “published” would report the actor
+- Calling local staging “published” would report the actor
   outcome before it exists.
 - Combining frontend/npm delivery would cross the one-slice boundary.
 
@@ -600,8 +600,8 @@ can be reviewed without inferring versions from the current source tree.
 - No React/npm artifact.
 - No separately deployed Orca API.
 - No production cloud topology.
-- No automatic Central publication.
-- No namespace, token, signing-key, upload, publication, tag, commit, merge, or
+- No automatic GitHub Packages publication.
+- No token, package upload, publication, tag, commit, merge, or
   push authorization.
 
 ## DDD Closeout Evidence
@@ -620,5 +620,13 @@ DDD closeout on 2026-09-13 confirmed:
   records are identified for the documentation commit and later implementation
   closeout.
 
-The next layer is TDD only after explicit user authorization and DDD closeout
-approval.
+The distribution correction on 2026-09-17 replaced the over-specific Maven
+Central decision with GitHub Packages while preserving the Maven coordinate,
+artifact contents, compatibility evidence, independent consumer, and public API
+boundaries. The corrected TDD and implementation are verified locally;
+publication remains a separately authorized external mutation.
+
+Verification completed on 2026-09-20 confirms that Maven resolves the inactive-
+by-default GitHub Packages profile, an isolated staged consumer resolves the
+ordinary artifact, external settings remain outside source, and all existing
+reactor regressions remain green.

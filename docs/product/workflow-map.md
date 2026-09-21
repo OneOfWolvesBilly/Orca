@@ -216,13 +216,16 @@ Supported slice:
 
 Approved delivery support:
 
-- `deployment-03` versioned backend artifact delivery specifies Maven Central,
-  the stable `io.github.oneofwolvesbilly:orca` coordinate family, compatibility
-  evidence, and independent cross-project verification.
+- `deployment-03` versioned backend artifact delivery specifies the Orca GitHub
+  Packages Maven registry, the stable `io.github.oneofwolvesbilly:orca`
+  coordinate family, compatibility evidence, and independent cross-project
+  verification.
 
 Known gaps:
 
-- deployment-03 TDD, implementation, publication, and public retrieval proof
+- deployment-03 committed-source candidate evidence, separately authorized
+  GitHub Packages publication, and exact authenticated package retrieval proof;
+  local release tooling and isolated staged-consumer verification are implemented
 - later structured logging and correlation support
 
 Completed delivery support:

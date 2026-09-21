@@ -1,6 +1,6 @@
 # Deployment 03 - Versioned Backend Artifact Delivery
 
-Status: Approved / DDD approved / TDD pending.
+Status: Approved / GitHub Packages implementation verified / publication proof pending.
 
 ## Slice Intake
 
@@ -33,9 +33,9 @@ Primary actor:
 
 Successful outcome:
 
-- The developer declares one exact, non-SNAPSHOT Orca dependency from Maven
-  Central and uses the supported `auth-12` embedded-auth public API in an
-  independently built Spring Boot application.
+- The developer declares one exact, non-SNAPSHOT Orca dependency from the Orca
+  GitHub Packages Maven registry and uses the supported `auth-12` embedded-auth
+  public API in an independently built Spring Boot application.
 - The consumer neither copies Orca source nor imports an Orca internal package.
 
 Failure flows:
@@ -112,7 +112,8 @@ Predecessor completion evidence:
 
 Unknowns resolved by this SDD:
 
-- Maven Central is the canonical public distribution source.
+- GitHub Packages is the approved Maven distribution source associated with
+  the public Orca GitHub repository.
 - The stable coordinate family remains `io.github.oneofwolvesbilly:orca`.
 - A release version is an exact, immutable, non-SNAPSHOT semantic version.
 - The first release number is not guessed by this SDD. It must be an unused
@@ -175,7 +176,7 @@ Decision: enter SDD.
 ## Goal
 
 Allow an application developer in an independent project to declare one exact,
-released Orca backend dependency from Maven Central and start the supported
+released Orca backend dependency from GitHub Packages and start the supported
 embedded-auth public boundary without copying Orca source or importing Orca
 internal packages.
 
@@ -187,7 +188,9 @@ or consumer-product behavior.
 
 ### Canonical Source
 
-Maven Central is the canonical public distribution source for this slice.
+The Apache Maven registry in GitHub Packages for
+`https://github.com/OneOfWolvesBilly/Orca` is the canonical distribution source
+for this slice.
 
 The consumer contract must not require:
 
@@ -195,8 +198,15 @@ The consumer contract must not require:
 - `mvn install` of an Orca checkout;
 - a file, system-path, Git-submodule, or copied-JAR dependency;
 - access to an Orca source checkout;
-- repository credentials for ordinary public dependency retrieval; or
-- a consumer-specific private repository.
+- a Sonatype account, Maven Central namespace, or Central publication service;
+  or
+- repository credentials committed to consumer source.
+
+GitHub currently requires authentication for Maven package installation even
+when the source repository and package are public. The consuming product owns
+its GitHub identity and supplies a token through external Maven settings or its
+CI secret store. The token is a delivery credential, not part of the Orca
+artifact or public API.
 
 A local or private staging repository may be used only for pre-publication
 verification. Passing against staging does not satisfy the final independent
@@ -233,15 +243,17 @@ For one release coordinate, the publication must include at least:
 - the executable-class JAR used as the Maven dependency;
 - its effective consumer POM with correct dependency scopes;
 - a sources JAR;
-- a Javadoc JAR or an explicitly justified documentation JAR accepted by the
-  canonical repository;
-- repository-required checksums;
-- repository-required signatures; and
+- a Javadoc JAR or an explicitly justified documentation JAR;
+- repository-generated integrity metadata; and
 - required project, license, developer, source-control, and dependency
   metadata.
 
-Every published file must pass Maven Central validation before the release is
-called available. A successful local package build alone is not publication.
+The public artifact is licensed under Apache License 2.0. The repository-root
+`LICENSE` text and the published POM license identity and URL must agree.
+
+The exact coordinate must be accepted by GitHub Packages and then resolved by
+an authorized clean consumer before the release is called available. A
+successful local package build alone is not publication.
 
 ### Artifact Content Boundary
 
@@ -272,7 +284,7 @@ The artifact must not contain:
 | logout and revocation | auth | `auth-11` | existing logout HTTP contract | regression tests |
 | stable rejection response | reference-core | `reference-core-01` | existing API error contract | regression tests |
 | artifact classes and resources | contributing Orca scopes | their current authoritative specs | packaged implementation behind approved public APIs | content inventory and test suite |
-| artifact packaging and delivery | `deployment` support scope | this spec | Maven Central release coordinate | staging and public retrieval proofs |
+| artifact packaging and delivery | `deployment` support scope | this spec | GitHub Packages Maven coordinate | staging and authenticated retrieval proofs |
 | build/release mechanism | `deployment` support scope | this spec | repeatable release command/workflow; secrets remain external | clean build, validation, and release evidence |
 | runtime datasource and values | consuming application | `auth-12` integration boundary and Spring runtime | consumer-supplied `DataSource` and external values | isolated startup proof |
 | Orca-owned schema evolution | Flyway migrations contributed by owning Orca scopes | current migration-backed specs | packaged `db/migration` resources | migration inventory and database verification |
@@ -399,19 +411,21 @@ The build/release mechanism must provide a repeatable path that:
    separately authorized delivery;
 2. selects an unused release version and records the compatibility matrix;
 3. runs all required backend, fixture, packaging, and migration verification;
-4. builds release JAR, POM, sources, Javadoc/documentation, checksums, and
-   signatures without embedding release credentials;
+4. builds release JAR, POM, sources, and Javadoc/documentation without
+   embedding release credentials;
 5. validates the component set through a non-public staging step;
 6. requires explicit human authorization before irreversible public
    publication;
-7. publishes the validated component set to Maven Central;
-8. waits until the exact coordinate is retrievable from the canonical public
-   repository; and
+7. publishes the validated component set to GitHub Packages through an
+   explicitly activated Maven profile that requires the release gate and
+   rejects snapshot publication;
+8. waits until the exact coordinate is retrievable from the canonical GitHub
+   Packages repository with consumer-owned credentials; and
 9. runs the isolated consumer proof with a clean local repository.
 
-No SDD, DDD, test, or implementation authorization implicitly grants namespace
-registration, credential creation, signing-key creation, upload, publication,
-tagging, push, or other external release mutation.
+No SDD, DDD, test, or implementation authorization implicitly grants GitHub
+package creation, credential creation, upload, publication, tagging, push, or
+other external release mutation.
 
 If validation or publication fails, the workflow must leave the failed release
 unclaimed. If a coordinate has become public, it must never be replaced; fixes
@@ -428,7 +442,8 @@ The final proof must build a standalone consumer that:
 - lives outside the Orca Maven reactor;
 - has no Orca source checkout, module relationship, or file dependency;
 - starts with a clean, isolated Maven local repository;
-- uses Maven Central as the only Orca artifact source;
+- uses the Orca GitHub Packages Maven registry as the only Orca artifact
+  source;
 - pins the exact released Orca version;
 - imports only the three approved `auth.api` types;
 - provides its own datasource and runtime values;
@@ -440,7 +455,7 @@ The final proof must build a standalone consumer that:
 
 A pre-publication standalone fixture may resolve the release candidate from a
 temporary staging repository to find packaging defects. It is additional
-evidence, not a substitute for post-publication Maven Central retrieval.
+evidence, not a substitute for post-publication GitHub Packages retrieval.
 
 ## Runtime And Public Failure Set
 
@@ -449,12 +464,12 @@ evidence, not a substitute for post-publication Maven Central retrieval.
 | absent | artifact, canonical repository result, exact version, datasource, or required runtime value is absent | resolution, build, or startup fails; protected behavior is unavailable | automated negative test where local; reproducible repository proof where external |
 | null | a public runtime configuration source supplies literal null for a required value or object | validation/startup fails without coercing null or exposing a secret | automated configuration/startup test |
 | blank | groupId, artifactId, version, repository input, or required configuration is blank | release validation or consumer startup fails | automated metadata/configuration test |
-| malformed | coordinate, POM metadata, signature, artifact archive, datasource value, or migration is malformed | staging, dependency resolution, or startup fails before availability is claimed | automated validation/corruption test or reproducible staging proof |
+| malformed | coordinate, POM metadata, artifact archive, datasource value, or migration is malformed | staging, dependency resolution, or startup fails before availability is claimed | automated validation/corruption test or reproducible staging proof |
 | duplicate | conflicting Orca versions, duplicate embedded providers, duplicate bean/configuration providers, or repeated publication coordinate | dependency/build/startup validation rejects ambiguity; a public coordinate is never overwritten | dependency-tree/startup tests and repository immutability proof |
 | unsupported | Java, Spring Boot, database, migration state, or Orca combination is outside the compatibility record | no support claim; verified guard fails where detectable, otherwise documentation and matrix identify the exception | compatibility matrix test or explicit verification exception |
 | untyped | environment, JVM property, YAML, XML, or JavaScript-generated build input reaches a public runtime/build boundary without compile-time type safety | runtime/build validation rejects invalid values explicitly | automated boundary test; not dismissed because Java API types exist |
 | stale | snapshot/cached local artifact, old migration set, obsolete metadata, or consumer built for an incompatible public API | clean-repository proof or checksum/version comparison detects the mismatch; unsupported startup is not accepted | clean-cache retrieval and migration/compatibility tests |
-| unauthorized | staging or publication access is denied; ordinary Maven Central retrieval unexpectedly requires credentials | publication stops without leaking credentials; public consumer acceptance fails until anonymous retrieval succeeds | reproducible denied-access proof with redacted output; public anonymous retrieval proof |
+| unauthorized | GitHub Packages publication or retrieval access is denied, the token is absent, or its scope is insufficient | publication or retrieval stops without leaking credentials; no availability claim is made | automated missing-settings proof plus reproducible denied-access proof with redacted output |
 | unexpected | download interruption, checksum mismatch, dependency-resolution error, build error, Flyway error, startup exception, or public integration regression | release is not called available; evidence identifies the failed stage without secrets | automated failure injection where practical, otherwise reproducible manual proof with exception rationale |
 
 No failure class is inapplicable. Although Maven XML has no native null token,
@@ -464,13 +479,15 @@ public inputs, so it requires explicit runtime coverage.
 ## Acceptance Criteria
 
 1. One exact, non-SNAPSHOT `io.github.oneofwolvesbilly:orca:<version>` release
-   is available from Maven Central and cannot be overwritten.
+   is available from the Orca GitHub Packages Maven registry and is not reused
+   or overwritten by the release workflow.
 2. The release contains the required JAR, POM, source/documentation artifacts,
-   checksums, signatures, and valid public metadata.
+   repository integrity metadata, and valid public metadata.
 3. The release publishes a compatibility record backed by verification for
    every claimed combination.
 4. A clean standalone consumer retrieves the artifact without an Orca checkout,
-   repository-local install, copied source, copied JAR, or private credential.
+   repository-local install, copied source, or copied JAR; GitHub credentials
+   are supplied only through external Maven settings.
 5. Consumer source imports only the three approved `auth.api` types.
 6. The consumer starts `@EnableOrcaEmbeddedAuth`, declares one supported
    `@OrcaProtectedCommand`, and receives exactly one `AuthenticatedActor`.
@@ -480,8 +497,8 @@ public inputs, so it requires explicit runtime coverage.
    are explicit and verified on an empty and already-current schema.
 9. Conflicting versions/providers and unsupported runtime combinations cannot
    silently satisfy the compatibility claim.
-10. Publication and verification output contains no credentials, signing-key
-    material, session values, or consumer secrets.
+10. Publication and verification output contains no GitHub credentials,
+    session values, or consumer secrets.
 11. Frontend/npm delivery and CogniRig-specific integration remain outside the
     release contract.
 
@@ -491,7 +508,7 @@ public inputs, so it requires explicit runtime coverage.
 | --- | --- |
 | artifact can be built | clean release-profile Maven build; inspect expected component files |
 | stable versioned coordinates | automated effective-POM and filename assertions reject blank, range, alias, and SNAPSHOT versions |
-| Maven Central publication is valid | Central staging validation plus exact public-coordinate retrieval |
+| GitHub Packages publication is valid | explicit Maven deploy plus exact authenticated package retrieval |
 | isolated consumer obtains dependency | standalone project with clean local Maven repository and no Orca checkout |
 | no copied Orca source or JAR | fixture content/path assertion and build provenance inspection |
 | no internal imports | source/import scan plus compile rule that permits only approved `auth.api` imports |
@@ -508,24 +525,23 @@ public inputs, so it requires explicit runtime coverage.
 | unexpected download/publication outage | explicit verification exception: external outage cannot be deterministically injected; release remains incomplete until retry and public retrieval succeed |
 
 Every acceptance criterion must map to an automated test or reproducible proof
-before SDD closeout. External Maven Central availability and authorization
+before SDD closeout. External GitHub Packages availability and authorization
 failures may use reproducible redacted evidence because Orca does not own that
 service, but they may not be omitted.
 
 ## Security And Secret Boundary
 
-Release credentials, namespace tokens, and signing-key material are
-environment-owned secrets. They must never appear in repository files,
-generated artifacts, logs, test reports, command arguments captured by the
-repository, or consumer examples.
+GitHub publication and package-read credentials are environment-owned secrets.
+They must never appear in repository files, generated artifacts, logs, test
+reports, command arguments captured by the repository, or consumer examples.
 
 Verification may assert that a value exists or that an operation was denied,
-but must redact credential values. Public consumers must not need publication
-credentials.
+but must redact credential values. Consumers use a read-scoped credential and
+must not receive the publication credential.
 
 ## Affected And Superseded Documents
 
-At SDD and DDD closeout:
+At implementation verification:
 
 - this new deployment-03 spec is added;
 - `docs/drafts/slice-planning-handoff.md` records the intake disposition;
@@ -534,27 +550,44 @@ At SDD and DDD closeout:
 - `docs/document-map.md` is checked and needs no change because its existing
   deployment spec and DDD patterns already cover deployment-03;
 - `docs/product/workflow-map.md`, `docs/product/capability-map.md`, and
-  `docs/slice-map.md` record the approved-but-not-implemented slice;
+  `docs/slice-map.md` record the verified local release implementation and the
+  remaining GitHub Packages publication proof;
 - README status needs no change because public delivery is not implemented and
   Orca remains not production-ready; and
-- the matching deployment-03 DDD is approved as the derived design authority.
+- the matching deployment-03 DDD remains aligned as the derived design
+  authority.
 
 SDD closeout reconciled `ORCA-DELIVERY-01` against these acceptance criteria,
 failure cases, non-goals, verification requirements, and affected documents on
 2026-09-12. The backend artifact outcome is fully represented here. The
 frontend distribution remainder stays active and outside this slice.
 
-## Later-phase Boundary
+On 2026-09-17 the distribution decision was corrected after re-reading the
+original intake: Maven consumption required an approved repository boundary but
+did not authorize Maven Central. The user selected GitHub-only source and
+artifact delivery for consumer products. GitHub Packages therefore replaces
+Maven Central without changing the slice's actor, Maven coordinate, packaged
+behavior, or one-slice boundary.
 
-The approved documentation commit may align lifecycle maps. It does not
-authorize:
+The corrected implementation was verified on 2026-09-20 with GitHub-specific
+profile contract tests, external-settings failure tests, effective-POM
+inspection, a staged artifact resolved by the standalone consumer, and the full
+Maven reactor. Maven enforcer also rejects snapshot publication when the GitHub
+profile is selected without the release gate. Actual GitHub Packages publication
+remains pending and requires separate authorization.
 
-- changing Maven POMs, build plugins, release workflows, tests, or source;
-- registering or verifying a Maven Central namespace;
-- creating or importing signing keys or publication credentials;
-- publishing, tagging, committing, rebasing, merging, pushing, or cleaning up;
-  or
-- closing or tombstoning `ORCA-DELIVERY-01`.
+## Remaining Release Boundary
 
-The next phase after DDD closeout is TDD only with separate explicit user
+TDD and release implementation were explicitly authorized and verified on
+2026-09-16. That authorization does not grant:
+
+- creating GitHub package credentials or changing package permissions;
+- uploading or publishing a GitHub Package;
+- tagging, committing, rebasing, merging, or pushing; or
+- closing or tombstoning `ORCA-DELIVERY-01` before GitHub package publication
+  and authenticated retrieval evidence exists.
+
+The next required release proof is a candidate built from a committed source
+state with exact verified Java and MariaDB versions. GitHub Packages publication
+and authenticated package retrieval still require separate explicit
 authorization.

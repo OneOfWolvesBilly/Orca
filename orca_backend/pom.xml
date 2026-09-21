@@ -13,12 +13,43 @@
 
     <groupId>io.github.oneofwolvesbilly</groupId>
     <artifactId>orca</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>${revision}${changelist}</version>
+    <packaging>jar</packaging>
     <name>Orca</name>
     <description>Orca backend (domain-first, infrastructure last)</description>
+    <url>https://github.com/OneOfWolvesBilly/Orca</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>oneofwolvesbilly</id>
+            <name>Chih-hao Chen</name>
+            <url>https://github.com/OneOfWolvesBilly</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/OneOfWolvesBilly/Orca.git</connection>
+        <developerConnection>scm:git:https://github.com/OneOfWolvesBilly/Orca.git</developerConnection>
+        <url>https://github.com/OneOfWolvesBilly/Orca</url>
+    </scm>
 
     <properties>
         <java.version>21</java.version>
+        <revision>0.0.1</revision>
+        <changelist>-SNAPSHOT</changelist>
+        <orca.source.commit>UNSET</orca.source.commit>
+        <orca.java.release>21</orca.java.release>
+        <orca.java.verified-runtimes>UNSET</orca.java.verified-runtimes>
+        <orca.spring-boot.supported>4.0.1</orca.spring-boot.supported>
+        <orca.database.verified-versions>UNSET</orca.database.verified-versions>
     </properties>
 
     <dependencies>
@@ -82,4 +113,209 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>backend-artifact-release</id>
+            <activation>
+                <property>
+                    <name>backendArtifactRelease</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <version>3.6.3</version>
+                        <executions>
+                            <execution>
+                                <id>enforce-release-dependency-convergence</id>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <dependencyConvergence/>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>require-release-source-commit</id>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <requireProperty>
+                                            <property>orca.source.commit</property>
+                                            <regex>^[0-9a-f]{40}$</regex>
+                                            <regexMessage>orca.source.commit must be the exact 40-character source commit.</regexMessage>
+                                        </requireProperty>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>require-verified-java-runtimes</id>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <requireProperty>
+                                            <property>orca.java.verified-runtimes</property>
+                                            <regex>^(?!UNSET$)(?!.*\$\{).+$</regex>
+                                            <regexMessage>orca.java.verified-runtimes must record exercised runtime versions.</regexMessage>
+                                        </requireProperty>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>require-verified-database-versions</id>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <requireProperty>
+                                            <property>orca.database.verified-versions</property>
+                                            <regex>^(?!UNSET$)(?!.*\$\{).+$</regex>
+                                            <regexMessage>orca.database.verified-versions must record exercised MariaDB versions.</regexMessage>
+                                        </requireProperty>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>flatten-maven-plugin</artifactId>
+                        <version>1.8.0</version>
+                        <configuration>
+                            <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                            <updatePomFile>true</updatePomFile>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>flatten</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>flatten</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>flatten-clean</id>
+                                <phase>clean</phase>
+                                <goals>
+                                    <goal>clean</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <version>3.5.0</version>
+                        <executions>
+                            <execution>
+                                <id>release-compatibility-metadata</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+                                    <useDefaultDelimiters>false</useDefaultDelimiters>
+                                    <delimiters>
+                                        <delimiter>@</delimiter>
+                                    </delimiters>
+                                    <resources>
+                                        <resource>
+                                            <directory>src/main/release-filtered-resources</directory>
+                                            <filtering>true</filtering>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.4.0</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.12.0</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>backend-artifact-github-packages</id>
+            <activation>
+                <property>
+                    <name>backendArtifactGitHubPackages</name>
+                </property>
+            </activation>
+            <distributionManagement>
+                <repository>
+                    <id>github</id>
+                    <name>GitHub Packages</name>
+                    <url>https://maven.pkg.github.com/OneOfWolvesBilly/Orca</url>
+                </repository>
+            </distributionManagement>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <version>3.6.3</version>
+                        <executions>
+                            <execution>
+                                <id>enforce-github-package-release</id>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <requireProperty>
+                                            <property>backendArtifactRelease</property>
+                                            <regex>^true$</regex>
+                                            <regexMessage>GitHub Packages publication requires backendArtifactRelease=true.</regexMessage>
+                                        </requireProperty>
+                                        <requireReleaseVersion/>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-deploy-plugin</artifactId>
+                        <version>3.1.4</version>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

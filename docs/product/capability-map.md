@@ -496,25 +496,33 @@ Existing predecessor capabilities:
 
 Approved delivery capability:
 
-- Maven Central as the product-neutral public distribution boundary
+- GitHub Packages as the repository-associated Maven distribution boundary
 - stable `io.github.oneofwolvesbilly:orca` coordinate family
 - exact immutable release versions and version-specific compatibility evidence
 - independent consumer verification without copied source or internal imports
 
 Implementation gaps:
 
-- release-profile POM metadata, flattened consumer POM, sources, Javadoc,
-  checksums, and signatures
-- user-managed Central validation and separately authorized publication
-- clean-repository independent consumer and public retrieval evidence
-- compatibility and migration verification for every claimed combination
+- separately authorized GitHub Packages publication
+- exact authenticated package-coordinate retrieval from GitHub Packages
+- exact Java 21 and resolved MariaDB 11 verification evidence for the first
+  published compatibility claim
+
+Implemented locally:
+
+- release-profile POM metadata, flattened consumer POM, sources, Javadoc, and
+  ordinary backend JAR assembly
+- immutable semantic-version validation and required compatibility inputs
+- explicit GitHub Packages Maven profile using external server id `github`
+- clean-repository standalone consumer verification against a staged Maven
+  repository, including embedded auth and packaged migration behavior
 
 Sequencing notes:
 
 - deployment owns delivery evidence but does not own packaged business rules.
-- TDD must precede release implementation.
-- Portal upload and immutable public publication require separate user
-  authorization and are not implied by implementation approval.
+- TDD preceded release implementation and is green.
+- GitHub package upload and publication require separate user authorization and
+  are not implied by implementation approval.
 - Frontend/npm delivery remains a separate outcome.
 
 ---
