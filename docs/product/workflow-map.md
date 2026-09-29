@@ -161,8 +161,9 @@ Explicit unknowns:
 
 ## Workflow: Embedded Core Authentication Consumption
 
-Status: embedded behavior supported / public artifact delivery specified but
-not implemented.
+Status: embedded behavior and release tooling implemented / Core V1 not
+released because safe structured logging, GitHub Packages publication, and
+authenticated clean-consumer retrieval remain open gates.
 
 Primary actor:
 
@@ -221,12 +222,24 @@ Approved delivery support:
   coordinate family, compatibility evidence, and independent cross-project
   verification.
 
+Core MVP / V1 alignment:
+
+- `auth-12`, `reference-core-01`, `reference-core-03`, `frontend-03`, and
+  `frontend-04` provide the completed public-boundary and fixture outcomes.
+- `deployment-03` release tooling and isolated staged-consumer verification are
+  implemented.
+- `ORCA-OPS-01` safe structured logging and correlation is the remaining
+  behavior-slice gate.
+- Explicitly authorized GitHub Packages publication and authenticated retrieval
+  by a clean standalone consumer are the remaining external release gates.
+- CogniRig is an intended consumer, but its product-specific integration is not
+  an Orca Core V1 completion dependency.
+
 Known gaps:
 
-- deployment-03 committed-source candidate evidence, separately authorized
-  GitHub Packages publication, and exact authenticated package retrieval proof;
-  local release tooling and isolated staged-consumer verification are implemented
-- later structured logging and correlation support
+- separately authorized GitHub Packages publication and exact authenticated
+  package retrieval proof;
+- safe structured logging and correlation through an authoritative slice.
 
 Completed delivery support:
 

@@ -52,6 +52,103 @@ and audit decisions.
 
 ---
 
+## Core MVP / V1 Release Milestone
+
+Status: defined / not released.
+
+This milestone promotes the historical Product-Agnostic Orca Core MVP planning
+objective into the current product baseline. It does not create a second
+product direction. It groups the objective's authoritative successor slices
+and remaining release gates into one bounded completion decision.
+
+### Release Outcome
+
+An application developer can configure one same-process Spring Boot consumer to
+retrieve one exact, immutable Orca backend version from GitHub Packages and use
+the documented public Core boundaries for:
+
+- reusable browser login;
+- authentication and server-side session context;
+- authenticated actor resolution for one product-neutral protected command;
+- stable public error handling;
+- product-neutral audit recording;
+- safe structured logging and correlation; and
+- the bounded React login and protected-session reference proof.
+
+The standalone consumer must not use an Orca checkout, repository-local install,
+copied source or JAR, internal-package import, direct Orca-table query, or
+product-specific shortcut.
+
+### Completed Milestone Components
+
+- `auth-12` supplies the implemented embedded-auth entry point, protected
+  command declaration, and authenticated actor boundary.
+- `reference-core-01` supplies the implemented stable API error contract.
+- `reference-core-03` supplies the implemented product-neutral audit envelope
+  and replaceable recording port.
+- `frontend-03` supplies the implemented reusable React login composition and
+  bounded branding contract.
+- `frontend-04` supplies the implemented product-neutral React fixture login,
+  protected-command, expiry-coordination, and logout proof.
+- `deployment-03` supplies implemented release tooling, component assembly,
+  compatibility evidence, and isolated staged-consumer verification.
+
+### Open V1 Release Gates
+
+1. `ORCA-OPS-01` must be split through slice intake and complete the smallest
+   authoritative outcome that proves safe structured application logging and
+   correlation across the Minimal Consumer Fixture flow. A production logging
+   backend, metrics, tracing, dashboards, and alerting are not required.
+2. `deployment-03` must complete an explicitly authorized publication of one
+   unused, exact, non-SNAPSHOT version to the Orca GitHub Packages Maven
+   registry.
+3. A clean standalone consumer must retrieve that exact published version with
+   external Maven credentials and pass the release verification matrix without
+   an Orca checkout, repository-local install, copied source, or copied JAR.
+4. README, workflow, capability, specification status, verification evidence,
+   and planning continuity must agree before the milestone is marked released.
+
+The release version remains undecided until the authorized publication step.
+The Core V1 milestone name does not by itself select `1.0.0`, authorize package
+publication, or authorize a tag, commit, merge, or push.
+
+### Active Items That Do Not Block Core V1
+
+- `ORCA-AUDIT-01`: `reference-core-03` already proves the product-neutral
+  recording extension point required by the MVP. Concrete workflow adoption,
+  storage, lookup, retention, export, and transactional delivery remain later
+  workflow-specific outcomes.
+- `ORCA-ARCH-01`: the supported `auth-12` public boundary and `deployment-03`
+  consumer import proof satisfy the first embedded consumer. Broader
+  cross-context dependency enforcement remains architecture hardening.
+- `ORCA-OPS-02`: production-grade health, readiness, liveness, metrics, and
+  operational platforms are outside the original embedded Core proof.
+- Credential setup, account lifecycle, external identity, session renewal,
+  organization expansion, Vue/Angular parity, cache, production cloud
+  topology, and frontend package publication remain post-V1 candidates unless
+  a later human product decision changes the milestone.
+
+### Consumer Boundary
+
+CogniRig is an intended future consumer of Orca Core, but Core V1 completion
+does not depend on CogniRig implementation. Orca owns the product-neutral public
+contract and generic standalone proof. CogniRig owns its product behavior,
+configuration, UI, and adoption acceptance in the CogniRig repository.
+
+No CogniRig-specific package, code, configuration, branding, role, route,
+aggregate, database table, or shortcut may enter Orca to satisfy this
+milestone.
+
+### Completion Decision
+
+Core V1 may be marked released only when every open release gate has concrete
+evidence and no milestone document contradicts the authoritative specs. Each
+new behavior needed by a gate still requires slice intake, SDD, DDD, TDD, and
+implementation authorization. The milestone cannot authorize or collapse
+those stages.
+
+---
+
 ## Authority Relationship
 
 Product / SA documents sit upstream of future SDD slice selection:

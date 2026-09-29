@@ -75,6 +75,25 @@ Planned or gap areas:
 Planned capabilities are not implied to exist. They must enter through the same
 SDD -> DDD -> TDD workflow before implementation.
 
+### Current Release Milestone
+
+Orca's first release milestone is the product-agnostic embedded Core MVP, also
+named the Core V1 milestone. Its goal is to prove that a same-process Spring
+Boot consumer can obtain a versioned Orca backend artifact and use the public
+login, server-side session, authenticated-actor, error, audit, and bounded React
+reference surfaces without copying Orca source or importing internal packages.
+
+The successor slices for embedded auth, stable errors, reusable audit recording,
+React login composition, and the protected-session fixture are implemented. The
+milestone is not released yet because safe structured logging and correlation
+still require an authoritative slice, and the implemented GitHub Packages
+delivery must still complete an explicitly authorized publication followed by
+authenticated retrieval from a clean standalone consumer.
+
+CogniRig is an intended consumer of this product-neutral boundary, not part of
+Orca's release implementation. CogniRig-specific code and acceptance remain in
+the CogniRig project and do not block the generic Orca Core V1 proof.
+
 ---
 
 ## Product Direction

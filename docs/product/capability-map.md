@@ -37,6 +37,39 @@ This ordering keeps future work clear:
 
 ---
 
+## Core MVP / V1 Release Milestone
+
+Development status: defined / not released.
+
+The first release milestone is the product-agnostic embedded Core proof. It
+collects existing capabilities without turning every planned capability into a
+V1 requirement.
+
+Completed milestone capabilities:
+
+- `auth-12` embedded auth and authenticated actor API;
+- `reference-core-01` stable public error contract;
+- `reference-core-03` product-neutral audit recording boundary;
+- `frontend-03` reusable React login composition and branding;
+- `frontend-04` product-neutral protected-session fixture lifecycle; and
+- `deployment-03` release tooling, artifact assembly, compatibility evidence,
+  and isolated staged-consumer verification.
+
+Open milestone capabilities and release proof:
+
+- one intake-approved `ORCA-OPS-01` outcome for safe structured logging and
+  correlation in the Minimal Consumer Fixture flow;
+- one explicitly authorized GitHub Packages publication of an unused exact
+  release version; and
+- authenticated retrieval and verification by a clean standalone consumer.
+
+Broader audit adoption, cross-context architecture hardening, runtime health,
+credential and account lifecycle, external identity, session renewal,
+Vue/Angular parity, production cloud deployment, and CogniRig-specific
+integration remain outside this milestone.
+
+---
+
 ## Track 1: Completed Organization Baseline
 
 Development status: completed baseline / currently stable.

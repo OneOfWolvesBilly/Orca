@@ -549,11 +549,14 @@ At implementation verification:
 - `auth-12` remains the public embedded behavior authority;
 - `docs/document-map.md` is checked and needs no change because its existing
   deployment spec and DDD patterns already cover deployment-03;
-- `docs/product/workflow-map.md`, `docs/product/capability-map.md`, and
-  `docs/slice-map.md` record the verified local release implementation and the
-  remaining GitHub Packages publication proof;
-- README status needs no change because public delivery is not implemented and
-  Orca remains not production-ready; and
+- `docs/product/orca-sa-baseline.md`, `docs/product/workflow-map.md`, and
+  `docs/product/capability-map.md` record the verified local release
+  implementation, its Core V1 milestone role, and the remaining GitHub Packages
+  publication proof;
+- `docs/slice-map.md` is checked and needs no change because this milestone
+  alignment does not add or renumber a behavior slice;
+- README records the Core V1 milestone while continuing to state that Orca is
+  under active development and the milestone is not released; and
 - the matching deployment-03 DDD remains aligned as the derived design
   authority.
 
