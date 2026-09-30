@@ -83,12 +83,18 @@ Boot consumer can obtain a versioned Orca backend artifact and use the public
 login, server-side session, authenticated-actor, error, audit, and bounded React
 reference surfaces without copying Orca source or importing internal packages.
 
-The successor slices for embedded auth, stable errors, reusable audit recording,
-React login composition, and the protected-session fixture are implemented. The
-milestone is not released yet because safe structured logging and correlation
-still require an authoritative slice, and the implemented GitHub Packages
-delivery must still complete an explicitly authorized publication followed by
-authenticated retrieval from a clean standalone consumer.
+The baseline slices for embedded auth, stable errors, reusable audit recording,
+React login composition, and the protected-session fixture are implemented.
+The reference-core-03 / deployment-03 repair now specifies the exact supported
+audit API and independent artifact consumer proof; its SDD and DDD are complete, with
+TDD, implementation and artifact verification pending. Repository-local
+audit tests do not prove standalone public consumption.
+
+Core V1 is not released: the audit delivery repair remains unfinished, safe
+structured logging and correlation require their own authoritative slice, and
+GitHub Packages delivery still requires explicitly authorized publication and
+authenticated retrieval from a clean standalone consumer. Staged candidate
+proof is separate from published-version evidence.
 
 CogniRig is an intended consumer of this product-neutral boundary, not part of
 Orca's release implementation. CogniRig-specific code and acceptance remain in

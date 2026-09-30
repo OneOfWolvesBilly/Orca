@@ -1,10 +1,150 @@
 # DDD Derivation - 03 Reusable Audit Recording Boundary
 
-Status: Approved / Implemented.
+Status: Baseline Approved / Implemented; public artifact audit amendment DDD complete / TDD pending.
 
 This note is **derived from**
 `docs/specs/reference-core/03-reusable-audit-recording-boundary.md`.
 It does not introduce new behavior.
+
+## Public Artifact Amendment Derivation (2026-09-29)
+
+Authority: the Public Artifact Audit Amendment in
+[reference-core-03](../../specs/reference-core/03-reusable-audit-recording-boundary.md)
+and the single consumer proof in
+[deployment-03](../../specs/deployment/03-versioned-backend-artifact-delivery.md).
+The user authorized DDD after SDD closeout. This derivation does not authorize
+TDD, implementation, publication or Git delivery by itself. The user
+subsequently authorized the SDD/DDD documentation commit followed by TDD;
+implementation and delivery remain separately gated.
+
+The single outcome remains independent artifact consumption of a valid audit
+record through an exact supported API and a consumer-provided recorder.
+Reference-core owns the support value and port. Deployment owns proving that
+contract across a versioned artifact boundary. No new aggregate, bounded
+context, shared event catalog, audit endpoint or persistence model is derived.
+
+### Model and Public Type Closure
+
+Retain the seven existing types in
+`io.github.oneofwolvesbilly.orca.referencecore.application` because the amended
+spec explicitly selects their public signatures. A new facade or package move
+would add compatibility work without closing a different requirement.
+
+| Type | Model role | Rule placement and allowed dependencies |
+| --- | --- | --- |
+| `AuditEventType` | workflow-owned identifier value | non-null/non-blank string in its canonical constructor; factory delegates; JDK only |
+| `AuditActorId` | workflow-owned actor identifier value | same structural rule; no auth lookup, role or identity inference |
+| `AuditOutcome` | workflow-owned result identifier value | same structural rule; no central outcome catalog |
+| `AuditMetadataEntry` | immutable string pair | non-null/non-blank key/value in constructor; no generic object value |
+| `AuditMetadata` | immutable collection value | defensive copy, reject null collection/entries and exact duplicate keys; expose immutable entries |
+| `AuditRecord` | complete immutable support envelope | require typed fields, caller `Instant`, metadata and non-blank optional identifiers when present; no external state |
+| `AuditRecorder` | application-facing outbound port implemented by consumer | `void record(AuditRecord)`; signature depends only on the support record, with no adapter technology |
+
+`AuditRecord` is a consistency boundary for construction, not a domain
+aggregate or transaction boundary. Its full constructor and both factories
+converge on the same invariant checks. The short factory represents omitted
+optional identifiers as null and omitted metadata as the empty value. Explicit
+null metadata is not equivalent to omission. Java record equality/hash-code
+semantics remain value semantics, not serialization or logging contracts.
+
+The public type graph closes over these seven types and JDK values such as
+`String`, `Instant`, `List` and `Collection`. Public constructors, factories,
+component accessors and port signatures must not force callers to name sibling
+application classes, framework annotations, internal exceptions or adapters.
+Only the seven named types are supported; the enclosing package is not public
+as a whole. Changes to their signatures follow deployment-03 compatibility
+rules rather than a package-placement recommendation.
+
+### Call Flow and Failure Placement
+
+```text
+Consumer typed fixture input
+  -> consumer-owned allowlisting mapper
+  -> public audit value construction (complete structural validation)
+  -> one explicit call to consumer-provided AuditRecorder
+  -> normal void return OR caller-observable recorder failure
+```
+
+Construction completes before the recorder is called. Failed construction
+therefore leaves invocation count at zero. The recorder interface is a port,
+not a validation proxy: a non-null valid record is the caller precondition,
+and an arbitrary consumer implementation cannot be claimed to be intercepted
+by Orca. Do not introduce a central use case, Spring auto-configuration,
+default recorder or decorator merely to enforce unsupported direct null calls.
+
+Preserve the specified Java failure categories: null structure rejects with
+`NullPointerException`; blank strings and duplicate metadata keys reject with
+`IllegalArgumentException`. Message wording is not a contract. Erased raw
+collection misuse is rejected during construction; its runtime exception
+message/type is not standardized beyond the spec's rejection invariant.
+
+One submission invokes the selected recorder once. Two explicit submissions
+remain two calls. This is not a delivery idempotency guarantee. A throwing
+recorder is observed by the consumer caller without core catching, retrying,
+buffering or converting it to a shared outcome. No choice is made about the
+success/failure of a future product operation when recording fails.
+
+### Consumer Mapping and Fixture Ownership
+
+The consumer mapper and recorder are outside the backend artifact. The
+standalone fixture is the deployment-owned verification host, not a new Orca
+business context. Its event identifier, constant outcome, synthetic actor,
+occurrence time and exact metadata allowlist are defined by deployment-03;
+this note does not invent alternatives to that mapping.
+
+The mapper receives a typed fixture input, builds only the authorized fields,
+and omits the confidential synthetic test detail. Assert the entire resulting
+record, not only absence of a suspicious key. Test each forbidden-data category
+using sentinel values and verify no value is copied into any output field.
+Real secrets, raw request/session objects and unrestricted maps are not mapper
+inputs. These tests prove this fixture's mapping, not every future consumer's
+semantic safety. Future consuming workflows still own their own mapper tests.
+
+Test recorders capture already-validated records or deliberately throw a
+sentinel failure. They remain fixture/test assets and are never added to Orca's
+published component. No auth/organization emission path, centralized store,
+transport or production adapter is derived.
+
+### Failure Set to Test Placement
+
+| Class | Detection and placement | Proof |
+| --- | --- | --- |
+| absent | public construction/default paths; consumer configuration requires explicit recorder | A1, A2; standalone wiring positive/negative cases |
+| null | each reachable public constructor/factory and metadata collection entry path; optional identifier absence remains valid | A2 plain tests and standalone zero-recorder-call cases |
+| blank | every required string, optional supplied identifier and metadata key/value | A2 constructor/factory matrix |
+| malformed | incompatible scalar/time arguments at Java compile boundary; erased metadata at runtime | A3 negative compilation and runtime rejection |
+| duplicate | metadata collection consistency checks; repeated record submissions remain separate | A2 duplicate keys with equal/different values; A4 invocation counts |
+| unsupported | exact public type/signature guard; arbitrary non-blank event/outcome identifiers remain supported | A1 positive custom identifiers; A3 supported/forbidden compilation |
+| untyped | raw collection constructor/factory paths with wrong, binary, nested or exception objects | A3 runtime tests; no generics-only waiver |
+| stale | artifact/version evidence belongs to deployment; supplied instant is preserved without age policy | A1 time preservation; D-AUDIT-4 |
+| unauthorized | consumer typed mapper excludes forbidden semantics; dependency guard rejects unsupported Orca types | A5 full-envelope assertions; A3 / D-AUDIT-1; no actor authorization rule |
+| unexpected | consumer recorder call exposes failure without core recovery; artifact linkage/startup failures belong to deployment | A4 exception and exact invocation count; D-AUDIT-3 / D-AUDIT-4 |
+
+### Verification Design and Next Layer
+
+| Spec proof | Derived test placement | Observable evidence |
+| --- | --- | --- |
+| A1 | standalone Spring consumer contract tests plus plain value tests | exact record/defaults, equality/hash values, custom identifiers, supplied instant, two interchangeable recorder implementations and missing-recorder rejection |
+| A2 | expand existing `AuditRecordTest`; repeat public consumption cases against artifact | every null/blank/duplicate path, optional defaults, immutable metadata despite input/output mutation, zero recorder calls on invalid construction |
+| A3 | plain raw-collection tests and standalone compile/dependency contract harness | allowed public signature graph uses only seven audit/JDK types; invalid scalar signatures fail compilation, erased invalid collections fail at runtime, forbidden dependencies fail guard |
+| A4 | existing `AuditRecorderTest` and standalone consumer recorder tests | void completion, one/two explicit submissions, observed sentinel exception and no extra calls |
+| A5 | standalone fixture typed-mapper tests | exact full envelope and single metadata allowlist; forbidden sentinel categories excluded from all fields |
+
+Support model and port tests stay plain JUnit without Spring. No artificial
+domain model or domain service is introduced to satisfy a layer label.
+Standalone host wiring uses Spring only at the fixture boundary; the same
+mapper/port path is directly testable without HTTP, credentials or a database.
+Deployment's derived note places artifact assembly, guard enforcement and
+staged/published verification. Backend unit tests alone never satisfy A1-A5's
+independent artifact requirement.
+
+DDD closeout: every amendment A1-A5 requirement and all ten failure classes
+have model, owner, rule and test placement. The seven-type API matches the
+spec; no global failure policy, semantic secret scanner, production storage or
+workflow adoption is added. The selected DELIVERY/ARCH/DOC portions continue
+at TDD after separate authorization; all other approved dispositions remain.
+DDD completion is not a claim that expanded tests, implementation, staged
+artifact proof or published-version proof have passed.
 
 ## Scope Ownership
 
@@ -137,7 +277,7 @@ domain event platform.
 
 ## Package Placement
 
-Recommended placement:
+Spec-defined public placement:
 
 ```text
 io.github.oneofwolvesbilly.orca.referencecore.application
@@ -150,9 +290,10 @@ Rationale:
 - It is not infrastructure.
 - It is not an auth or organization domain model.
 
-Implementation may introduce subpackages if the existing codebase pattern
-requires it, but the boundary must remain under `referencecore`, not a new
-bounded context.
+The seven public types retain these exact qualified names. The former
+sub-package flexibility is superseded by the public artifact amendment; a
+public package/signature change requires an authoritative compatibility
+decision. Internal types remain outside the supported consumer surface.
 
 ## Failure Policy
 

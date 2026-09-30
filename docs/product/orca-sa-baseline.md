@@ -79,34 +79,45 @@ The standalone consumer must not use an Orca checkout, repository-local install,
 copied source or JAR, internal-package import, direct Orca-table query, or
 product-specific shortcut.
 
-### Completed Milestone Components
+### Implemented Baseline Components
 
 - `auth-12` supplies the implemented embedded-auth entry point, protected
   command declaration, and authenticated actor boundary.
 - `reference-core-01` supplies the implemented stable API error contract.
 - `reference-core-03` supplies the implemented product-neutral audit envelope
-  and replaceable recording port.
+  and replaceable recording port. Its public artifact amendment SDD and DDD are complete;
+  TDD, expanded tests and independent audit consumer proof remain pending.
 - `frontend-03` supplies the implemented reusable React login composition and
   bounded branding contract.
 - `frontend-04` supplies the implemented product-neutral React fixture login,
   protected-command, expiry-coordination, and logout proof.
 - `deployment-03` supplies implemented release tooling, component assembly,
-  compatibility evidence, and isolated staged-consumer verification.
+  and isolated staged auth/migration verification. Its audit delivery repair
+  SDD and DDD are complete; audit proof and final release compatibility evidence remain
+  pending. Test-only staging is not published-version evidence.
 
 ### Open V1 Release Gates
 
-1. `ORCA-OPS-01` must be split through slice intake and complete the smallest
+1. The coordinated `reference-core-03` public-boundary amendment and
+   `deployment-03` delivery repair must complete TDD, implementation and
+   independent artifact audit verification. SDD and DDD are complete only. This is the
+   existing Core audit consumption outcome, not broader workflow audit adoption.
+2. `ORCA-OPS-01` must be split through slice intake and complete the smallest
    authoritative outcome that proves safe structured application logging and
    correlation across the Minimal Consumer Fixture flow. A production logging
    backend, metrics, tracing, dashboards, and alerting are not required.
-2. `deployment-03` must complete an explicitly authorized publication of one
+3. `deployment-03` must complete an explicitly authorized publication of one
    unused, exact, non-SNAPSHOT version to the Orca GitHub Packages Maven
    registry.
-3. A clean standalone consumer must retrieve that exact published version with
+4. A clean standalone consumer must retrieve that exact published version with
    external Maven credentials and pass the release verification matrix without
    an Orca checkout, repository-local install, copied source, or copied JAR.
-4. README, workflow, capability, specification status, verification evidence,
+5. README, workflow, capability, specification status, verification evidence,
    and planning continuity must agree before the milestone is marked released.
+
+Logging/correlation requires a later intake and sequencing decision before the
+final V1 candidate, including whether it changes the public artifact or consumer
+matrix. It is not a predecessor to the audit recording repair.
 
 The release version remains undecided until the authorized publication step.
 The Core V1 milestone name does not by itself select `1.0.0`, authorize package
@@ -114,13 +125,14 @@ publication, or authorize a tag, commit, merge, or push.
 
 ### Active Items That Do Not Block Core V1
 
-- `ORCA-AUDIT-01`: `reference-core-03` already proves the product-neutral
-  recording extension point required by the MVP. Concrete workflow adoption,
-  storage, lookup, retention, export, and transactional delivery remain later
-  workflow-specific outcomes.
-- `ORCA-ARCH-01`: the supported `auth-12` public boundary and `deployment-03`
-  consumer import proof satisfy the first embedded consumer. Broader
-  cross-context dependency enforcement remains architecture hardening.
+- `ORCA-AUDIT-01`: concrete workflow adoption, storage, lookup, retention,
+  export and transactional delivery remain later workflow-specific outcomes.
+  The implemented envelope/port alone does not prove standalone artifact audit
+  consumption; that narrow repair is an open gate above.
+- `ORCA-ARCH-01`: broader cross-context dependency enforcement remains
+  architecture hardening. Only the exact audit public type boundary and its
+  standalone consumer guard are included in the current delivery repair;
+  the earlier auth-only import proof cannot establish this audit outcome.
 - `ORCA-OPS-02`: production-grade health, readiness, liveness, metrics, and
   operational platforms are outside the original embedded Core proof.
 - Credential setup, account lifecycle, external identity, session renewal,
@@ -491,8 +503,8 @@ Required safety boundaries:
 
 ### Audit and Operational Support
 
-Status: reusable audit boundary implemented / broader audit workflow remains a
-gap.
+Status: reusable audit baseline implemented / public artifact amendment SDD/DDD
+complete, TDD and verification pending / broader workflow adoption remains a gap.
 
 Purpose:
 
@@ -514,9 +526,10 @@ Completed first auth-related slice:
 
 - `auth-10` login failure audit / troubleshooting reference
 
-Completed reference-core slice:
+Implemented reference-core baseline:
 
-- `reference-core-03` reusable audit recording boundary
+- `reference-core-03` reusable audit recording boundary; its public artifact
+  amendment has completed SDD and DDD, with TDD and subsequent layers pending.
 
 Unknown / to be discovered:
 

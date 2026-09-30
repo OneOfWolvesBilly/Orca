@@ -161,9 +161,10 @@ Explicit unknowns:
 
 ## Workflow: Embedded Core Authentication Consumption
 
-Status: embedded behavior and release tooling implemented / Core V1 not
-released because safe structured logging, GitHub Packages publication, and
-authenticated clean-consumer retrieval remain open gates.
+Status: embedded behavior and release tooling baseline implemented / public
+audit artifact repair SDD/DDD complete, TDD and subsequent layers pending / Core V1
+not released. Audit consumer proof, safe structured logging, GitHub Packages
+publication and authenticated clean-consumer retrieval remain open gates.
 
 Primary actor:
 
@@ -224,12 +225,15 @@ Approved delivery support:
 
 Core MVP / V1 alignment:
 
-- `auth-12`, `reference-core-01`, `reference-core-03`, `frontend-03`, and
-  `frontend-04` provide the completed public-boundary and fixture outcomes.
-- `deployment-03` release tooling and isolated staged-consumer verification are
-  implemented.
-- `ORCA-OPS-01` safe structured logging and correlation is the remaining
-  behavior-slice gate.
+- `auth-12`, `reference-core-01`, `frontend-03`, and `frontend-04` provide
+  implemented public-boundary and fixture outcomes.
+- `reference-core-03` has an implemented audit envelope/port baseline; its
+  owner-approved public artifact amendment SDD and DDD are complete, with TDD and
+  expanded verification pending.
+- `deployment-03` has implemented release tooling and staged auth/migration
+  verification. Its coordinated audit consumer repair SDD and DDD are complete only.
+- `ORCA-OPS-01` safe structured logging and correlation remains a separate
+  behavior gate requiring intake and sequencing before the final V1 candidate.
 - Explicitly authorized GitHub Packages publication and authenticated retrieval
   by a clean standalone consumer are the remaining external release gates.
 - CogniRig is an intended consumer, but its product-specific integration is not
@@ -237,6 +241,8 @@ Core MVP / V1 alignment:
 
 Known gaps:
 
+- implementation and standalone proof of the exact public audit contract in
+  reference-core-03 / deployment-03; next authorized layer decision is TDD;
 - separately authorized GitHub Packages publication and exact authenticated
   package retrieval proof;
 - safe structured logging and correlation through an authoritative slice.
@@ -534,8 +540,8 @@ Explicit unknowns:
 
 ## Workflow: Reusable Audit Recording Boundary
 
-Status: reusable boundary implemented / workflow-specific emission not yet
-adopted.
+Status: reusable baseline implemented / public artifact amendment SDD/DDD complete,
+TDD and standalone proof pending / workflow-specific emission not yet adopted.
 
 Primary actor:
 
@@ -581,12 +587,23 @@ Alternative / failure flows:
   policy selection belongs to a future workflow-specific audit-emission slice,
   not to one global rule in the core API.
 
-Implemented boundary slice:
+Implemented boundary baseline:
 
 - `reference-core-03` reusable audit recording boundary.
 
+Public artifact repair:
+
+- An independent Spring Boot consumer uses the seven exact owner-approved
+  audit types from a versioned artifact, a consumer-owned typed mapper and
+  consumer-provided recorder without copied source or unsupported dependencies.
+- Reference-core-03 owns the API and preserved validation/failure/safety rules;
+  deployment-03 owns independent artifact proof. SDD and DDD are complete; TDD,
+  implementation and staged/published verification are not complete.
+- No auth/organization audit adoption or logging/correlation is included.
+
 Known gaps:
 
+- independent public audit consumption through staged and published artifacts;
 - storage adapters
 - workflow-specific audit emission from auth or organization commands
 - audit lookup, retention, and access policy

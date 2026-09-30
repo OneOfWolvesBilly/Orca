@@ -45,18 +45,23 @@ The first release milestone is the product-agnostic embedded Core proof. It
 collects existing capabilities without turning every planned capability into a
 V1 requirement.
 
-Completed milestone capabilities:
+Implemented milestone baselines:
 
 - `auth-12` embedded auth and authenticated actor API;
 - `reference-core-01` stable public error contract;
-- `reference-core-03` product-neutral audit recording boundary;
+- `reference-core-03` product-neutral audit envelope and recording port
+  (repository-local baseline; standalone public consumption remains pending);
 - `frontend-03` reusable React login composition and branding;
 - `frontend-04` product-neutral protected-session fixture lifecycle; and
-- `deployment-03` release tooling, artifact assembly, compatibility evidence,
-  and isolated staged-consumer verification.
+- `deployment-03` release tooling, artifact assembly and isolated staged
+  auth/migration verification; final release compatibility evidence remains
+  pending.
 
 Open milestone capabilities and release proof:
 
+- the coordinated reference-core-03 / deployment-03 public audit repair:
+  SDD and DDD complete; TDD, implementation and standalone artifact proof
+  remain pending;
 - one intake-approved `ORCA-OPS-01` outcome for safe structured logging and
   correlation in the Minimal Consumer Fixture flow;
 - one explicitly authorized GitHub Packages publication of an unused exact
@@ -347,7 +352,8 @@ Existing slices:
 
 - `auth-10` for login failure audit/reference.
 - `reference-core-02` client diagnostics foundation is implemented.
-- `reference-core-03` reusable audit recording boundary is implemented.
+- `reference-core-03` reusable audit baseline is implemented; public artifact
+  amendment SDD and DDD are complete; TDD and expanded verification remain pending.
 - No dedicated general application logging or observability slice.
 
 Existing capabilities:
@@ -386,8 +392,11 @@ Sequencing notes:
 - Login failure audit is covered by the active auth track.
 - `reference-core-02` is available before frontend behavior displays a
   queryable client failure reference.
-- `reference-core-03` establishes the reusable audit boundary before auth or
-  organization workflows are migrated to it.
+- `reference-core-03` establishes the reusable audit baseline before auth or
+  organization workflows are migrated to it. The public artifact repair is
+  separate from that deferred workflow adoption.
+- Logging/correlation needs a separate intake and sequencing decision before
+  the final V1 candidate; it is not an audit repair predecessor.
 - General logging and observability are cross-cutting support capabilities.
 - Logs and audit must not store passwords, raw session cookie values, or
   credential secrets.
@@ -536,6 +545,9 @@ Approved delivery capability:
 
 Implementation gaps:
 
+- public audit artifact repair after completed SDD/DDD: TDD, implementation,
+  exact API/dependency guard, and standalone A1-A5 proof through staged and
+  published artifacts;
 - separately authorized GitHub Packages publication
 - exact authenticated package-coordinate retrieval from GitHub Packages
 - exact Java 21 and resolved MariaDB 11 verification evidence for the first
@@ -553,7 +565,8 @@ Implemented locally:
 Sequencing notes:
 
 - deployment owns delivery evidence but does not own packaged business rules.
-- TDD preceded release implementation and is green.
+- TDD preceded the baseline release implementation and is green. This is not
+  proof of the audit amendment; its next layer is TDD after authorization.
 - GitHub package upload and publication require separate user authorization and
   are not implied by implementation approval.
 - Frontend/npm delivery remains a separate outcome.

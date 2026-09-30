@@ -1,10 +1,186 @@
 # Deployment 03 - Versioned Backend Artifact Delivery
 
-Status: Approved / GitHub Packages implementation verified / publication proof pending.
+Status: Baseline GitHub Packages implementation verified; public audit delivery repair SDD and DDD complete / TDD pending; publication proof pending.
 
-## Slice Intake
+## Public Audit Delivery Repair (2026-09-29)
 
-Planning path: `select draft candidate`.
+Planning path: `continue current capability`.
+
+The user approved the repair intake at local main
+`ee169174615e12844776237ba42727c302ecbb3d`. One application developer can use
+an exact versioned Orca backend artifact in an independent Spring Boot consumer
+to construct a valid audit record through the formally supported public
+contract and submit it to a consumer-provided recorder, without copied Orca
+source or unsupported imports. This completes a gap in Core V1's existing
+Release Outcome; it is not a new workflow-adoption slice.
+
+### Evidence and Classification
+
+The baseline release tooling, standalone auth/migration fixture, and three-type
+import guard are implemented. The baseline guard passes precisely because the
+fixture uses only auth API types. It cannot establish public audit consumption.
+The reusable audit baseline is implemented and its nine local tests pass, but
+its seven types were outside this delivery spec's permitted direct imports.
+The observed local `1.2.6` JAR contains those classes, with source commit
+`90c7505d528d609cca75e2296f4e4f0670d0cdd1`, verified Java `22.0.2`, and database
+value `TEST-MATRIX-EVIDENCE`. It is historical test-only assembly evidence,
+not current-main, verified MariaDB, or published-release evidence.
+
+The repair requires two coordinated amendments for this single outcome:
+
+1. Reference-core-03 owns and explicitly names the supported audit API and
+   preserves its structural, sensitive-data, and recorder-failure behavior.
+2. Deployment-03 consumes that owner-approved API, limits consumer dependencies,
+   and proves the same contract through the artifact distribution boundary.
+
+Deployment must not derive an API from Java `public`, relax an entire package,
+or copy the validation rules. The reference-core-03 amendment is the required
+owner-side contract predecessor. Its SDD and DDD are complete;
+expanded tests and standalone implementation proof remain pending. No new
+credential, logging, storage, or auth/organization adoption predecessor is
+required. No new slice id or package architecture is selected.
+
+### Approved Intake Dispositions
+
+| Item | Approved disposition and retained remainder |
+| --- | --- |
+| ORCA-DELIVERY-01 | include now only audit artifact consumption; final publication/retrieval remains pending and frontend delivery remains deferred |
+| ORCA-ARCH-01 | include now only exact audit public dependency enforcement; broader cross-context architecture and package work remain active/deferred |
+| ORCA-DOC-01 | include now only this outcome's contract, evidence and lifecycle alignment; repository-wide reconciliation remains active/deferred |
+| ORCA-AUDIT-01 | defer concrete workflow adoption, storage, lookup, retention, export and outbox; these are not required predecessors and their non-blocking status does not prove artifact consumption |
+| ORCA-OPS-01 | defer logging/correlation to its own intake; still a separate V1 release gate, not an audit predecessor |
+| ORCA-SECURITY-01, ORCA-AUTH-CREDENTIAL-01 | defer encoding/migration and credential setup/recovery; no dependency from this audit outcome |
+| ORCA-AUTH-RENEWAL-01, ORCA-AUTH-LIFECYCLE-01, ORCA-AUTH-EXTERNAL-01 | defer independent auth outcomes; no new identity/session behavior is needed |
+| ORCA-DEPLOY-01, ORCA-OPS-02, ORCA-DEPLOY-FUTURE-01 | defer residual local exposure/preflight, health/metrics and production topology outcomes; no dependency from record submission |
+| ORCA-FRONTEND-OPS-01 | defer diagnostic reader UI; no dependency from audit recording |
+
+The selected shape is one behavior outcome. Target specs are this file and
+reference-core-03, not a new numbered slice. Intake decision: enter SDD.
+Unknowns retained: exact first published version and verified compatibility
+matrix; future production recorder/storage, readers, retention and event-level
+recovery policy. Consumer-specific choices do not become Orca defaults.
+
+### Independent Audit Consumer Proof
+
+The standalone fixture must retain its existing embedded-auth and migration
+regression checks. It additionally demonstrates audit use through a
+consumer-owned typed mapper and explicitly supplied recorder inside its Spring
+Boot host. This proof adds no HTTP audit endpoint and does not attach audit
+emission to auth login/logout or organization commands.
+
+The no-domain fixture mapping is explicitly bounded:
+
+- its typed input contains an opaque synthetic fixture actor identifier and an
+  `Instant` occurrence time, plus a confidential test-only detail used solely
+  to prove exclusion;
+- it maps event type `fixture.audit-recording`, outcome `completed`, the input
+  actor and instant, absent tenant/resource identifiers, and the single
+  metadata entry `source=standalone-fixture`;
+- the actor denotes the synthetic fixture action, not an assertion that a
+  caller is authenticated; it is not derived from a cookie or Orca table;
+- confidential input never enters any envelope field; tests use synthetic
+  sentinel values representing each forbidden data category in
+  reference-core-03, never real credentials or production data;
+- this fixture identifier/metadata choice belongs to the verification host,
+  not a centralized Orca event catalog or production product workflow; and
+- an additional full-envelope construction case proves optional identifiers
+  and immutable metadata are usable without unsupported helper types.
+
+A successful case proves the exact record arrives once at the selected
+consumer recorder. A second consumer recorder proves replaceability. Invalid
+construction proves zero recorder calls. A throwing recorder proves failure is
+observable at the consumer caller with one invocation and no Orca retry,
+suppression or fallback. A missing recorder cannot satisfy the proof; the
+fixture must explicitly provide one rather than rely on a core default.
+Reference-core-03 A1-A5 define the complete audit success/failure obligations.
+
+The audit proof must not depend on credential setup, hashing, schema queries,
+or login fixture seeding. Existing auth regression test setup is not a public
+audit integration mechanism and must not be copied into the audit path. The
+artifact's existing runtime dependencies do not imply that audit recording
+requires a database. No database-backed audit adapter is required.
+
+### Public Dependency and Artifact Evidence
+
+The approved direct dependency closure is the three auth types below plus the
+seven exact audit types enumerated by reference-core-03. Every supported audit
+signature must be usable with only these types and JDK types. No package-wide
+wildcard allowance, sibling application type, internal configuration name,
+reflection-based internal access, copied test utility or copied Orca source may
+satisfy the proof.
+
+The consumer guard must reject forbidden ordinary/static imports and fully
+qualified Orca source references in both main and test source. It must include
+negative fixtures proving rejection, including wildcard imports and an
+unapproved `referencecore.application` sibling, rather than only scan a
+currently conforming fixture. Passing compilation alone cannot certify that
+all dependencies are approved because internal classes remain in the JAR.
+
+The JAR, sources, Javadoc and version-specific compatibility evidence must
+identify the supported audit type closure consistently with this spec and
+reference-core-03. Publishing Javadoc for other packaged classes does not make
+them supported APIs. Artifact inventory must prove all seven audit classes are
+present, the consumer POM resolves the exact version, and no fixture/test
+recorder becomes a production artifact component. Guard tests and actual
+artifact-consumer tests are both required; neither replaces the other.
+
+| Evidence level | Required provenance and result | What it can establish |
+| --- | --- | --- |
+| repository-local | identified source state, existing/expanded audit unit contracts and existing reactor regressions | behavior and source boundary only; cannot prove independent artifact resolution |
+| staged artifact | candidate from an identified committed source, exact version, component/checksum and compatibility inventory, fixture outside reactor with a fresh Maven repository, A1-A5 plus existing auth/migration checks | pre-publication independent consumption only; file staging is allowed here and is not formal availability |
+| published version | explicitly authorized unused immutable version from canonical GitHub Packages, external consumer-owned credentials, fresh Maven repository, same provenance/inventory and consumer matrix | final delivery acceptance; no checkout, local install, copied source/JAR or staging fallback |
+
+Release evidence must bind source commit, coordinate, artifact integrity,
+verified runtimes, consumer results and evidence level. Old reports, cached
+artifacts, placeholder compatibility values and test-only versions cannot be
+promoted into published evidence. No public version is selected by this SDD.
+
+### Repair Verification Mapping and Failure Set
+
+| Proof | Normative outcome | Required future evidence |
+| --- | --- | --- |
+| D-AUDIT-1 | only owner-approved audit API is consumed | allowlist/signature review, positive independent compilation, negative source dependency guard including static/FQN/wildcard cases |
+| D-AUDIT-2 | complete usable artifact | binary/source/Javadoc/POM inventory and versioned public API evidence; omitted audit class or mismatched version fails proof |
+| D-AUDIT-3 | valid record, replaceable consumer recorder, validation before recording, immutable metadata, semantic safety, observable failure | standalone artifact consumer A1-A5 matrix from reference-core-03 at staged and published levels |
+| D-AUDIT-4 | provenance and evidence levels cannot be confused | clean-repository dependency resolution, checksum/source/version comparisons; fail on missing, stale, duplicate, corrupt or substituted artifact; no fallback to local install |
+| D-AUDIT-5 | unchanged auth, error and migration behavior | existing reactor and standalone suites plus exact verified Java/MariaDB release matrix; H2 fixture success alone is not MariaDB proof |
+
+All ten classes in Runtime And Public Failure Set remain applicable. The audit
+record/submission boundary additionally uses reference-core-03's complete
+failure table: absent/null/blank construction, malformed/unsupported/untyped
+values, duplicate metadata, stale artifact, unauthorized dependencies/unsafe
+mapping, and unexpected recorder failure. This does not add event freshness,
+idempotency, authorization, or a global fail-open/fail-closed rule. Unauthorized
+GitHub retrieval uses reproducible redacted evidence; external outage retains
+the existing explicit exception and never permits an availability claim.
+
+### SDD Closeout and Next Required Layer
+
+SDD closeout (2026-09-29) reconciles the selected portions of
+ORCA-DELIVERY-01, ORCA-ARCH-01 and ORCA-DOC-01 against the single outcome,
+owner/API closure, A1-A5 and D-AUDIT-1 through D-AUDIT-5, all ten failure classes,
+non-goals and affected documents. ORCA-AUDIT-01 and all other deferred items
+retain their recorded reasons and remain active. Broad clusters are not
+promoted or tombstoned by this partial selection.
+
+The repair SDD and subsequently authorized DDD are complete; TDD is the next
+layer requiring authorization.
+Baseline implementation evidence remains valid only for its original scope.
+The repair, complete delivery and Core V1 release are not implemented/complete
+by these documents. The matching DDD notes derive the public model, consumer
+composition, dependency guards, artifact evidence and test placement. The user subsequently authorized the SDD/DDD documentation commit and TDD.
+Implementation, integration, publication, tagging and push remain unauthorized.
+
+Before a final Core V1 candidate, logging/correlation requires separate intake
+and an explicit sequencing decision: determine whether that slice affects the
+public API, artifact or consumer matrix, and incorporate any required changes
+before final release verification. Logging is not an audit repair predecessor
+and is not included in this repair.
+
+## Original Delivery Intake and Amended Contract
+
+Original delivery planning path: `select draft candidate`. The current audit
+repair follows `continue current capability` above.
 
 Slice candidate:
 
@@ -35,7 +211,8 @@ Successful outcome:
 
 - The developer declares one exact, non-SNAPSHOT Orca dependency from the Orca
   GitHub Packages Maven registry and uses the supported `auth-12` embedded-auth
-  public API in an independently built Spring Boot application.
+  public API and the reference-core-03 public audit contract in an independently
+  built Spring Boot application.
 - The consumer neither copies Orca source nor imports an Orca internal package.
 
 Failure flows:
@@ -62,14 +239,16 @@ Existing supported slices:
 
 Planned predecessor slices:
 
-- None. The behavior and public API consumed by this delivery slice are
-  already authoritative and implemented.
+- Original auth delivery predecessors are implemented. The audit repair also
+  requires the reference-core-03 owner amendment above; its SDD and DDD are complete,
+  while TDD, expanded verification and independent audit proof remain pending.
 
 Dependency owners:
 
 - Auth owns embedded login, logout, protected-command, session, and actor
   behavior.
-- Reference-core owns stable public error responses.
+- Reference-core owns stable public error responses and the public audit
+  contract, structural validation, and recorder-failure boundary.
 - Each Orca bounded context owns the code and resources it contributes to the
   backend module.
 - The approved `deployment` support scope owns packaging, publication,
@@ -98,6 +277,8 @@ Allowed public boundaries:
 - `io.github.oneofwolvesbilly.orca.auth.api.EnableOrcaEmbeddedAuth`
 - `io.github.oneofwolvesbilly.orca.auth.api.OrcaProtectedCommand`
 - `io.github.oneofwolvesbilly.orca.auth.api.AuthenticatedActor`
+- The seven exact audit types enumerated under Exact Supported Audit API in
+  `reference-core-03`; no other `referencecore.application` type is approved.
 - Existing auth HTTP endpoints and the `ORCA_SESSION` contract only as defined
   by their authoritative auth specs.
 
@@ -141,14 +322,15 @@ Non-goals:
 - Combined backend and frontend distribution delivery.
 - Treating the whole `ORCA-DELIVERY-01` problem cluster as one slice.
 
-Overlapping active handoff items:
+Original delivery intake overlap (historical; the approved audit repair
+dispositions above govern the selected repair):
 
 - `ORCA-DELIVERY-01`: include only its backend artifact outcome now.
 - `ORCA-ARCH-01`: overlap exists at the supported-public-versus-internal import
   boundary; defer its broader package-enforcement outcome because the
   `auth-12` API already supplies the required public boundary.
 - `ORCA-SECURITY-01`: not included; artifact delivery neither adds nor changes
-  the log-redaction behavior tracked there.
+  the credential encoding and migration behavior tracked there.
 - `ORCA-DOC-01`: not included; this spec records its own consumer contract but
   does not take ownership of repository-wide documentation discovery.
 
@@ -162,11 +344,12 @@ Handoff disposition:
 
 Candidate shape: single behavior.
 
-Target spec:
+Original delivery target (the current repair amends the two existing specs
+named above):
 
-- New numbered spec:
+- Original numbered spec:
   `docs/specs/deployment/03-versioned-backend-artifact-delivery.md`.
-- Matching future DDD:
+- Matching DDD (audit amendment derivation complete; TDD pending):
   `docs/ddd/deployment/03-versioned-backend-artifact-delivery.md`.
 - Do not amend `auth-12`: auth owns the already-complete public behavior;
   deployment-03 owns formal delivery of that behavior.
@@ -176,9 +359,9 @@ Decision: enter SDD.
 ## Goal
 
 Allow an application developer in an independent project to declare one exact,
-released Orca backend dependency from GitHub Packages and start the supported
-embedded-auth public boundary without copying Orca source or importing Orca
-internal packages.
+released Orca backend dependency from GitHub Packages, start the supported
+embedded-auth boundary, and use the supported reusable audit contract without
+copying Orca source or importing unsupported Orca types.
 
 This is a delivery-support behavior slice. It makes existing Orca behavior
 consumable; it does not add or reinterpret auth, reference-core, organization,
@@ -261,10 +444,11 @@ The artifact may contain the current backend module's implementation classes,
 adapters, auto-configuration metadata, and Flyway migrations required to run
 the already-supported Orca behavior.
 
-Packaging a class does not make that class public API. The supported embedded
-integration API for this slice is limited to the three `auth.api` types listed
-under Allowed public boundaries. Existing HTTP contracts remain public only
-through their own authoritative specs.
+Packaging a class does not make that class public API. Direct source-level
+integration is limited to the three named `auth.api` types and the seven audit
+types explicitly approved by reference-core-03. This supersedes the former
+auth-only restriction without opening either entire package. Existing HTTP
+contracts remain public only through their own authoritative specs.
 
 The artifact must not contain:
 
@@ -283,6 +467,7 @@ The artifact must not contain:
 | protected session resolution | auth | `auth-09` | auth-owned resolution invoked by the embedded boundary | regression tests |
 | logout and revocation | auth | `auth-11` | existing logout HTTP contract | regression tests |
 | stable rejection response | reference-core | `reference-core-01` | existing API error contract | regression tests |
+| public audit construction and recording | reference-core | reference-core-03 baseline and public artifact amendment | seven exact audit types; consumer-supplied recorder | A1-A5 and D-AUDIT-1 through D-AUDIT-5; amendment proof pending |
 | artifact classes and resources | contributing Orca scopes | their current authoritative specs | packaged implementation behind approved public APIs | content inventory and test suite |
 | artifact packaging and delivery | `deployment` support scope | this spec | GitHub Packages Maven coordinate | staging and authenticated retrieval proofs |
 | build/release mechanism | `deployment` support scope | this spec | repeatable release command/workflow; secrets remain external | clean build, validation, and release evidence |
@@ -317,12 +502,15 @@ The consumer may:
 - annotate a supported command handler with `@OrcaProtectedCommand`;
 - receive `AuthenticatedActor` at that handler boundary;
 - call the existing login and logout HTTP boundaries; and
-- provide application-owned datasource and external runtime values.
+- provide application-owned datasource and external runtime values; and
+- construct audit records and implement a recorder using only the seven
+  owner-approved audit types, under reference-core-03.
 
 The consumer must not:
 
-- import any Orca package except the approved `auth.api` package for direct
-  source-level integration;
+- directly depend on any Orca type outside the three named auth types and
+  seven owner-approved audit types, including through static imports or fully
+  qualified references;
 - scan or instantiate Orca internal configuration classes by name;
 - parse or persist `ORCA_SESSION` itself;
 - copy Orca Java source or migration files;
@@ -379,7 +567,7 @@ record containing:
 - supported Spring Boot version or bounded version range;
 - supported database product and verified versions;
 - supported migration starting states;
-- the public embedded-auth API surface; and
+- the public embedded-auth and reusable audit API surfaces; and
 - known unsupported combinations.
 
 The initial implementation baseline is Java release level 21, Spring Boot
@@ -445,12 +633,15 @@ The final proof must build a standalone consumer that:
 - uses the Orca GitHub Packages Maven registry as the only Orca artifact
   source;
 - pins the exact released Orca version;
-- imports only the three approved `auth.api` types;
+- depends directly only on the three named auth API types and seven exact
+  audit types approved by reference-core-03;
 - provides its own datasource and runtime values;
 - allows packaged Flyway migrations to establish Orca-owned schema;
 - starts the public embedded-auth entry point;
 - verifies login, protected actor resolution, logout, and post-logout
-  rejection; and
+  rejection;
+- proves the public audit outcome and reference-core-03 A1-A5 without audit
+  adoption in auth or organization workflows; and
 - records dependency resolution and test results without printing secrets.
 
 A pre-publication standalone fixture may resolve the release candidate from a
@@ -488,7 +679,9 @@ public inputs, so it requires explicit runtime coverage.
 4. A clean standalone consumer retrieves the artifact without an Orca checkout,
    repository-local install, copied source, or copied JAR; GitHub credentials
    are supplied only through external Maven settings.
-5. Consumer source imports only the three approved `auth.api` types.
+5. Consumer source depends directly only on the three named auth types and
+   the seven exact audit types approved by reference-core-03. D-AUDIT-1 guards
+   the complete source dependency boundary, not just ordinary imports.
 6. The consumer starts `@EnableOrcaEmbeddedAuth`, declares one supported
    `@OrcaProtectedCommand`, and receives exactly one `AuthenticatedActor`.
 7. Existing login, actor resolution, logout, rejection, and session behavior
@@ -501,6 +694,10 @@ public inputs, so it requires explicit runtime coverage.
     session values, or consumer secrets.
 11. Frontend/npm delivery and CogniRig-specific integration remain outside the
     release contract.
+12. The independent consumer constructs valid records, supplies replaceable
+    recorders, and proves reference-core-03 A1-A5 from the exact artifact.
+13. D-AUDIT-1 through D-AUDIT-5 distinguish repository-local, staged and
+    published evidence and bind the public audit API to that release.
 
 ## Verification Mapping
 
@@ -511,7 +708,8 @@ public inputs, so it requires explicit runtime coverage.
 | GitHub Packages publication is valid | explicit Maven deploy plus exact authenticated package retrieval |
 | isolated consumer obtains dependency | standalone project with clean local Maven repository and no Orca checkout |
 | no copied Orca source or JAR | fixture content/path assertion and build provenance inspection |
-| no internal imports | source/import scan plus compile rule that permits only approved `auth.api` imports |
+| no unsupported Orca dependencies | D-AUDIT-1 allowlist, positive compilation and negative dependency guards; only the three auth and seven audit types |
+| public audit outcome | reference-core-03 A1-A5 and D-AUDIT-2 through D-AUDIT-5 at staged and published evidence levels |
 | public embedded-auth entry point starts | standalone consumer startup/integration test |
 | login and actor resolution are unchanged | existing auth-08/auth-09/auth-12 tests plus standalone happy path |
 | logout and rejection are unchanged | existing auth-11/reference-core tests plus standalone post-logout rejection |
@@ -541,7 +739,18 @@ must not receive the publication credential.
 
 ## Affected And Superseded Documents
 
-At implementation verification:
+For the public audit repair, README, product baseline, workflow/capability
+maps, slice map and the private handoff distinguish baseline implementation
+from completed repair SDD/DDD and pending TDD/verification. Both DDD notes now
+derive the amendment without changing its behavior. Document-map and constraints require no change because
+authority, scope and layer order are unchanged. The auth-only direct-consumer
+restriction in this spec is replaced by the exact owner-approved audit
+allowlist; audit structure/failure/sensitivity rules remain in reference-core-03.
+No auth or organization specification is superseded.
+
+Original implementation verification record (historical baseline only; the
+repair status and affected-document decisions above supersede these status
+claims for audit delivery):
 
 - this new deployment-03 spec is added;
 - `docs/drafts/slice-planning-handoff.md` records the intake disposition;
@@ -590,7 +799,9 @@ TDD and release implementation were explicitly authorized and verified on
 - closing or tombstoning `ORCA-DELIVERY-01` before GitHub package publication
   and authenticated retrieval evidence exists.
 
-The next required release proof is a candidate built from a committed source
-state with exact verified Java and MariaDB versions. GitHub Packages publication
+The next repair layer is TDD after separate authorization. After repair TDD,
+implementation and verification, the remaining release proof requires a
+candidate built from a committed source state with exact verified Java and
+MariaDB versions, including public audit consumption. GitHub Packages publication
 and authenticated package retrieval still require separate explicit
 authorization.

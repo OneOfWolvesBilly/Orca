@@ -1,10 +1,189 @@
 # DDD - Deployment 03 - Versioned Backend Artifact Delivery
 
-Status: Approved / GitHub Packages implementation verified / publication proof pending.
+Status: Baseline GitHub Packages implementation verified; public audit delivery repair DDD complete / TDD pending; publication proof pending.
 
 This note is derived from the approved contract in
 `docs/specs/deployment/03-versioned-backend-artifact-delivery.md`.
 It must not introduce behavior beyond that spec.
+
+## Public Audit Delivery Derivation (2026-09-29)
+
+This repair derives only the Public Audit Delivery Repair in
+[deployment-03](../../specs/deployment/03-versioned-backend-artifact-delivery.md)
+and consumes the Exact Supported Audit API in
+[reference-core-03](../../specs/reference-core/03-reusable-audit-recording-boundary.md).
+DDD was explicitly authorized after the single-outcome intake and SDD closeout.
+The user subsequently authorized the SDD/DDD documentation commit followed by
+TDD. Implementation, integration and release mutations remain unauthorized.
+
+### Ownership and Component Placement
+
+| Component | Owner and placement | Spec obligation |
+| --- | --- | --- |
+| seven audit types | existing backend `referencecore.application`; no rename or extraction | reference-core-03 owns structure, signatures, failures and semantic responsibility |
+| consumer typed fixture input and mapper | standalone `deploy/backend-artifact/consumer-fixture`; no backend production dependency on fixture | A1, A5 / D-AUDIT-3 |
+| consumer recorder implementations and wiring | fixture-owned test configuration and test assets | A1, A4; explicit recorder, no Orca default |
+| audit contract tests | backend plain support tests plus standalone artifact consumer tests | A1-A5; local tests do not replace artifact consumption |
+| exact public dependency guard | deployment verification tooling, exercised by its contract tests | D-AUDIT-1; source access limited to three auth and seven audit types |
+| artifact/API inventory and compatibility metadata | existing release profile and verification tooling | D-AUDIT-2, D-AUDIT-4 |
+| existing auth/migration proof | retained standalone consumer suite and release runtime matrix | D-AUDIT-5; no audit adoption or migration change |
+
+The consumer fixture remains outside the root Maven reactor with its own
+Spring Boot parent and exact Orca dependency. It does not depend on backend
+test classes or copy `RecordingAuditRecorder` from Orca. Fixture-owned recorder
+implementations are newly written test doubles against the approved interface,
+not production storage adapters.
+
+### Audit Fixture Composition
+
+Use a separate audit test configuration/path inside the existing standalone
+fixture so audit tests do not inherit the auth test class's database seeding,
+credential hashing or HTTP request setup. Spring hosts explicit consumer beans
+for the typed mapper/caller and selected recorder; no new Orca annotation or
+auto-configuration is needed. Tests invoke this consumer path directly.
+Use an audit-only Boot test application with explicit consumer configuration,
+without embedded-auth enablement, and restrict auto-configuration so datasource
+and Flyway startup are not prerequisites of that audit test context. Do not
+change the existing embedded-auth application or its runtime configuration.
+The existing embedded-auth application and migration tests remain regression
+proof and may still need their existing datasource. Their dependencies are not
+requirements of the audit API or the audit test path.
+
+The typed fixture input carries the SDD's synthetic actor id, `Instant`, and
+confidential test detail. Its mapper builds exactly:
+
+```text
+eventType = fixture.audit-recording
+actorId = input synthetic actor
+occurredAt = input instant
+outcome = completed
+tenantId/resourceType/resourceId = absent
+metadata = { source: standalone-fixture }
+```
+
+The confidential detail is never forwarded. A full-envelope test separately
+exercises optional identifiers and metadata. Avoid logging the input or record
+as a way to assert safety; compare values in memory. Synthetic secret sentinels
+are test data, not package credentials or real sessions.
+
+The consumer caller constructs first and calls its supplied recorder second.
+A recording double captures the exact immutable record; a second independent
+double proves replacement; a throwing double exposes a sentinel exception and
+counts calls before throwing. Invalid construction results in zero calls. The
+fixture's explicit required-recorder wiring has a negative test with the bean
+omitted; startup/configuration failure belongs to this fixture, not a new
+Orca-wide startup rule. No no-op fallback is installed.
+
+### Dependency Guard Design
+
+Represent the supported surface as an exact qualified-type allowlist: the
+three existing auth types plus the seven reference-core audit types. Audit
+membership is derived from the owner spec, not from scanning all `public`
+classes. Keep a drift check tying the guard, artifact inventory and compatibility
+API record to that same expected set.
+
+Inspect both consumer main and test Java source. A Java syntax/symbol-aware
+check should resolve referenced Orca type owners rather than rely only on a
+line-start import regular expression. This covers named imports, static member
+imports and fully qualified references, while comments and string literals do
+not accidentally become imports. Wildcard Orca imports are rejected per SDD.
+Positive cases include named allowed imports, allowed static factories and
+allowed fully qualified references. Negative fixtures cover forbidden sibling
+application types, auth/organization internals, wildcard imports and static/FQN
+forms. Deliberately invalid snippets belong to guard test data, outside the
+accepted consumer source tree.
+
+The runner gates the copied standalone consumer source before claiming a
+successful build. The test harness also compiles positive supported signatures
+against the resolved artifact and requires invalid scalar/time/metadata
+signatures to fail. Distinguish an expected snippet diagnostic from an absent
+compiler, unresolved Orca artifact or broken harness: tooling/setup failure
+cannot count as a passing negative test. Compiler diagnostics are evidence,
+not a new public error API.
+
+Compilation alone is insufficient because forbidden classes can be physically
+present. Conversely, a passing source guard does not prove binary/API
+compatibility. Both checks are required before the consumer result is accepted.
+Reflection/internal-name access is unsupported by the spec and is excluded
+from the fixture by source/provenance review; do not claim a source guard is a
+security sandbox for arbitrary consumer programs.
+
+### Artifact and Evidence Design
+
+Extend the existing component inventory to include all seven exact audit class
+entries, their source/Javadoc representation and the exact resolved consumer
+POM. Include an `audit.public-api` entry in the generated compatibility record,
+listing the seven qualified type names; compare it with the expected supported
+set in verification. This is delivery metadata, not a new runtime input or
+audit behavior. Preserve the existing embedded-auth metadata and compatibility
+policy. Other packaged/Javadoc types remain unsupported for direct integration.
+
+Run the same audited consumer sources and A1-A5 matrix at staging and formal
+retrieval. Copy source/resources/POM only into a fresh workspace; exclude old
+`target` output, reports and cached class files. Use a fresh Maven repository
+and an explicit exact coordinate. The copied project's compile/runtime paths
+must not point into the Orca checkout. Do not allow an old passing report,
+repository-local install or copied JAR to satisfy the artifact proof.
+
+| Evidence | Assembly and checks | Claim boundary |
+| --- | --- | --- |
+| repository-local | expanded plain model/port tests, guard tests and reactor regressions identified by source state | local behavior only |
+| staged artifact | committed source candidate, ordinary JAR/POM/sources/Javadoc, checksums, API and compatibility inventory, fresh external fixture/cache, A1-A5 and auth/migration suites | pre-publication consumption only |
+| published version | explicitly authorized immutable version, canonical authenticated GitHub resolution with external settings, matching integrity/provenance and the same fixture matrix | final artifact delivery proof |
+
+Record exact Java/Spring Boot/database versions with the result. H2 consumer
+success and the old `TEST-MATRIX-EVIDENCE` value cannot prove MariaDB support.
+A version-only compatibility assertion is insufficient without the matching
+runtime result. No repository token or settings contents enter reports.
+
+### Failure and Verification Placement
+
+| Class | Detection placement | Evidence/result |
+| --- | --- | --- |
+| absent | missing artifact/API member/runtime evidence, required audit fields or fixture recorder | D-AUDIT-2/4 and A1/A2; fail the current proof before claiming availability |
+| null | audit constructors/factories and existing runtime configuration tests | A2 plus original deployment matrix; no null-to-empty coercion except specified omission |
+| blank | audit identifiers/metadata and version/configuration validators | A2 and original deployment matrix |
+| malformed | invalid Java calls, raw metadata, unreadable archive/POM/integrity | A3 and D-AUDIT-2/4; reject before accepted consumer result |
+| duplicate | metadata keys, artifact/version/provider ambiguity | A2 and D-AUDIT-4 plus existing provider checks; no audit deduplication policy |
+| unsupported | exact source dependency allowlist, signature graph, declared runtime matrix | D-AUDIT-1/5 and A3; no package-wide support claim |
+| untyped | erased collections and existing shell/XML/environment boundaries | A3 runtime cases and release validation tests |
+| stale | source/GAV/checksum comparison and clean consumer workspace/cache | D-AUDIT-4; preserve caller time without adding event freshness rules |
+| unauthorized | forbidden type dependencies, unsafe mapper fields, denied package access | D-AUDIT-1, A5, redacted external denial proof; no new role policy |
+| unexpected | recorder exception, compiler/harness/linkage/resolution/startup failure | A4 / D-AUDIT-3/4; observable failure, failed release stage, no global fallback |
+
+| Spec proof | Derived verification placement |
+| --- | --- |
+| D-AUDIT-1 | release contract suite plus source/symbol guard positive and negative fixtures; standalone compilation uses the resolved artifact |
+| D-AUDIT-2 | release component inventory and compatibility metadata assertions, including missing-class and inconsistent-API negatives |
+| D-AUDIT-3 | separate standalone audit test path implementing reference-core-03 A1-A5; includes recorder replacement/failure and exact safe mapper output |
+| D-AUDIT-4 | verifier orchestration tests and actual staged/published retrieval; controlled missing/corrupt/substituted artifacts and source/version/checksum mismatches |
+| D-AUDIT-5 | existing reactor/standalone auth/error/migration suites and verified Java/MariaDB matrix |
+
+Remote denial uses reproducible redacted evidence under the existing spec.
+The external outage exception remains unchanged: it cannot deterministically
+be injected into GitHub, and release availability stays unclaimed until a
+successful retry/retrieval. Audit behavior has no manual-only waiver.
+
+### DDD Closeout and Sequencing
+
+The design covers the seven-type owner contract, one independent consumer
+outcome, A1-A5 and D-AUDIT-1 through D-AUDIT-5, all ten failure classes and
+three evidence levels. It supersedes the former auth-only consumer dependency
+list in this note. No product event catalog, auth/organization emission,
+production recorder, audit database/query/retention/export/outbox, logging,
+credential migration, React publication or CogniRig integration is introduced.
+
+Selected DELIVERY/ARCH/DOC portions are aligned; unrelated portions and all
+other approved deferred items remain active. Both specs, README, product maps,
+slice map and the canonical ignored handoff record DDD complete / TDD pending.
+This is design completion only. Next authorized-layer decision is TDD; begin
+with plain support-boundary tests, then fixture/build contract tests before
+implementation. No new domain model requires a separate domain slice.
+
+Logging/correlation still requires its own intake and sequencing decision
+before the final V1 candidate. Publication/retrieval still requires separate
+authorization and exact release evidence. No commit, merge, push or tag is
+performed by completing this DDD.
 
 ## Purpose
 
@@ -16,7 +195,7 @@ behavior.
 The single actor-visible outcome remains:
 
 - an application developer declares one exact Orca release from GitHub Packages
-  and uses the approved embedded-auth API without an Orca checkout, copied
+  and uses the approved embedded-auth and audit APIs without an Orca checkout, copied
   source, copied JAR, or internal-package import.
 
 ## Scope Classification
@@ -276,7 +455,7 @@ repository-generated integrity metadata
 
 The release verifier inspects the binary JAR and rejects:
 
-- missing `io/github/oneofwolvesbilly/orca/auth/api` classes;
+- missing approved auth API classes or any of the seven audit classes;
 - missing Spring auto-configuration metadata;
 - missing or reordered `db/migration` resources;
 - fixture classes, test classes, local environment files, credentials, or
@@ -309,6 +488,7 @@ database.verified-versions
 migration.current
 migration.supported-starts
 embedded-auth.public-api
+audit.public-api
 unsupported-combinations
 ```
 
@@ -336,13 +516,16 @@ It has:
 - an exact Orca version supplied by the verifier;
 - one repository URL supplied by the verifier;
 - its own Spring Boot application and datasource values;
-- direct imports limited to `EnableOrcaEmbeddedAuth`,
-  `OrcaProtectedCommand`, and `AuthenticatedActor`;
+- direct source dependencies limited to `EnableOrcaEmbeddedAuth`,
+  `OrcaProtectedCommand`, `AuthenticatedActor`, and the seven exact audit types
+  approved by reference-core-03;
 - one product-neutral protected command; and
 - integration tests for login, actor resolution, logout, and post-logout
-  rejection.
+  rejection; and
+- separate public audit consumption tests for A1-A5 without auth test seeding.
 
-The verification runner copies only the fixture into a temporary directory and
+The verification runner copies only fixture source/resources/POM, excluding
+generated output and cached reports, into a temporary directory and
 creates a second temporary directory for `maven.repo.local`. It must validate
 both directories before cleanup and must never use a workspace root, `$HOME`,
 or unresolved broad path as a cleanup target.
@@ -408,9 +591,10 @@ not restate or implement those rules.
 
 ### Reference-core rules
 
-Reference-core remains authoritative for stable API errors. Delivery tests may
-assert the existing public result but must not introduce a release-specific
-error envelope.
+Reference-core remains authoritative for stable API errors and the public
+audit contract. Delivery tests consume the exact seven audit types and preserve
+its construction, recorder failure and sensitive-data responsibility rules;
+they must not introduce a release-specific audit policy or error envelope.
 
 ### Consumer rules
 
@@ -435,7 +619,7 @@ Release orchestrator
 Independent Consumer Fixture
   -> Maven repository boundary
   -> io.github.oneofwolvesbilly:orca:<exact-version>
-  -> auth.api public boundary
+  -> exact approved auth and audit public types
   -> packaged Orca implementation
 
 Packaged Orca implementation
@@ -451,8 +635,9 @@ No production source dependency may point from Orca into
 
 ## Test Layer Placement
 
-No domain or application test is added because this slice introduces no domain
-or use-case rule.
+No new domain model or use-case rule is introduced. The audit amendment extends
+plain support-model/port contract tests under reference-core and standalone
+consumer/build tests under deployment, as mapped above.
 
 Maven/build contract tests validate:
 
@@ -604,7 +789,7 @@ can be reviewed without inferring versions from the current source tree.
 - No token, package upload, publication, tag, commit, merge, or
   push authorization.
 
-## DDD Closeout Evidence
+## Baseline DDD Closeout Evidence
 
 DDD closeout on 2026-09-13 confirmed:
 
