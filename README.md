@@ -86,9 +86,10 @@ reference surfaces without copying Orca source or importing internal packages.
 The baseline slices for embedded auth, stable errors, reusable audit recording,
 React login composition, and the protected-session fixture are implemented.
 The reference-core-03 / deployment-03 repair now specifies the exact supported
-audit API and independent artifact consumer proof; its SDD and DDD are complete, with
-TDD, implementation and artifact verification pending. Repository-local
-audit tests do not prove standalone public consumption.
+audit API and independent artifact consumer proof. Its implementation and local
+verification now pass, including a real standalone consumer of the development
+artifact. Committed staged verification, exact runtime evidence and published
+retrieval remain pending; development assembly is not release evidence.
 
 Core V1 is not released: the audit delivery repair remains unfinished, safe
 structured logging and correlation require their own authoritative slice, and

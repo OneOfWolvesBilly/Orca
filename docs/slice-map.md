@@ -92,7 +92,7 @@ frontend business rules.
 | --- | --- | --- | --- |
 | `reference-core-01` | [Stable API Error Contract](specs/reference-core/01-stable-api-error-contract.md) | [DDD](ddd/reference-core/01-stable-api-error-contract.md) | Done |
 | `reference-core-02` | [Client Diagnostics Foundation](specs/reference-core/02-client-diagnostics-foundation.md) | [DDD](ddd/reference-core/02-client-diagnostics-foundation.md) | Done |
-| `reference-core-03` | [Reusable Audit Recording Boundary](specs/reference-core/03-reusable-audit-recording-boundary.md) | [DDD](ddd/reference-core/03-reusable-audit-recording-boundary.md) | Baseline Done / Public Artifact Amendment SDD and DDD Complete / TDD Pending |
+| `reference-core-03` | [Reusable Audit Recording Boundary](specs/reference-core/03-reusable-audit-recording-boundary.md) | [DDD](ddd/reference-core/03-reusable-audit-recording-boundary.md) | Approved / Implemented Locally / Committed Staged and Published Proof Pending |
 
 ## Frontend
 
@@ -124,7 +124,7 @@ login readiness.
 | --- | --- | --- | --- |
 | `deployment-01` | [Local Runtime Build Plan](specs/deployment/01-secure-local-runtime-boundary.md) | [DDD](ddd/deployment/01-secure-local-runtime-boundary.md) | Approved support gate / no runtime assets |
 | `deployment-02` | [Local MariaDB Login Runtime](specs/deployment/02-local-mariadb-login-runtime.md) | [DDD](ddd/deployment/02-local-mariadb-login-runtime.md) | Implemented |
-| `deployment-03` | [Versioned Backend Artifact Delivery](specs/deployment/03-versioned-backend-artifact-delivery.md) | [DDD](ddd/deployment/03-versioned-backend-artifact-delivery.md) | Baseline Release Implementation Verified / Public Audit Repair SDD and DDD Complete / TDD Pending / Publication Proof Pending |
+| `deployment-03` | [Versioned Backend Artifact Delivery](specs/deployment/03-versioned-backend-artifact-delivery.md) | [DDD](ddd/deployment/03-versioned-backend-artifact-delivery.md) | Public Audit Repair Approved / Implemented Locally / Committed Staged and Runtime Proof Pending / Publication Proof Pending |
 
 ## Planned Contexts
 

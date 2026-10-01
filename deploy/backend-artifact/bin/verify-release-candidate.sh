@@ -66,11 +66,33 @@ case "$verification_root" in
 esac
 trap 'rm -rf "$verification_root"' EXIT HUP INT TERM
 
-cp -R "$CONSUMER_FIXTURE" "$verification_root/consumer"
+expected_manifest=${ORCA_RELEASE_EXPECTED_MANIFEST:-}
+if [ ! -f "$expected_manifest" ]; then
+  printf '%s\n' 'ORCA_RELEASE_EXPECTED_MANIFEST must name retained candidate evidence.' >&2
+  exit 65
+fi
+python3 "$SCRIPT_ROOT/verify_artifact.py" check-manifest "$expected_manifest" "$release_version"
+
+mkdir -p "$verification_root/consumer"
+cp "$CONSUMER_FIXTURE/pom.xml" "$verification_root/consumer/pom.xml"
+python3 - "$CONSUMER_FIXTURE/src" "$verification_root/consumer/src" <<'PYTHON'
+from pathlib import Path
+import shutil
+import sys
+source = Path(sys.argv[1])
+if any(path.is_symlink() for path in source.rglob("*")):
+    raise SystemExit("Consumer source must not contain symbolic links.")
+shutil.copytree(source, sys.argv[2], ignore=shutil.ignore_patterns("target", "*.class", "*.jar", "__pycache__", "*.pyc"))
+PYTHON
+if ! java "$SCRIPT_ROOT/ConsumerSourceBoundary.java" "$verification_root/consumer/src" >"$verification_root/source-output.log" 2>&1; then
+  printf '%s\n' 'Consumer source boundary verification failed.' >&2
+  exit 1
+fi
 mkdir -p "$verification_root/maven-repository"
 
 set -- \
   -q \
+  -C \
   -f "$verification_root/consumer/pom.xml" \
   -Dmaven.repo.local="$verification_root/maven-repository" \
   -Dorca.version="$release_version" \
@@ -87,4 +109,6 @@ then
   exit 1
 fi
 
-printf '%s\n' 'Release candidate passed isolated consumer verification.'
+python3 "$SCRIPT_ROOT/verify_artifact.py" verify "$verification_root/maven-repository" "$release_version" "$expected_manifest"
+python3 "$SCRIPT_ROOT/verify_artifact.py" check-results "$verification_root/consumer" "$expected_manifest" "${ORCA_RELEASE_EVIDENCE_OUTPUT:-}"
+printf '%s\n' 'Release candidate passed isolated consumer verification against retained evidence; this does not establish publication or the runtime matrix.'

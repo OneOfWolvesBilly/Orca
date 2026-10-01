@@ -1,10 +1,107 @@
 # DDD - Deployment 03 - Versioned Backend Artifact Delivery
 
-Status: Baseline GitHub Packages implementation verified; public audit delivery repair DDD complete / TDD pending; publication proof pending.
+Status: Public audit repair Approved / Implemented (local verification); committed staged/runtime and publication proof pending.
 
 This note is derived from the approved contract in
 `docs/specs/deployment/03-versioned-backend-artifact-delivery.md`.
 It must not introduce behavior beyond that spec.
+
+## Public Audit Implementation Evidence (2026-09-30)
+
+The user authorized development after the SDD/DDD commit `ff43aa8`. The remaining
+artifact mutation tests were written and observed RED before the inventory
+implementation. Initial RED evidence from the preceding session was 15 passing
+backend tests, 8/9 historical cached-artifact tests, 4/13 source/metadata tests,
+and the former three-type import guard failure. These historical results are
+superseded by the GREEN evidence below; they never established release proof.
+
+### Implementation and Rule Placement
+
+- The seven owner-approved core types already satisfy the contract. No domain
+  or audit runtime rule changed, and no recorder implementation was added to
+  the Orca artifact.
+- Consumer test configuration supplies the typed mapper and replaceable
+  recorders explicitly. It is `@TestConfiguration`, so the audit-only wiring
+  cannot leak into the separate embedded-auth test application's component scan.
+- `ConsumerSourceBoundary.java` uses the JDK Java parser for both source sets,
+  with an exact ten-type allowlist. It rejects ordinary/static/wildcard/FQN
+  dependencies, unapproved siblings, Orca package declarations, and malformed
+  source. Comments and literals are not dependencies. It does not claim to be
+  a sandbox for reflective access or arbitrary consumer code.
+- The fixture resolves the exact ordinary JAR, POM, sources and Javadoc using
+  Maven with strict checksums and a fresh repository. The runner copies only
+  POM/source/resources, excludes generated output, and rejects source symlinks.
+- `verify_artifact.py` checks each artifact and all seven API members, rejects
+  duplicates/test assets, compares the exact GAV/source/compatibility/SHA-256
+  set against retained build evidence, and requires resolution from the selected
+  repository. Multiple Orca versions or a local-install origin cannot pass.
+- The candidate builder requires committed release inputs and emits the manifest.
+  `ORCA_RELEASE_EXPECTED_MANIFEST` is required for verification; it must be retained
+  independently of retrieved bytes. Recreating expected hashes from a failed
+  download is not verification. Published verification requires staged evidence.
+- Successful Maven exit alone is insufficient: the three expected standalone
+  suites must have passing, non-skipped reports. Optional
+  `ORCA_RELEASE_EVIDENCE_OUTPUT` records bounded counts/provenance without raw
+  test logs or settings, and never overwrites a retained result.
+
+### Verified Results and Mapping
+
+| Mapping | Executable evidence | Result |
+| --- | --- | --- |
+| A1/A2/A3/A4 | `AuditPublicContractTest`, existing `AuditRecordTest` and `AuditRecorderTest` | 15 passing audit tests within 230 passing backend tests |
+| A1/A2/A4/A5; D-AUDIT-3 | standalone `AuditArtifactConsumerTest` | 6 pass: Spring wiring, recorder replacement/missing/failure, exact safe envelope, immutable metadata and API declaration |
+| A3; D-AUDIT-1 | standalone `AuditPublicCompilationTest` | 3 pass: artifact-only compiler classpath, malformed arguments/time negative controls, complete public signature closure |
+| D-AUDIT-1/2/4 | Python source-boundary, artifact-inventory and report-evidence suites | 45 pass, including missing/corrupt/substituted components, missing class/source/docs, API/source/GAV/runtime/checksum mismatch, duplicate members/evidence/versions, wrong origin, missing/skipped/failed reports, and development-to-publication rejection |
+| D-AUDIT-5 | existing release shell suites | 84 pass: version 13, contract 53, verifier 18 |
+| D-AUDIT-5 | full Maven reactor | 230 backend and 15 Minimal Consumer Fixture tests pass |
+| D-AUDIT-3/5 | real independent Maven consumer from an initially empty local repository | audit 6, compilation 3, existing auth/migration 4 pass |
+
+Python archives and Maven doubles are synthetic orchestration tests; their
+success cannot substitute for the separately executed real consumer. The first
+reactor attempt was blocked by sandbox socket restrictions. The authorized
+execution outside the sandbox passed. The independent consumer also ran outside
+the sandbox for dependency retrieval and its local test server.
+
+### Evidence Level and Remaining Release Work
+
+The real consumer used `io.github.oneofwolvesbilly:orca:0.0.0`, a test-only
+repository-local development assembly of the uncommitted repair tree. Its
+metadata's `ff43aa8` identifies the base commit only. The retained expected
+manifest records the uncommitted source state and a working-tree digest; this
+must not be described as a committed staged candidate. Java was 22.0.2 with
+compiler release 21, Spring Boot 4.0.1, and the regression database was H2.
+`NOT-VERIFIED-DEVELOPMENT-ASSEMBLY` is deliberately not MariaDB evidence.
+
+Local evidence directory: `/private/tmp/orca-audit-development-1igjyq1c`.
+It contains the development Maven repository, `expected.json` and
+`consumer-result.json`. During that run, main remained `ee16917` and the
+implementation/tests were uncommitted above SDD/DDD `ff43aa8`. On 2026-10-01
+the user authorized their joint commit on the existing temporary branch. No
+integration, push, tag or publication is included in that authorization.
+
+The local implementation/TDD checkpoint passes. The release remains incomplete:
+the authorized joint commit records the tests and implementation under the
+existing cadence. Next, build and verify a committed candidate with exact Java 21 and MariaDB version
+proof, and perform separately authorized canonical publication/authenticated
+retrieval. Preserve the selected DELIVERY/ARCH/DOC remainders in the private handoff.
+Logging/correlation needs its own intake and order decision before the final V1
+candidate; this audit implementation does not adopt it.
+
+Reproduce the local checks from the repair worktree:
+
+```sh
+./orca_backend/mvnw -o test
+python3 -m unittest discover -s deploy/backend-artifact/test -p 'test_*.py'
+sh deploy/backend-artifact/test/validate-release-version.test.sh
+sh deploy/backend-artifact/test/verify-release-contract.test.sh
+sh deploy/backend-artifact/test/verify-release-candidate.test.sh
+```
+
+Use the commands and manifest contract in `deploy/backend-artifact/README.md`
+for future candidate verification. Those commands require a committed candidate;
+the retained development result is not a substitute. External authorization and
+outage proofs retain the spec's manual/remote exceptions. No audit behavior
+failure has been waived.
 
 ## Public Audit Delivery Derivation (2026-09-29)
 
@@ -14,7 +111,8 @@ and consumes the Exact Supported Audit API in
 [reference-core-03](../../specs/reference-core/03-reusable-audit-recording-boundary.md).
 DDD was explicitly authorized after the single-outcome intake and SDD closeout.
 The user subsequently authorized the SDD/DDD documentation commit followed by
-TDD. Implementation, integration and release mutations remain unauthorized.
+TDD, then explicitly authorized implementation. Integration and release
+mutations remain separately gated.
 
 ### Ownership and Component Placement
 
@@ -175,10 +273,9 @@ credential migration, React publication or CogniRig integration is introduced.
 
 Selected DELIVERY/ARCH/DOC portions are aligned; unrelated portions and all
 other approved deferred items remain active. Both specs, README, product maps,
-slice map and the canonical ignored handoff record DDD complete / TDD pending.
-This is design completion only. Next authorized-layer decision is TDD; begin
-with plain support-boundary tests, then fixture/build contract tests before
-implementation. No new domain model requires a separate domain slice.
+slice map and the canonical ignored handoff now record locally verified
+implementation/TDD with committed staged and published evidence pending.
+The implementation checkpoint above supersedes the initial RED checkpoint. No new domain model requires a separate domain slice.
 
 Logging/correlation still requires its own intake and sequencing decision
 before the final V1 candidate. Publication/retrieval still requires separate

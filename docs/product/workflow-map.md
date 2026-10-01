@@ -162,7 +162,7 @@ Explicit unknowns:
 ## Workflow: Embedded Core Authentication Consumption
 
 Status: embedded behavior and release tooling baseline implemented / public
-audit artifact repair SDD/DDD complete, TDD and subsequent layers pending / Core V1
+audit artifact repair locally implemented and verified; committed staged/runtime and publication proof pending / Core V1
 not released. Audit consumer proof, safe structured logging, GitHub Packages
 publication and authenticated clean-consumer retrieval remain open gates.
 
@@ -228,10 +228,11 @@ Core MVP / V1 alignment:
 - `auth-12`, `reference-core-01`, `frontend-03`, and `frontend-04` provide
   implemented public-boundary and fixture outcomes.
 - `reference-core-03` has an implemented audit envelope/port baseline; its
-  owner-approved public artifact amendment SDD and DDD are complete, with TDD and
-  expanded verification pending.
+  owner-approved public artifact amendment is locally implemented and verified;
+  committed staged and published verification remain pending.
 - `deployment-03` has implemented release tooling and staged auth/migration
-  verification. Its coordinated audit consumer repair SDD and DDD are complete only.
+  verification. Its coordinated audit consumer repair passes local implementation/TDD and a
+  standalone development-artifact consumer; release evidence remains pending.
 - `ORCA-OPS-01` safe structured logging and correlation remains a separate
   behavior gate requiring intake and sequencing before the final V1 candidate.
 - Explicitly authorized GitHub Packages publication and authenticated retrieval
@@ -241,8 +242,8 @@ Core MVP / V1 alignment:
 
 Known gaps:
 
-- implementation and standalone proof of the exact public audit contract in
-  reference-core-03 / deployment-03; next authorized layer decision is TDD;
+- committed staged/runtime and published proof of the locally implemented public
+  audit contract in reference-core-03 / deployment-03;
 - separately authorized GitHub Packages publication and exact authenticated
   package retrieval proof;
 - safe structured logging and correlation through an authoritative slice.
@@ -540,8 +541,8 @@ Explicit unknowns:
 
 ## Workflow: Reusable Audit Recording Boundary
 
-Status: reusable baseline implemented / public artifact amendment SDD/DDD complete,
-TDD and standalone proof pending / workflow-specific emission not yet adopted.
+Status: reusable baseline and public artifact repair locally implemented and verified;
+committed staged and published proof pending / workflow-specific emission not yet adopted.
 
 Primary actor:
 
@@ -597,8 +598,9 @@ Public artifact repair:
   audit types from a versioned artifact, a consumer-owned typed mapper and
   consumer-provided recorder without copied source or unsupported dependencies.
 - Reference-core-03 owns the API and preserved validation/failure/safety rules;
-  deployment-03 owns independent artifact proof. SDD and DDD are complete; TDD,
-  implementation and staged/published verification are not complete.
+  deployment-03 owns independent artifact proof. Local TDD/implementation and
+  development-artifact verification pass; committed staged and published
+  verification remain open.
 - No auth/organization audit adoption or logging/correlation is included.
 
 Known gaps:

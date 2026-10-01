@@ -1,6 +1,30 @@
 # Deployment 03 - Versioned Backend Artifact Delivery
 
-Status: Baseline GitHub Packages implementation verified; public audit delivery repair SDD and DDD complete / TDD pending; publication proof pending.
+Status: Public audit repair Approved / Implemented (local verification); committed staged/runtime and publication proof pending.
+
+## Local Implementation Checkpoint (2026-09-30)
+
+The user authorized implementation after SDD/DDD commit `ff43aa8`. A1-A5 and
+D-AUDIT-1 through D-AUDIT-5 now have locally passing automated evidence: 15 audit
+unit tests within 230 backend tests, 15 reactor fixture tests, 45 Python
+inventory/source/report tests, 84 release shell checks, and 13 real standalone
+consumer tests (audit 6, independent compilation 3, auth/migration 4).
+
+The exact API, validation exceptions, mapper safety and consumer recorder failure
+responsibilities are unchanged. Public API metadata, syntax-aware dependency
+guards, retained artifact hashes/source/GAV inventory and fresh consumer copying
+are implemented in the deployment boundary. Test doubles remain outside the
+production artifact. The matching deployment DDD records commands, precise
+case mappings, component digests/evidence location and failure-return behavior.
+
+The standalone result uses a `0.0.0` development artifact from the uncommitted
+repair tree and an initially empty Maven repository. Its source commit is the
+`ff43aa8` base, not a committed implementation claim. Java 22.0.2 / compiler
+release 21 and H2 are local evidence only. Committed staged verification, exact
+Java 21/MariaDB evidence, canonical package publication and authenticated
+retrieval remain outstanding. On 2026-10-01 the user authorized the joint
+tests-plus-implementation commit. This commit preserves the development proof
+limitations and does not mark deployment-03 or Core V1 released.
 
 ## Public Audit Delivery Repair (2026-09-29)
 
@@ -36,7 +60,7 @@ The repair requires two coordinated amendments for this single outcome:
 Deployment must not derive an API from Java `public`, relax an entire package,
 or copy the validation rules. The reference-core-03 amendment is the required
 owner-side contract predecessor. Its SDD and DDD are complete;
-expanded tests and standalone implementation proof remain pending. No new
+expanded tests and standalone development-artifact implementation proof now pass; committed staged and published proof remain pending. No new
 credential, logging, storage, or auth/organization adoption predecessor is
 required. No new slice id or package architecture is selected.
 
@@ -163,13 +187,11 @@ non-goals and affected documents. ORCA-AUDIT-01 and all other deferred items
 retain their recorded reasons and remain active. Broad clusters are not
 promoted or tombstoned by this partial selection.
 
-The repair SDD and subsequently authorized DDD are complete; TDD is the next
-layer requiring authorization.
-Baseline implementation evidence remains valid only for its original scope.
-The repair, complete delivery and Core V1 release are not implemented/complete
-by these documents. The matching DDD notes derive the public model, consumer
-composition, dependency guards, artifact evidence and test placement. The user subsequently authorized the SDD/DDD documentation commit and TDD.
-Implementation, integration, publication, tagging and push remain unauthorized.
+The repair SDD and DDD are complete. The user subsequently authorized TDD and
+implementation; local GREEN results and a real development-artifact consumer
+are recorded below. Committed staged/runtime and published evidence remain open.
+The user authorized the joint tests-plus-implementation commit on 2026-10-01;
+integration, publication, tagging and push remain separately gated.
 
 Before a final Core V1 candidate, logging/correlation requires separate intake
 and an explicit sequencing decision: determine whether that slice affects the
@@ -241,7 +263,8 @@ Planned predecessor slices:
 
 - Original auth delivery predecessors are implemented. The audit repair also
   requires the reference-core-03 owner amendment above; its SDD and DDD are complete,
-  while TDD, expanded verification and independent audit proof remain pending.
+  and local implementation/TDD and development-artifact audit proof pass;
+  committed staged and published proof remain pending.
 
 Dependency owners:
 
@@ -349,7 +372,7 @@ named above):
 
 - Original numbered spec:
   `docs/specs/deployment/03-versioned-backend-artifact-delivery.md`.
-- Matching DDD (audit amendment derivation complete; TDD pending):
+- Matching DDD (audit amendment locally implemented and verified; release evidence pending):
   `docs/ddd/deployment/03-versioned-backend-artifact-delivery.md`.
 - Do not amend `auth-12`: auth owns the already-complete public behavior;
   deployment-03 owns formal delivery of that behavior.
@@ -467,7 +490,7 @@ The artifact must not contain:
 | protected session resolution | auth | `auth-09` | auth-owned resolution invoked by the embedded boundary | regression tests |
 | logout and revocation | auth | `auth-11` | existing logout HTTP contract | regression tests |
 | stable rejection response | reference-core | `reference-core-01` | existing API error contract | regression tests |
-| public audit construction and recording | reference-core | reference-core-03 baseline and public artifact amendment | seven exact audit types; consumer-supplied recorder | A1-A5 and D-AUDIT-1 through D-AUDIT-5; amendment proof pending |
+| public audit construction and recording | reference-core | reference-core-03 baseline and public artifact amendment | seven exact audit types; consumer-supplied recorder | A1-A5 and D-AUDIT-1 through D-AUDIT-5 locally verified; committed release proof pending |
 | artifact classes and resources | contributing Orca scopes | their current authoritative specs | packaged implementation behind approved public APIs | content inventory and test suite |
 | artifact packaging and delivery | `deployment` support scope | this spec | GitHub Packages Maven coordinate | staging and authenticated retrieval proofs |
 | build/release mechanism | `deployment` support scope | this spec | repeatable release command/workflow; secrets remain external | clean build, validation, and release evidence |
@@ -741,7 +764,7 @@ must not receive the publication credential.
 
 For the public audit repair, README, product baseline, workflow/capability
 maps, slice map and the private handoff distinguish baseline implementation
-from completed repair SDD/DDD and pending TDD/verification. Both DDD notes now
+from locally verified repair implementation and pending committed staged/runtime/publication proof. Both DDD notes now
 derive the amendment without changing its behavior. Document-map and constraints require no change because
 authority, scope and layer order are unchanged. The auth-only direct-consumer
 restriction in this spec is replaced by the exact owner-approved audit
@@ -799,8 +822,8 @@ TDD and release implementation were explicitly authorized and verified on
 - closing or tombstoning `ORCA-DELIVERY-01` before GitHub package publication
   and authenticated retrieval evidence exists.
 
-The next repair layer is TDD after separate authorization. After repair TDD,
-implementation and verification, the remaining release proof requires a
+Repair implementation and TDD are authorized and locally verified. The remaining
+release proof requires a
 candidate built from a committed source state with exact verified Java and
 MariaDB versions, including public audit consumption. GitHub Packages publication
 and authenticated package retrieval still require separate explicit

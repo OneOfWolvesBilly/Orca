@@ -1,6 +1,30 @@
 # Spec 03 - Reusable Audit Recording Boundary
 
-Status: Baseline Approved / Implemented; public artifact audit amendment SDD and DDD complete / TDD pending.
+Status: Approved / Implemented; public artifact amendment locally verified; committed staged and published proof pending.
+
+## Local Implementation Checkpoint (2026-09-30)
+
+The user authorized implementation after SDD/DDD commit `ff43aa8`. A1-A5 and
+D-AUDIT-1 through D-AUDIT-5 now have locally passing automated evidence: 15 audit
+unit tests within 230 backend tests, 15 reactor fixture tests, 45 Python
+inventory/source/report tests, 84 release shell checks, and 13 real standalone
+consumer tests (audit 6, independent compilation 3, auth/migration 4).
+
+The exact API, validation exceptions, mapper safety and consumer recorder failure
+responsibilities are unchanged. Public API metadata, syntax-aware dependency
+guards, retained artifact hashes/source/GAV inventory and fresh consumer copying
+are implemented in the deployment boundary. Test doubles remain outside the
+production artifact. The matching deployment DDD records commands, precise
+case mappings, component digests/evidence location and failure-return behavior.
+
+The standalone result uses a `0.0.0` development artifact from the uncommitted
+repair tree and an initially empty Maven repository. Its source commit is the
+`ff43aa8` base, not a committed implementation claim. Java 22.0.2 / compiler
+release 21 and H2 are local evidence only. Committed staged verification, exact
+Java 21/MariaDB evidence, canonical package publication and authenticated
+retrieval remain outstanding. On 2026-10-01 the user authorized the joint
+tests-plus-implementation commit. This commit preserves the development proof
+limitations and does not mark deployment-03 or Core V1 released.
 
 ## Public Artifact Audit Amendment (2026-09-29)
 
@@ -44,10 +68,10 @@ artifact contract is now explicitly enumerated here.
 
 | Mechanism | Owner | Authoritative predecessor | Allowed contract | Completion state |
 | --- | --- | --- | --- | --- |
-| envelope and common structural validation | reference-core support scope | this spec's baseline Validation and Ownership Boundary | exact audit value types below | baseline implemented; external contract verification pending |
-| replaceable recording and observable failure | reference-core support scope | this spec's baseline Failure Policy Boundary | `AuditRecorder.record(AuditRecord)` | baseline implemented; standalone proof pending |
-| event meaning and sensitive-data exclusion | consuming workflow; deployment owns only the no-domain verification fixture | this spec's consuming-workflow obligations | consumer-owned typed mapper, allowlisted fields, consumer-provided recorder | fixture proof must be added after TDD authorization |
-| versioned artifact and source dependency guard | deployment support scope | deployment-03 | exact Maven coordinate and explicit type allowlist | auth delivery tooling implemented; audit amendment and publication proof pending |
+| envelope and common structural validation | reference-core support scope | this spec's baseline Validation and Ownership Boundary | exact audit value types below | local contract and development-artifact proof pass; release proof pending |
+| replaceable recording and observable failure | reference-core support scope | this spec's baseline Failure Policy Boundary | `AuditRecorder.record(AuditRecord)` | development-artifact standalone proof passes; committed release proof pending |
+| event meaning and sensitive-data exclusion | consuming workflow; deployment owns only the no-domain verification fixture | this spec's consuming-workflow obligations | consumer-owned typed mapper, allowlisted fields, consumer-provided recorder | typed fixture tests pass against the development artifact; release proof pending |
+| versioned artifact and source dependency guard | deployment support scope | deployment-03 | exact Maven coordinate and explicit type allowlist | audit delivery repair locally verified; committed staged and publication proof pending |
 | existing host auth behavior | auth | auth-12 and its completed predecessors | three existing auth API types and existing HTTP contracts | implemented; regression only, no audit adoption |
 
 The reusable audit API does not require embedded auth enablement, a database,
@@ -123,7 +147,8 @@ this allowlist is a contract decision, not a guard-only edit.
 
 ### Public Failure Set and Verification Obligations
 
-The proof identifiers below are future required evidence, not implemented tests.
+The proof identifiers below define the required coverage; the implementation checkpoint
+and derived deployment evidence record their locally passing tests and release limits.
 All constructor/factory paths that can admit the listed values must be covered.
 
 | Class | Applicable input / normative outcome | Required proof |
@@ -175,7 +200,8 @@ public contract, full failure set, A1-A5, deployment evidence levels, and the
 non-goals above. No normative success or failure is left without a planned
 proof or stated contract boundary. The subsequent user-authorized DDD closeout
 (2026-09-29) derives these obligations in the matching notes. SDD and DDD are
-complete; TDD, implementation, staged and published-version proof remain pending.
+complete. Subsequently authorized implementation/TDD and the real development-artifact
+consumer now pass; committed staged and published-version proof remain pending.
 The baseline nine passing tests do not close the amendment's expanded matrix.
 
 Affected records are this spec, deployment-03, README, product baseline,

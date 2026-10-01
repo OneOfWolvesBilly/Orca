@@ -92,16 +92,10 @@ assert_public_orca_imports_only() {
     return
   fi
 
-  forbidden_imports=$(grep -Rh \
-    '^import io\.github\.oneofwolvesbilly\.orca\.' \
-    "$CONSUMER_ROOT/src" 2>/dev/null | grep -Ev \
-    'import io\.github\.oneofwolvesbilly\.orca\.auth\.api\.(AuthenticatedActor|EnableOrcaEmbeddedAuth|OrcaProtectedCommand);' \
-    || true)
-
-  if [ -n "$forbidden_imports" ]; then
-    fail "$name" "$forbidden_imports"
-  else
+  if java "$RELEASE_ROOT/bin/ConsumerSourceBoundary.java" "$CONSUMER_ROOT/src"; then
     pass "$name"
+  else
+    fail "$name" "Consumer depends on an unsupported Orca type."
   fi
 }
 
@@ -247,7 +241,7 @@ assert_contains "independent consumer pins the Orca artifact" "$FIXTURE_POM" '<a
 assert_contains "independent consumer receives an exact Orca version" "$FIXTURE_POM" '<version>${orca.version}</version>'
 assert_contains "independent consumer receives its repository boundary" "$FIXTURE_POM" '<url>${orca.repository.url}</url>'
 assert_fixture_outside_reactor "keeps the independent consumer outside the Orca reactor"
-assert_public_orca_imports_only "allows only the three approved Orca public imports"
+assert_public_orca_imports_only "allows only the ten approved Orca public types"
 assert_no_copied_orca_sources "copies neither Orca source nor Flyway migrations"
 
 assert_file "provides the published artifact consumer integration test" "$FIXTURE_TEST"

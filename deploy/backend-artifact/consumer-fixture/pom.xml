@@ -24,6 +24,8 @@
         <repository>
             <id>orca-under-test</id>
             <url>${orca.repository.url}</url>
+            <releases><checksumPolicy>fail</checksumPolicy></releases>
+            <snapshots><enabled>false</enabled></snapshots>
         </repository>
     </repositories>
 
@@ -32,6 +34,22 @@
             <groupId>io.github.oneofwolvesbilly</groupId>
             <artifactId>orca</artifactId>
             <version>${orca.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.oneofwolvesbilly</groupId>
+            <artifactId>orca</artifactId>
+            <version>${orca.version}</version>
+            <classifier>sources</classifier>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.github.oneofwolvesbilly</groupId>
+            <artifactId>orca</artifactId>
+            <version>${orca.version}</version>
+            <classifier>javadoc</classifier>
+            <scope>test</scope>
         </dependency>
 
         <dependency>

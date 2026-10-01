@@ -23,6 +23,8 @@ if [ ! -f "$maven_settings" ]; then
   exit 66
 fi
 
+python3 "$SCRIPT_ROOT/verify_artifact.py" check-release-manifest "${ORCA_RELEASE_EXPECTED_MANIFEST:-}" "$1"
+
 exec env ORCA_RELEASE_MAVEN_SETTINGS="$maven_settings" \
   sh "$SCRIPT_ROOT/verify-release-candidate.sh" \
   "$1" \

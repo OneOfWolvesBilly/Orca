@@ -86,21 +86,21 @@ product-specific shortcut.
 - `reference-core-01` supplies the implemented stable API error contract.
 - `reference-core-03` supplies the implemented product-neutral audit envelope
   and replaceable recording port. Its public artifact amendment SDD and DDD are complete;
-  TDD, expanded tests and independent audit consumer proof remain pending.
+  implementation and a real independent development-artifact consumer are locally verified; committed staged and published proof remain pending.
 - `frontend-03` supplies the implemented reusable React login composition and
   bounded branding contract.
 - `frontend-04` supplies the implemented product-neutral React fixture login,
   protected-command, expiry-coordination, and logout proof.
 - `deployment-03` supplies implemented release tooling, component assembly,
   and isolated staged auth/migration verification. Its audit delivery repair
-  SDD and DDD are complete; audit proof and final release compatibility evidence remain
-  pending. Test-only staging is not published-version evidence.
+  public audit implementation is locally verified; committed staged audit proof and final release compatibility evidence remain pending. Test-only staging is not published-version evidence.
 
 ### Open V1 Release Gates
 
 1. The coordinated `reference-core-03` public-boundary amendment and
-   `deployment-03` delivery repair must complete TDD, implementation and
-   independent artifact audit verification. SDD and DDD are complete only. This is the
+   `deployment-03` delivery repair has passed local implementation/TDD and
+   development-artifact consumer verification. It must still pass committed
+   staged and published artifact verification with exact runtime evidence. This is the
    existing Core audit consumption outcome, not broader workflow audit adoption.
 2. `ORCA-OPS-01` must be split through slice intake and complete the smallest
    authoritative outcome that proves safe structured application logging and
@@ -504,7 +504,7 @@ Required safety boundaries:
 ### Audit and Operational Support
 
 Status: reusable audit baseline implemented / public artifact amendment SDD/DDD
-complete, TDD and verification pending / broader workflow adoption remains a gap.
+and local implementation complete; committed staged and published verification pending / broader workflow adoption remains a gap.
 
 Purpose:
 
@@ -529,7 +529,7 @@ Completed first auth-related slice:
 Implemented reference-core baseline:
 
 - `reference-core-03` reusable audit recording boundary; its public artifact
-  amendment has completed SDD and DDD, with TDD and subsequent layers pending.
+  amendment has locally verified implementation and TDD, with committed staged and published evidence pending.
 
 Unknown / to be discovered:
 

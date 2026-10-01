@@ -1,10 +1,25 @@
 # DDD Derivation - 03 Reusable Audit Recording Boundary
 
-Status: Baseline Approved / Implemented; public artifact audit amendment DDD complete / TDD pending.
+Status: Approved / Implemented; public artifact amendment locally verified; committed staged and published proof pending.
 
 This note is **derived from**
 `docs/specs/reference-core/03-reusable-audit-recording-boundary.md`.
 It does not introduce new behavior.
+
+## Implementation Checkpoint (2026-09-30)
+
+The user authorized implementation after SDD/DDD commit `ff43aa8`. The existing
+seven core value/port types already satisfy the contract; no runtime behavior
+or global failure policy changed. Fifteen backend audit tests pass, and the
+independent artifact consumer passes six audit and three compilation/signature
+tests, including typed safe mapping and explicit Spring test wiring.
+
+The [deployment implementation evidence](../deployment/03-versioned-backend-artifact-delivery.md#public-audit-implementation-evidence-2026-09-30)
+records all failure mappings, component/source guards, test counts and limits.
+The implementation is locally verified, but the development artifact comes
+from an uncommitted tree. Committed staged, exact runtime-matrix and published
+proof remain pending. The user authorized the joint tests-plus-implementation
+commit on 2026-10-01; this does not upgrade the prior development evidence.
 
 ## Public Artifact Amendment Derivation (2026-09-29)
 
@@ -14,8 +29,9 @@ and the single consumer proof in
 [deployment-03](../../specs/deployment/03-versioned-backend-artifact-delivery.md).
 The user authorized DDD after SDD closeout. This derivation does not authorize
 TDD, implementation, publication or Git delivery by itself. The user
-subsequently authorized the SDD/DDD documentation commit followed by TDD;
-implementation and delivery remain separately gated.
+subsequently authorized the SDD/DDD documentation commit, TDD, and then
+implementation. The implementation commit was subsequently authorized on 2026-10-01; delivery
+remains separately gated.
 
 The single outcome remains independent artifact consumption of a valid audit
 record through an exact supported API and a consumer-provided recorder.
@@ -142,7 +158,8 @@ DDD closeout: every amendment A1-A5 requirement and all ten failure classes
 have model, owner, rule and test placement. The seven-type API matches the
 spec; no global failure policy, semantic secret scanner, production storage or
 workflow adoption is added. The selected DELIVERY/ARCH/DOC portions continue
-at TDD after separate authorization; all other approved dispositions remain.
+with locally verified implementation/TDD and remaining release proof; all other
+approved dispositions remain.
 DDD completion is not a claim that expanded tests, implementation, staged
 artifact proof or published-version proof have passed.
 

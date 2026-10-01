@@ -50,7 +50,7 @@ Implemented milestone baselines:
 - `auth-12` embedded auth and authenticated actor API;
 - `reference-core-01` stable public error contract;
 - `reference-core-03` product-neutral audit envelope and recording port
-  (repository-local baseline; standalone public consumption remains pending);
+  (local implementation and standalone development-artifact proof pass; committed staged/published proof pending);
 - `frontend-03` reusable React login composition and branding;
 - `frontend-04` product-neutral protected-session fixture lifecycle; and
 - `deployment-03` release tooling, artifact assembly and isolated staged
@@ -60,8 +60,8 @@ Implemented milestone baselines:
 Open milestone capabilities and release proof:
 
 - the coordinated reference-core-03 / deployment-03 public audit repair:
-  SDD and DDD complete; TDD, implementation and standalone artifact proof
-  remain pending;
+  implementation and TDD locally verified; committed staged/runtime and
+  published standalone proof remain pending;
 - one intake-approved `ORCA-OPS-01` outcome for safe structured logging and
   correlation in the Minimal Consumer Fixture flow;
 - one explicitly authorized GitHub Packages publication of an unused exact
@@ -353,7 +353,7 @@ Existing slices:
 - `auth-10` for login failure audit/reference.
 - `reference-core-02` client diagnostics foundation is implemented.
 - `reference-core-03` reusable audit baseline is implemented; public artifact
-  amendment SDD and DDD are complete; TDD and expanded verification remain pending.
+  amendment implementation and TDD are locally verified; committed staged and published proof remain pending.
 - No dedicated general application logging or observability slice.
 
 Existing capabilities:
@@ -545,9 +545,8 @@ Approved delivery capability:
 
 Implementation gaps:
 
-- public audit artifact repair after completed SDD/DDD: TDD, implementation,
-  exact API/dependency guard, and standalone A1-A5 proof through staged and
-  published artifacts;
+- public audit implementation and exact API/dependency guards now pass locally;
+  committed staged/runtime and published A1-A5 artifact proof remain pending;
 - separately authorized GitHub Packages publication
 - exact authenticated package-coordinate retrieval from GitHub Packages
 - exact Java 21 and resolved MariaDB 11 verification evidence for the first
@@ -566,7 +565,8 @@ Sequencing notes:
 
 - deployment owns delivery evidence but does not own packaged business rules.
 - TDD preceded the baseline release implementation and is green. This is not
-  proof of the audit amendment; its next layer is TDD after authorization.
+  the audit amendment proof. The repair now has separate GREEN tests and a
+  real development-artifact consumer result; release evidence remains pending.
 - GitHub package upload and publication require separate user authorization and
   are not implied by implementation approval.
 - Frontend/npm delivery remains a separate outcome.

@@ -26,9 +26,25 @@ printf '%s\n' "$*" >> "$TEST_COMMAND_LOG"
 if [ -n "${TEST_MAVEN_OUTPUT:-}" ]; then
   printf '%s\n' "$TEST_MAVEN_OUTPUT"
 fi
+if [ "${TEST_MAVEN_STATUS:-0}" -eq 0 ]; then
+  previous=
+  for argument in "$@"; do
+    if [ "$previous" = '-f' ]; then python3 "$TEST_ARTIFACT_HELPER" "$(dirname -- "$argument")"; fi
+    previous=$argument
+  done
+  for argument in "$@"; do
+    case "$argument" in
+      -Dmaven.repo.local=*) cp -R "$TEST_ARTIFACT_REPOSITORY/." "${argument#-Dmaven.repo.local=}/" ;;
+    esac
+  done
+fi
 exit "${TEST_MAVEN_STATUS:-0}"
 EOF
 chmod +x "$FAKE_BIN/mvn"
+python3 "$PROJECT_ROOT/deploy/backend-artifact/test/artifact_fixture.py" "$TEST_ROOT/synthetic-repository" "$TEST_ROOT/expected.json"
+export ORCA_RELEASE_EXPECTED_MANIFEST="$TEST_ROOT/expected.json"
+export TEST_ARTIFACT_HELPER="$PROJECT_ROOT/deploy/backend-artifact/test/artifact_fixture.py"
+export TEST_ARTIFACT_REPOSITORY="$TEST_ROOT/synthetic-repository"
 
 failures=0
 case_status=0

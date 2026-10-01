@@ -44,6 +44,11 @@ if ! git -C "$PROJECT_ROOT" diff --quiet || ! git -C "$PROJECT_ROOT" diff --cach
   exit 69
 fi
 
+untracked_release_inputs=$(git -C "$PROJECT_ROOT" ls-files --others --exclude-standard -- orca_backend deploy/backend-artifact pom.xml)
+if [ -n "$untracked_release_inputs" ]; then
+  printf '%s\n' 'Release source and tooling must be committed before building a candidate.' >&2
+  exit 69
+fi
 source_commit=$(git -C "$PROJECT_ROOT" rev-parse --verify HEAD)
 maven_command=${ORCA_RELEASE_MAVEN_COMMAND:-"$PROJECT_ROOT/orca_backend/mvnw"}
 
@@ -62,4 +67,6 @@ repository_url="file://$candidate_directory"
   -DaltDeploymentRepository="orca-candidate::$repository_url" \
   clean deploy
 
-printf 'Release candidate repository: %s\n' "$repository_url"
+python3 "$SCRIPT_ROOT/verify_artifact.py" create "$candidate_directory" "$release_version" "$source_commit" staged "$candidate_directory/orca-release-evidence.json"
+
+printf 'Release candidate repository: %s\n'  "$repository_url"
